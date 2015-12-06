@@ -3,7 +3,7 @@
 
 static mag_raw_data_t   raw_magnetic;
 static uint8_t          init_flag = 0;
-static int16_t _hmc5883l_mGauss_LSb = 92;
+static int16_t          _hmc5883l_mGauss_LSb = 92;
 #define GAIN_MULTIPLYER     100L
 
 void hmc5883l_init()

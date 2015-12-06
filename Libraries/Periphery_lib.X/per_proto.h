@@ -77,5 +77,7 @@ uint32_t timer_stop();
 #define TIMER_DIV_64  0b10
 #define TIMER_DIV_256 0b11
 
+void error_process ( void );
+
 #endif	/* PERIPHERY_PROTO_H_ */
 

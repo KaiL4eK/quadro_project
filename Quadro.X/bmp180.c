@@ -1,8 +1,9 @@
 #include "BMP180.h"
 #include "per_proto.h"
 
-static uint8_t      buffer[3];
-static uint8_t      measure_mode = 0;
+static uint8_t      buffer[3],
+                    measure_mode = 0,
+                    init_flag = 0;
 static bool         calibration_loaded = false;
 int16_t     ac1, ac2, ac3, b1, b2, mc, mb, md; 
 uint16_t    ac4, ac5, ac6;
@@ -55,6 +56,7 @@ int8_t bmp180_init( uint8_t oversampling )
     }
     bmp180_load_calibration();
     bmp180_send_temperature_signal();
+    init_flag = 1;
     return( 0 );
 }
 
@@ -159,6 +161,8 @@ void bmp180_send_pressure_signal()
 
 uint8_t bmp180_data_ready()
 {
+    if ( !init_flag )
+        return( 0 );
     return( !((get_control() >> 5) & 0x1) );
 }
 

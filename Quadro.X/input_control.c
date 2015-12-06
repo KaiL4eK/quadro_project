@@ -21,8 +21,9 @@ static void init_channel_5();
 /********************************/
 /*      MAIN INITIALIZATION     */
 /********************************/
-#define LOSS_LIGHT  _RA4
-#define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 1; LOSS_LIGHT = 1;}
+#define LOSS_LIGHT      _LATA3
+#define TRIS_LOSS_LIGHT _TRISA3
+#define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 0; LOSS_LIGHT = 1;}
 
 void ic_find_control()
 {
@@ -62,8 +63,7 @@ void init_input_control()
     T2CONbits.TCKPS = TIMER_DIV_1;
     TMR2 = 0;
     PR2 = UINT16_MAX;
-    _TRISA4 = 0;
-    _LATA4 = 0;
+    TRIS_LOSS_LIGHT = 0;
     init_channel_1();
     init_channel_2();
     init_channel_3();
@@ -408,7 +408,7 @@ init_channel_5()
     IC5CONbits.ICTMR = IC_TIMER_2;
     IC5CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC5CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC5IP = 7;     //Priority 7
+    _IC5IP = 7;     // Priority 7
     _IC5IF = 0;     // Zero interrupt flag
     _IC5IE = 1;     // Enable interrupt
 }

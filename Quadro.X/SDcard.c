@@ -220,7 +220,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
         spi_read();
         spi_cs_set( 1 );
         fdebug( "SD writing error", response );
-        while ( 1 );
+        error_process();
         return( TIMEOUT_ERROR_WRITE_NOT_ACCEPTED );
     }
 

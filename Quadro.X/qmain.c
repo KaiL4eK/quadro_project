@@ -8,8 +8,6 @@
 #include "FAT32.h"
 #include "SDcard.h"
 #include "file_io.h"
-// For flash storage
-#include <libpic30.h>
 
 long long get_clock_freq() { return( FCY ); }
 
@@ -103,32 +101,14 @@ int main(void)
     if ( bmp180_init(BMP085_STANDARD) != 0 )
     {
         debug("Bad init");
-        while(1);
+        error_process();
     }
     debug( "BMP180 initialized" );
-    hmc5883l_init();
+//    hmc5883l_init();
     debug( "HMC5883L initialized" );
     sensors_timer_init();
     
     debug( "Let`s begin!" );
-    
-/* FLASH write read code */
-//int testdata[_FLASH_ROW];
-//_prog_addressT p_eds_address = 0x21000;
-//_memcpy_p2d16(testdata, p_eds_address, sizeof(testdata));
-//UART_write_int(testdata[0]);
-//if ( testdata[0] == 0xffff )
-//{
-//UART_writeln_string("Write values");
-//_erase_flash(p_eds_address);
-//int i;
-//    for (i=0; i<(_FLASH_ROW);i++) {
-//        testdata[i]=0x32;
-//    }
-//_write_flash16(p_eds_address, testdata);
-//}
-//_memcpy_p2d16(testdata, p_eds_address, sizeof(testdata));
-//UART_write_hint(testdata[0]);
     
     while( 1 )
     {   
@@ -193,7 +173,7 @@ static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
 static magnetic_data_t      curr_data_mag;
 static Angles_t             current_angles = { 0, 0, 0 };
-static uint16_t             potenc_value = 0;
+//static uint16_t             potenc_value = 0;
 static uint16_t             time_elapsed_us = 0;
 
 static BMP180_Stage_t       bmp_rcv_data_stage = TEMP;
@@ -399,8 +379,8 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     }
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
-//    hmc5883l_receive_mag_raw_data();
-//    hmc5883l_get_scaled_mag_data( &curr_data_mag ); // In mGauss
+    hmc5883l_receive_mag_raw_data();
+    hmc5883l_get_scaled_mag_data( &curr_data_mag ); // In mGauss
 //    get_direction_values( &control_values );
 //    potenc_value = ADC_read() - 3655; // 3655 - mid of construction
     process_angles_counts();

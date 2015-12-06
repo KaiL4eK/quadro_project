@@ -28,7 +28,8 @@ struct task_
 static uint8_t      data_buffer[BUFFERS_AMOUNT][512],
                     current_buffer = 0,
                     busy_buffers[BUFFERS_AMOUNT],
-                    file_opened = 0;
+                    file_opened = 0,
+                    init_flag = 0;
 
 static uint16_t     data_offset = 0;
 
@@ -41,17 +42,18 @@ int init_sd_file_io ( void )
     if ( init_FAT32() < 0 )
     {
         debug("FAT32 not found!");
-        while(1);
+        error_process();
     }
     spi_set_speed( FREQ_16000K );
     PROCESSING_TRIS = 0;
     PROCESSING_LIGHT = 1;
+    init_flag = 1;
     return( 0 );
 }
 
 inline int convert_filename ( char *filename );
 
-static int open ( void )
+inline static int open ( void )
 {
     if ( file_opened )
         return( -1 );
@@ -138,6 +140,9 @@ int file_process_tasks ( void )
 
 int file_open ( char *in_filename )
 {
+    if ( !init_flag )
+        return( -1 );
+    
     char filename[12];
     // Copy filename in correct array
     memset( filename, 0, sizeof( filename ) );
@@ -173,7 +178,7 @@ inline void set_next_buffer( void )
     {
         debug( "Buffers overlay" );
         if ( out_counter++ == 255 )
-            while ( 1 );
+            error_process();
     }
     data_offset = 0;
     memset( data_buffer[current_buffer], 0, sizeof( data_buffer[current_buffer] ) );
@@ -181,6 +186,9 @@ inline void set_next_buffer( void )
 
 int file_close ( void )
 {
+    if ( !init_flag )
+        return( -1 );
+    
     add_task( CLOSE_FILE, current_buffer, NULL );
     set_next_buffer();
     return( 0 );
@@ -189,6 +197,9 @@ int file_close ( void )
 
 int file_write( uint8_t *buffer, uint16_t buffer_length )
 {
+    if ( !init_flag )
+        return( -1 );
+    
     memcpy( &data_buffer[current_buffer][data_offset], buffer, buffer_length );
     data_offset += buffer_length;
     

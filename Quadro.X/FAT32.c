@@ -53,7 +53,7 @@ int init_FAT32 ( void )
             debug("SD card initialization failed");
             debug( (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found" : 
                                 err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2" : "Unknown error") );
-            while(1);
+            error_process();
         }
     }
     
