@@ -245,56 +245,58 @@ Program Memory  [Origin = 0x200, Length = 0x2aa00]
 section                    address   length (PC units)   length (bytes) (dec)
 -------                    -------   -----------------   --------------------
 .text                        0x200              0x3214          0x4b1e  (19230)
-.const                      0x3414               0x3e6           0x5d9  (1497)
-libmxconst                  0x37fa               0x174           0x22e  (558)
-.text                       0x396e              0x35b2          0x508b  (20619)
-.dinit                      0x6f20               0x29c           0x3ea  (1002)
-.text                       0x71bc               0x7e6           0xbd9  (3033)
+.const                      0x3414               0x5fc           0x8fa  (2298)
+libmxconst                  0x3a10               0x174           0x22e  (558)
+.text                       0x3b84              0x37c8          0x53ac  (21420)
+.dinit                      0x734c               0x29e           0x3ed  (1005)
+.text                       0x75ea               0x7e6           0xbd9  (3033)
 
-                     Total program memory used (bytes):         0xb373  (45939) 17%
+                     Total program memory used (bytes):         0xb9b8  (47544) 18%
 
 
 Data Memory  [Origin = 0x800, Length = 0x7800]
 
 section                    address      alignment gaps    total length  (dec)
 -------                    -------      --------------    -------------------
-.nbss                        0x800                   0          0x12f4  (4852)
-.ndata                      0x1af4                   0            0x3c  (60)
-.nbss                       0x1b30                   0            0x38  (56)
-.ndata                      0x1b68                   0            0x2c  (44)
-.nbss                       0x1b94                   0            0x48  (72)
-.ndata                      0x1bdc                   0             0xc  (12)
-.nbss                       0x1be8                   0             0x4  (4)
-.ndata                      0x1bec                   0             0x2  (2)
-.nbss                       0x1bee                   0             0x4  (4)
-.data._powers_              0x1bf2                   0            0xb0  (176)
-.data._npowers_             0x1ca2                   0            0xb0  (176)
-.data.dpowers               0x1d52                   0            0xa0  (160)
-.data                       0x1df2                   0            0x2a  (42)
-.data._iob                  0x1e1c                   0            0x24  (36)
-.bss.__allocs               0x1e40                   0             0x8  (8)
-.bss.__allocx               0x1e48                   0             0x4  (4)
-.bss.__allocp               0x1e4c                   0             0x2  (2)
-.bss.__alloct               0x1e4e                   0             0x2  (2)
-.data._Files                0x1e50                   0             0x2  (2)
-.bss._outdone               0x1e52                   0             0x2  (2)
-.bss._sibuf                 0x1e54                   0             0x2  (2)
-.bss._sobuf                 0x1e56                   0             0x2  (2)
-.data.__C30_UART            0x1e58                   0             0x2  (2)
-.bss.__curbrk               0x1e5a                   0             0x2  (2)
-.heap                       0x1e5c                   0           0x200  (512)
+.nbss                        0x800                   0          0x12d4  (4820)
+.ndata                      0x1ad4                   0            0x3c  (60)
+.nbss                       0x1b10                   0            0x38  (56)
+.ndata                      0x1b48                   0            0x2c  (44)
+.nbss                       0x1b74                   0            0x40  (64)
+.ndata                      0x1bb4                   0             0x8  (8)
+.nbss                       0x1bbc                   0             0x8  (8)
+.ndata                      0x1bc4                   0             0x6  (6)
+.nbss                       0x1bca                   0             0x4  (4)
+.ndata                      0x1bce                   0             0x2  (2)
+.nbss                       0x1bd0                   0             0x4  (4)
+.data._powers_              0x1bd4                   0            0xb0  (176)
+.data._npowers_             0x1c84                   0            0xb0  (176)
+.data.dpowers               0x1d34                   0            0xa0  (160)
+.data                       0x1dd4                   0            0x2a  (42)
+.data._iob                  0x1dfe                   0            0x24  (36)
+.bss.__allocs               0x1e22                   0             0x8  (8)
+.bss.__allocx               0x1e2a                   0             0x4  (4)
+.bss.__allocp               0x1e2e                   0             0x2  (2)
+.bss.__alloct               0x1e30                   0             0x2  (2)
+.data._Files                0x1e32                   0             0x2  (2)
+.bss._outdone               0x1e34                   0             0x2  (2)
+.bss._sibuf                 0x1e36                   0             0x2  (2)
+.bss._sobuf                 0x1e38                   0             0x2  (2)
+.data.__C30_UART            0x1e3a                   0             0x2  (2)
+.bss.__curbrk               0x1e3c                   0             0x2  (2)
+.heap                       0x1e3e                   0           0x200  (512)
 
-                        Total data memory used (bytes):         0x185c  (6236) 20%
+                        Total data memory used (bytes):         0x183e  (6206) 20%
 
 
 Dynamic Memory Usage
 
 region                     address                      maximum length  (dec)
 ------                     -------                      ---------------------
-heap                        0x1e5c                               0x200  (512)
-stack                       0x205c                              0x5fa4  (24484)
+heap                        0x1e3e                               0x200  (512)
+stack                       0x203e                              0x5fc2  (24514)
 
-                        Maximum dynamic memory (bytes):         0x61a4  (24996)
+                        Maximum dynamic memory (bytes):         0x61c2  (25026)
 
 
 External Symbols in Data Memory (by address):
@@ -323,92 +325,90 @@ External Symbols in Data Memory (by address):
                     0x1652                  _UART_buffer
                     0x1a52                  _input_command
                     0x1a54                  _test_throttle
-                    0x1abf                  _writing_flag
-                    0x1ac0                  _filename
-                    0x1ad0                  _buffer_tmp
-                    0x1b4e                  _mean_ax
-                    0x1b50                  _mean_ay
-                    0x1b52                  _mean_az
-                    0x1b54                  _mean_gx
-                    0x1b56                  _mean_gy
-                    0x1b58                  _mean_gz
-                    0x1b5a                  _state
-                    0x1b5c                  _ax_offset
-                    0x1b5e                  _ay_offset
-                    0x1b60                  _az_offset
-                    0x1b62                  _gx_offset
-                    0x1b64                  _gy_offset
-                    0x1b66                  _gz_offset
-                    0x1b68                  _program_author
-                    0x1b76                  _program_version
-                    0x1b87                  _program_date
-                    0x1bba                  _ac1
-                    0x1bbc                  _ac2
-                    0x1bbe                  _ac3
-                    0x1bc0                  _b1
-                    0x1bc2                  _b2
-                    0x1bc4                  _mc
-                    0x1bc6                  _mb
-                    0x1bc8                  _md
-                    0x1bca                  _ac4
-                    0x1bcc                  _ac5
-                    0x1bce                  _ac6
-                    0x1bd0                  _B5
-                    0x1be2                  _buffersize
-                    0x1be4                  _acel_deadzone
-                    0x1be6                  _giro_deadzone
-                    0x1bee                  _SDHC_flag
-                    0x1bef                  _card_type
-                    0x1bf2                  __powers_
-                    0x1ca2                  __npowers_
-                    0x1e1c                  __iob
-                    0x1e40                  ___allocs
-                    0x1e48                  ___allocx
-                    0x1e4c                  ___allocp
-                    0x1e4e                  ___alloct
-                    0x1e50                  __Files
-                    0x1e52                  __outdone
-                    0x1e54                  __sibuf
-                    0x1e56                  __sobuf
-                    0x1e58                  ___C30_UART
-                    0x1e5a                  ___curbrk
+                    0x1abf                  _filename
+                    0x1b2e                  _mean_ax
+                    0x1b30                  _mean_ay
+                    0x1b32                  _mean_az
+                    0x1b34                  _mean_gx
+                    0x1b36                  _mean_gy
+                    0x1b38                  _mean_gz
+                    0x1b3a                  _state
+                    0x1b3c                  _ax_offset
+                    0x1b3e                  _ay_offset
+                    0x1b40                  _az_offset
+                    0x1b42                  _gx_offset
+                    0x1b44                  _gy_offset
+                    0x1b46                  _gz_offset
+                    0x1b48                  _program_author
+                    0x1b56                  _program_version
+                    0x1b67                  _program_date
+                    0x1b9a                  _ac1
+                    0x1b9c                  _ac2
+                    0x1b9e                  _ac3
+                    0x1ba0                  _b1
+                    0x1ba2                  _b2
+                    0x1ba4                  _mc
+                    0x1ba6                  _mb
+                    0x1ba8                  _md
+                    0x1baa                  _ac4
+                    0x1bac                  _ac5
+                    0x1bae                  _ac6
+                    0x1bb0                  _B5
+                    0x1bba                  _writing_flag
+                    0x1bc4                  _buffersize
+                    0x1bc6                  _acel_deadzone
+                    0x1bc8                  _giro_deadzone
+                    0x1bd0                  _SDHC_flag
+                    0x1bd1                  _card_type
+                    0x1bd4                  __powers_
+                    0x1c84                  __npowers_
+                    0x1dfe                  __iob
+                    0x1e22                  ___allocs
+                    0x1e2a                  ___allocx
+                    0x1e2e                  ___allocp
+                    0x1e30                  ___alloct
+                    0x1e32                  __Files
+                    0x1e34                  __outdone
+                    0x1e36                  __sibuf
+                    0x1e38                  __sobuf
+                    0x1e3a                  ___C30_UART
+                    0x1e3c                  ___curbrk
 
 External Symbols in Data Memory (by name):
 
-                    0x1bd0                  _B5
+                    0x1bb0                  _B5
                     0x122e                  _FAT_sector_buffer
                     0x142e                  _FAT_sector_number
-                    0x1bee                  _SDHC_flag
+                    0x1bd0                  _SDHC_flag
                     0x1652                  _UART_buffer
-                    0x1e50                  __Files
-                    0x1e58                  ___C30_UART
-                    0x1e4c                  ___allocp
-                    0x1e40                  ___allocs
-                    0x1e4e                  ___alloct
-                    0x1e48                  ___allocx
-                    0x1e5a                  ___curbrk
-                    0x1e1c                  __iob
-                    0x1ca2                  __npowers_
-                    0x1e52                  __outdone
-                    0x1bf2                  __powers_
-                    0x1e54                  __sibuf
-                    0x1e56                  __sobuf
-                    0x1bba                  _ac1
-                    0x1bbc                  _ac2
-                    0x1bbe                  _ac3
-                    0x1bca                  _ac4
-                    0x1bcc                  _ac5
-                    0x1bce                  _ac6
-                    0x1be4                  _acel_deadzone
-                    0x1b5c                  _ax_offset
-                    0x1b5e                  _ay_offset
-                    0x1b60                  _az_offset
-                    0x1bc0                  _b1
-                    0x1bc2                  _b2
-                    0x1ad0                  _buffer_tmp
-                    0x1be2                  _buffersize
+                    0x1e32                  __Files
+                    0x1e3a                  ___C30_UART
+                    0x1e2e                  ___allocp
+                    0x1e22                  ___allocs
+                    0x1e30                  ___alloct
+                    0x1e2a                  ___allocx
+                    0x1e3c                  ___curbrk
+                    0x1dfe                  __iob
+                    0x1c84                  __npowers_
+                    0x1e34                  __outdone
+                    0x1bd4                  __powers_
+                    0x1e36                  __sibuf
+                    0x1e38                  __sobuf
+                    0x1b9a                  _ac1
+                    0x1b9c                  _ac2
+                    0x1b9e                  _ac3
+                    0x1baa                  _ac4
+                    0x1bac                  _ac5
+                    0x1bae                  _ac6
+                    0x1bc6                  _acel_deadzone
+                    0x1b3c                  _ax_offset
+                    0x1b3e                  _ay_offset
+                    0x1b40                  _az_offset
+                    0x1ba0                  _b1
+                    0x1ba2                  _b2
+                    0x1bc4                  _buffersize
                     0x122c                  _bytes_per_sector
-                    0x1bef                  _card_type
+                    0x1bd1                  _card_type
                     0x1642                  _data_cluster
                     0x1646                  _data_first_sector
                     0x164a                  _data_sector
@@ -417,37 +417,37 @@ External Symbols in Data Memory (by name):
                     0x1636                  _dir_sector_first
                     0x163a                  _dir_sector_number
                     0x163e                  _dir_sector_offset
-                    0x1ac0                  _filename
+                    0x1abf                  _filename
                     0x1218                  _first_FAT_sector
                     0x1210                  _first_data_sector
                     0x1214                  _first_sector
-                    0x1be6                  _giro_deadzone
-                    0x1b62                  _gx_offset
-                    0x1b64                  _gy_offset
-                    0x1b66                  _gz_offset
+                    0x1bc8                  _giro_deadzone
+                    0x1b42                  _gx_offset
+                    0x1b44                  _gy_offset
+                    0x1b46                  _gz_offset
                     0x1a52                  _input_command
-                    0x1bc6                  _mb
-                    0x1bc4                  _mc
-                    0x1bc8                  _md
-                    0x1b4e                  _mean_ax
-                    0x1b50                  _mean_ay
-                    0x1b52                  _mean_az
-                    0x1b54                  _mean_gx
-                    0x1b56                  _mean_gy
-                    0x1b58                  _mean_gz
+                    0x1ba6                  _mb
+                    0x1ba4                  _mc
+                    0x1ba8                  _md
+                    0x1b2e                  _mean_ax
+                    0x1b30                  _mean_ay
+                    0x1b32                  _mean_az
+                    0x1b34                  _mean_gx
+                    0x1b36                  _mean_gy
+                    0x1b38                  _mean_gz
                     0x1640                  _new_dir
                     0x164e                  _next_free_cluster
                     0x120e                  _out_counter
-                    0x1b68                  _program_author
-                    0x1b87                  _program_date
-                    0x1b76                  _program_version
+                    0x1b48                  _program_author
+                    0x1b67                  _program_date
+                    0x1b56                  _program_version
                     0x121c                  _reserved_sector_count
                     0x1224                  _root_cluster
                     0x1220                  _sector_per_cluster
-                    0x1b5a                  _state
+                    0x1b3a                  _state
                     0x1a54                  _test_throttle
                     0x1228                  _total_clusters
-                    0x1abf                  _writing_flag
+                    0x1bba                  _writing_flag
 
 External Symbols in Program Memory (by address):
 
@@ -574,182 +574,183 @@ External Symbols in Program Memory (by address):
                   0x0033e8                  __dreturnNaN
                   0x0033ee                  __dunpack2exit
                   0x0033f8                  __dPropagateNaN
-                  0x00396e                  _init_FAT32
-                  0x003b32                  _show_content_of_FAT
-                  0x003b86                  _read_FAT_sector_with_cluster
-                  0x003bb2                  _get_next_cluster_FAT
-                  0x003c1e                  _set_next_cluster_FAT_cache
-                  0x003cb2                  _set_next_cluster_FAT
-                  0x003d00                  _find_next_free_cluster
-                  0x003da0                  _get_first_sector_of_cluster
-                  0x003e8e                  _create_new_file
-                  0x003f40                  _write_data_buffer
-                  0x004044                  _save_current_file
-                  0x0040be                  _displayMemory
-                  0x004152                  _get_file_list_root
-                  0x0042ae                  _ic_find_control
-                  0x0042ea                  __T3Interrupt
-                  0x00430c                  _init_input_control
-                  0x004372                  _ic_make_calibration
-                  0x004522                  _send_UART_calibration_data
-                  0x0045dc                  __T1Interrupt
-                  0x004600                  _get_direction_values
-                  0x0047d6                  _send_UART_control_values
-                  0x004802                  _send_UART_control_raw_data
-                  0x004884                  __IC1Interrupt
-                  0x004940                  __IC2Interrupt
-                  0x0049fc                  __IC3Interrupt
-                  0x004ab8                  __IC4Interrupt
-                  0x004b66                  __IC5Interrupt
-                  0x004c82                  _bmp180_init
-                  0x004cb2                  _bmp180_get_id
-                  0x004df6                  _bmp180_send_temperature_signal
-                  0x004e00                  _bmp180_send_pressure_signal
-                  0x004e18                  _bmp180_data_ready
-                  0x004e38                  _bmp180_read_temperature_C
-                  0x004e72                  _bmp180_read_pressure
-                  0x00511e                  _bmp180_get_raw_temperature
-                  0x005130                  _bmp180_get_temperature_C
-                  0x00516a                  _bmp180_get_temperature_F
-                  0x005194                  _bmp180_get_raw_pressure
-                  0x0051c8                  _bmp180_get_pressure
-                  0x005460                  _bmp180_get_altitude
-                  0x00549c                  _mpu6050_init
-                  0x0054da                  _mpu6050_receive_gyro_accel_raw_data
-                  0x00559e                  _send_UART_mpu6050_data
-                  0x0055ca                  _mpu6050_get_gyro_accel_raw_data
-                  0x0055da                  _mpu6050_set_sleep_bit
-                  0x0055ee                  _mpu6050_set_clock_source
-                  0x005602                  _mpu6050_set_DLPF
-                  0x005616                  _mpu6050_set_gyro_fullscale
-                  0x00562a                  _mpu6050_set_accel_fullscale
-                  0x00563e                  _mpu6050_set_interrupt_data_rdy_bit
-                  0x005652                  _mpu6050_set_sample_rate_divider
-                  0x005662                  _MPU6050_getXAccelOffset
-                  0x005684                  _mpu6050_setXAccelOffset
-                  0x005696                  _MPU6050_getYAccelOffset
-                  0x0056b8                  _mpu6050_setYAccelOffset
-                  0x0056ca                  _MPU6050_getZAccelOffset
-                  0x0056ec                  _mpu6050_setZAccelOffset
-                  0x0056fe                  _MPU6050_getXGyroOffset
-                  0x005720                  _mpu6050_setXGyroOffset
-                  0x005732                  _MPU6050_getYGyroOffset
-                  0x005754                  _mpu6050_setYGyroOffset
-                  0x005766                  _MPU6050_getZGyroOffset
-                  0x005788                  _mpu6050_setZGyroOffset
-                  0x00579a                  _mean_sensors
-                  0x0059cc                  _mpu6050_calibration
-                  0x005c22                  _get_clock_freq
-                  0x005c32                  _sensors_timer_init
-                  0x005c5a                  _main
-                  0x00608c                  _process_control_system
-                  0x0060c6                  _write_data_to_SD
-                  0x006140                  __T5Interrupt
-                  0x0061b2                  _SD_send_cmd
-                  0x0062de                  _init_SDcard
-                  0x006402                  _SD_read_sector
-                  0x0064aa                  _SD_write_sector
-                  0x0065da                  _add_task
-                  0x006646                  _file_process_tasks
-                  0x0066ba                  _file_open
-                  0x006728                  _set_next_buffer
-                  0x0067a6                  _file_close
-                  0x0067be                  _file_write
-                  0x006802                  _convert_filename
-                  0x006918                  _i2c_idle
-                  0x006954                  _i2c_init
-                  0x0069bc                  _i2c_start
-                  0x0069d0                  _i2c_stop
-                  0x0069e4                  _i2c_restart
-                  0x0069f8                  _i2c_ack
-                  0x006a0e                  _i2c_nack
-                  0x006a24                  _i2c_send_byte
-                  0x006a50                  _i2c_receive_byte
-                  0x006a74                  _i2c_send_bytes
-                  0x006ab0                  _i2c_receive_bytes
-                  0x006af8                  _i2c_write_byte_eeprom
-                  0x006b3a                  _i2c_write_word_eeprom
-                  0x006b94                  _i2c_read_bytes_eeprom
-                  0x006bf4                  _i2c_read_byte_eeprom
-                  0x006c0c                  _i2c_write_bits_eeprom
-                  0x006c7c                  _set_motors_started
-                  0x006ce6                  _set_motors_stopped
-                  0x006d5e                  _set_motor1_power
-                  0x006d9a                  _set_motor2_power
-                  0x006dd6                  _set_motor3_power
-                  0x006e12                  _set_motor4_power
-                  0x006e4e                  _motors_init
-                  0x0071bc                  _setup_PLL_oscillator
-                  0x007216                  _delay_ms
-                  0x0072dc                  _delay_us
-                  0x0073a2                  _timer_start
-                  0x0073be                  _timer_restart
-                  0x0073da                  _timer_stop
-                  0x0073f6                  _init_UART1
-                  0x00743a                  __U1RXInterrupt
-                  0x00745c                  _UART_get_last_received_command
-                  0x007480                  _UART_write_byte
-                  0x00749c                  _UART_write_words
-                  0x0074e0                  _UART_write_string
-                  0x007508                  _UART_writeln_string
-                  0x007518                  _UART_write_int32
-                  0x007532                  _UART_write_int16
-                  0x00754a                  _UART_write_int
-                  0x007556                  _UART_write_float
-                  0x007570                  _UART_write_hint
-                  0x007588                  _UART_write_hint32
-                  0x0075a2                  _hmc5883l_init
-                  0x0075c6                  _hmc5883l_set_continious_operating_mode
-                  0x0075d4                  _hmc5883l_set_magnetic_gain
-                  0x00763c                  _hmc5883l_set_output_rate
-                  0x007652                  _hmc5883l_set_averaged_samples
-                  0x007668                  _send_UART_magnetic_raw_data
-                  0x007688                  _hmc5883l_receive_mag_raw_data
-                  0x0076f4                  _hmc5883l_get_scaled_mag_data
-                  0x007746                  _lcd_init
-                  0x0077cc                  _lcd_init_4d
-                  0x007822                  _lcd_write_string_4d
-                  0x007852                  _lcd_write_character_4d
-                  0x00786c                  _lcd_write_instruction_4d
-                  0x007886                  _lcd_write_4
-                  0x0078d2                  _spi_init
-                  0x007904                  _spi_set_speed
-                  0x007950                  _spi_cs_set
-                  0x00796a                  _spi_write
-                  0x007994                  _spi_read
+                  0x003b84                  _init_FAT32
+                  0x003ec8                  _show_content_of_FAT
+                  0x003f1c                  _read_FAT_sector_with_cluster
+                  0x003f48                  _get_next_cluster_FAT
+                  0x003fb4                  _set_next_cluster_FAT_cache
+                  0x004048                  _set_next_cluster_FAT
+                  0x004096                  _find_next_free_cluster
+                  0x004136                  _get_first_sector_of_cluster
+                  0x00422c                  _create_new_file
+                  0x0042de                  _write_data_buffer
+                  0x0043e2                  _save_current_file
+                  0x00445c                  _displayMemory
+                  0x0044f0                  _get_file_list_root
+                  0x00468a                  _ic_find_control
+                  0x0046c6                  __T3Interrupt
+                  0x0046e8                  _init_input_control
+                  0x00474e                  _ic_make_calibration
+                  0x0048fe                  _send_UART_calibration_data
+                  0x0049b8                  __T1Interrupt
+                  0x0049dc                  _get_direction_values
+                  0x004bb2                  _send_UART_control_values
+                  0x004bde                  _send_UART_control_raw_data
+                  0x004c60                  __IC1Interrupt
+                  0x004d1c                  __IC2Interrupt
+                  0x004dd8                  __IC3Interrupt
+                  0x004e94                  __IC4Interrupt
+                  0x004f42                  __IC5Interrupt
+                  0x00505e                  _bmp180_init
+                  0x00508e                  _bmp180_get_id
+                  0x0051d2                  _bmp180_send_temperature_signal
+                  0x0051dc                  _bmp180_send_pressure_signal
+                  0x0051f4                  _bmp180_data_ready
+                  0x005214                  _bmp180_read_temperature_C
+                  0x00524e                  _bmp180_read_pressure
+                  0x0054fa                  _bmp180_get_raw_temperature
+                  0x00550c                  _bmp180_get_temperature_C
+                  0x005546                  _bmp180_get_temperature_F
+                  0x005570                  _bmp180_get_raw_pressure
+                  0x0055a4                  _bmp180_get_pressure
+                  0x00583c                  _bmp180_get_altitude
+                  0x005878                  _mpu6050_init
+                  0x0058b6                  _mpu6050_receive_gyro_accel_raw_data
+                  0x00597a                  _send_UART_mpu6050_data
+                  0x0059a6                  _mpu6050_get_gyro_accel_raw_data
+                  0x0059b6                  _mpu6050_set_sleep_bit
+                  0x0059ca                  _mpu6050_set_clock_source
+                  0x0059de                  _mpu6050_set_DLPF
+                  0x0059f2                  _mpu6050_set_gyro_fullscale
+                  0x005a06                  _mpu6050_set_accel_fullscale
+                  0x005a1a                  _mpu6050_set_interrupt_data_rdy_bit
+                  0x005a2e                  _mpu6050_set_sample_rate_divider
+                  0x005a3e                  _MPU6050_getXAccelOffset
+                  0x005a60                  _mpu6050_setXAccelOffset
+                  0x005a72                  _MPU6050_getYAccelOffset
+                  0x005a94                  _mpu6050_setYAccelOffset
+                  0x005aa6                  _MPU6050_getZAccelOffset
+                  0x005ac8                  _mpu6050_setZAccelOffset
+                  0x005ada                  _MPU6050_getXGyroOffset
+                  0x005afc                  _mpu6050_setXGyroOffset
+                  0x005b0e                  _MPU6050_getYGyroOffset
+                  0x005b30                  _mpu6050_setYGyroOffset
+                  0x005b42                  _MPU6050_getZGyroOffset
+                  0x005b64                  _mpu6050_setZGyroOffset
+                  0x005b76                  _mean_sensors
+                  0x005da8                  _mpu6050_calibration
+                  0x005ffe                  _get_clock_freq
+                  0x00600e                  _sensors_timer_init
+                  0x006036                  _main
+                  0x006418                  _process_control_system
+                  0x006452                  _write_data_to_SD
+                  0x00653e                  __T5Interrupt
+                  0x0065b6                  _init_sd_file_io
+                  0x006644                  _add_task
+                  0x0066b0                  _file_process_tasks
+                  0x006728                  _file_open
+                  0x006796                  _set_next_buffer
+                  0x006814                  _file_close
+                  0x00682c                  _file_write
+                  0x006870                  _convert_filename
+                  0x006986                  _SD_send_cmd
+                  0x006ab2                  _init_SDcard
+                  0x006bd6                  _SD_read_sector
+                  0x006c7e                  _SD_write_sector
+                  0x006d44                  _i2c_idle
+                  0x006d80                  _i2c_init
+                  0x006de8                  _i2c_start
+                  0x006dfc                  _i2c_stop
+                  0x006e10                  _i2c_restart
+                  0x006e24                  _i2c_ack
+                  0x006e3a                  _i2c_nack
+                  0x006e50                  _i2c_send_byte
+                  0x006e7c                  _i2c_receive_byte
+                  0x006ea0                  _i2c_send_bytes
+                  0x006edc                  _i2c_receive_bytes
+                  0x006f24                  _i2c_write_byte_eeprom
+                  0x006f66                  _i2c_write_word_eeprom
+                  0x006fc0                  _i2c_read_bytes_eeprom
+                  0x007020                  _i2c_read_byte_eeprom
+                  0x007038                  _i2c_write_bits_eeprom
+                  0x0070a8                  _set_motors_started
+                  0x007112                  _set_motors_stopped
+                  0x00718a                  _set_motor1_power
+                  0x0071c6                  _set_motor2_power
+                  0x007202                  _set_motor3_power
+                  0x00723e                  _set_motor4_power
+                  0x00727a                  _motors_init
+                  0x0075ea                  _setup_PLL_oscillator
+                  0x007644                  _delay_ms
+                  0x00770a                  _delay_us
+                  0x0077d0                  _timer_start
+                  0x0077ec                  _timer_restart
+                  0x007808                  _timer_stop
+                  0x007824                  _init_UART1
+                  0x007868                  __U1RXInterrupt
+                  0x00788a                  _UART_get_last_received_command
+                  0x0078ae                  _UART_write_byte
+                  0x0078ca                  _UART_write_words
+                  0x00790e                  _UART_write_string
+                  0x007936                  _UART_writeln_string
+                  0x007946                  _UART_write_int32
+                  0x007960                  _UART_write_int16
+                  0x007978                  _UART_write_int
+                  0x007984                  _UART_write_float
+                  0x00799e                  _UART_write_hint
+                  0x0079b6                  _UART_write_hint32
+                  0x0079d0                  _hmc5883l_init
+                  0x0079f4                  _hmc5883l_set_continious_operating_mode
+                  0x007a02                  _hmc5883l_set_magnetic_gain
+                  0x007a6a                  _hmc5883l_set_output_rate
+                  0x007a80                  _hmc5883l_set_averaged_samples
+                  0x007a96                  _send_UART_magnetic_raw_data
+                  0x007ab6                  _hmc5883l_receive_mag_raw_data
+                  0x007b22                  _hmc5883l_get_scaled_mag_data
+                  0x007b74                  _lcd_init
+                  0x007bfa                  _lcd_init_4d
+                  0x007c50                  _lcd_write_string_4d
+                  0x007c80                  _lcd_write_character_4d
+                  0x007c9a                  _lcd_write_instruction_4d
+                  0x007cb4                  _lcd_write_4
+                  0x007d00                  _spi_init
+                  0x007d32                  _spi_set_speed
+                  0x007d7e                  _spi_cs_set
+                  0x007d98                  _spi_write
+                  0x007dc2                  _spi_read
 
 External Symbols in Program Memory (by name):
 
-                  0x005662                  _MPU6050_getXAccelOffset
-                  0x0056fe                  _MPU6050_getXGyroOffset
-                  0x005696                  _MPU6050_getYAccelOffset
-                  0x005732                  _MPU6050_getYGyroOffset
-                  0x0056ca                  _MPU6050_getZAccelOffset
-                  0x005766                  _MPU6050_getZGyroOffset
-                  0x006402                  _SD_read_sector
-                  0x0061b2                  _SD_send_cmd
-                  0x0064aa                  _SD_write_sector
-                  0x00745c                  _UART_get_last_received_command
-                  0x007480                  _UART_write_byte
-                  0x007556                  _UART_write_float
-                  0x007570                  _UART_write_hint
-                  0x007588                  _UART_write_hint32
-                  0x00754a                  _UART_write_int
-                  0x007532                  _UART_write_int16
-                  0x007518                  _UART_write_int32
-                  0x0074e0                  _UART_write_string
-                  0x00749c                  _UART_write_words
-                  0x007508                  _UART_writeln_string
+                  0x005a3e                  _MPU6050_getXAccelOffset
+                  0x005ada                  _MPU6050_getXGyroOffset
+                  0x005a72                  _MPU6050_getYAccelOffset
+                  0x005b0e                  _MPU6050_getYGyroOffset
+                  0x005aa6                  _MPU6050_getZAccelOffset
+                  0x005b42                  _MPU6050_getZGyroOffset
+                  0x006bd6                  _SD_read_sector
+                  0x006986                  _SD_send_cmd
+                  0x006c7e                  _SD_write_sector
+                  0x00788a                  _UART_get_last_received_command
+                  0x0078ae                  _UART_write_byte
+                  0x007984                  _UART_write_float
+                  0x00799e                  _UART_write_hint
+                  0x0079b6                  _UART_write_hint32
+                  0x007978                  _UART_write_int
+                  0x007960                  _UART_write_int16
+                  0x007946                  _UART_write_int32
+                  0x00790e                  _UART_write_string
+                  0x0078ca                  _UART_write_words
+                  0x007936                  _UART_writeln_string
                   0x00029a                  __DefaultInterrupt
-                  0x004884                  __IC1Interrupt
-                  0x004940                  __IC2Interrupt
-                  0x0049fc                  __IC3Interrupt
-                  0x004ab8                  __IC4Interrupt
-                  0x004b66                  __IC5Interrupt
-                  0x0045dc                  __T1Interrupt
-                  0x0042ea                  __T3Interrupt
-                  0x006140                  __T5Interrupt
-                  0x00743a                  __U1RXInterrupt
+                  0x004c60                  __IC1Interrupt
+                  0x004d1c                  __IC2Interrupt
+                  0x004dd8                  __IC3Interrupt
+                  0x004e94                  __IC4Interrupt
+                  0x004f42                  __IC5Interrupt
+                  0x0049b8                  __T1Interrupt
+                  0x0046c6                  __T3Interrupt
+                  0x00653e                  __T5Interrupt
+                  0x007868                  __U1RXInterrupt
                   0x002dc0                  ___adddf3
                   0x000ad8                  ___addsf3
                   0x000ad8                  ___addsf3x
@@ -852,140 +853,141 @@ External Symbols in Program Memory (by name):
                   0x0014e4                  __unpackf
                   0x001fa4                  __vfprintf_cdfFnopuxX
                   0x001fa4                  __vfprintf_cdnopuxX
-                  0x0065da                  _add_task
+                  0x006644                  _add_task
                   0x000342                  _atan2f
                   0x000f96                  _atanf
                   0x000f96                  _atanfx
-                  0x004e18                  _bmp180_data_ready
-                  0x005460                  _bmp180_get_altitude
-                  0x004cb2                  _bmp180_get_id
-                  0x0051c8                  _bmp180_get_pressure
-                  0x005194                  _bmp180_get_raw_pressure
-                  0x00511e                  _bmp180_get_raw_temperature
-                  0x005130                  _bmp180_get_temperature_C
-                  0x00516a                  _bmp180_get_temperature_F
-                  0x004c82                  _bmp180_init
-                  0x004e72                  _bmp180_read_pressure
-                  0x004e38                  _bmp180_read_temperature_C
-                  0x004e00                  _bmp180_send_pressure_signal
-                  0x004df6                  _bmp180_send_temperature_signal
-                  0x006802                  _convert_filename
-                  0x003e8e                  _create_new_file
-                  0x007216                  _delay_ms
-                  0x0072dc                  _delay_us
-                  0x0040be                  _displayMemory
+                  0x0051f4                  _bmp180_data_ready
+                  0x00583c                  _bmp180_get_altitude
+                  0x00508e                  _bmp180_get_id
+                  0x0055a4                  _bmp180_get_pressure
+                  0x005570                  _bmp180_get_raw_pressure
+                  0x0054fa                  _bmp180_get_raw_temperature
+                  0x00550c                  _bmp180_get_temperature_C
+                  0x005546                  _bmp180_get_temperature_F
+                  0x00505e                  _bmp180_init
+                  0x00524e                  _bmp180_read_pressure
+                  0x005214                  _bmp180_read_temperature_C
+                  0x0051dc                  _bmp180_send_pressure_signal
+                  0x0051d2                  _bmp180_send_temperature_signal
+                  0x006870                  _convert_filename
+                  0x00422c                  _create_new_file
+                  0x007644                  _delay_ms
+                  0x00770a                  _delay_us
+                  0x00445c                  _displayMemory
                   0x0017ba                  _expf
                   0x0017ba                  _expfx
-                  0x0067a6                  _file_close
-                  0x0066ba                  _file_open
-                  0x006646                  _file_process_tasks
-                  0x0067be                  _file_write
-                  0x003d00                  _find_next_free_cluster
+                  0x006814                  _file_close
+                  0x006728                  _file_open
+                  0x0066b0                  _file_process_tasks
+                  0x00682c                  _file_write
+                  0x004096                  _find_next_free_cluster
                   0x001d4e                  _free
                   0x0031f8                  _frexp
                   0x0031f6                  _frexpl
-                  0x005c22                  _get_clock_freq
-                  0x004600                  _get_direction_values
-                  0x004152                  _get_file_list_root
-                  0x003da0                  _get_first_sector_of_cluster
-                  0x003bb2                  _get_next_cluster_FAT
-                  0x0076f4                  _hmc5883l_get_scaled_mag_data
-                  0x0075a2                  _hmc5883l_init
-                  0x007688                  _hmc5883l_receive_mag_raw_data
-                  0x007652                  _hmc5883l_set_averaged_samples
-                  0x0075c6                  _hmc5883l_set_continious_operating_mode
-                  0x0075d4                  _hmc5883l_set_magnetic_gain
-                  0x00763c                  _hmc5883l_set_output_rate
-                  0x0069f8                  _i2c_ack
-                  0x006918                  _i2c_idle
-                  0x006954                  _i2c_init
-                  0x006a0e                  _i2c_nack
-                  0x006bf4                  _i2c_read_byte_eeprom
-                  0x006b94                  _i2c_read_bytes_eeprom
-                  0x006a50                  _i2c_receive_byte
-                  0x006ab0                  _i2c_receive_bytes
-                  0x0069e4                  _i2c_restart
-                  0x006a24                  _i2c_send_byte
-                  0x006a74                  _i2c_send_bytes
-                  0x0069bc                  _i2c_start
-                  0x0069d0                  _i2c_stop
-                  0x006c0c                  _i2c_write_bits_eeprom
-                  0x006af8                  _i2c_write_byte_eeprom
-                  0x006b3a                  _i2c_write_word_eeprom
-                  0x0042ae                  _ic_find_control
-                  0x004372                  _ic_make_calibration
-                  0x00396e                  _init_FAT32
-                  0x0062de                  _init_SDcard
-                  0x0073f6                  _init_UART1
-                  0x00430c                  _init_input_control
-                  0x007746                  _lcd_init
-                  0x0077cc                  _lcd_init_4d
-                  0x007886                  _lcd_write_4
-                  0x007852                  _lcd_write_character_4d
-                  0x00786c                  _lcd_write_instruction_4d
-                  0x007822                  _lcd_write_string_4d
+                  0x005ffe                  _get_clock_freq
+                  0x0049dc                  _get_direction_values
+                  0x0044f0                  _get_file_list_root
+                  0x004136                  _get_first_sector_of_cluster
+                  0x003f48                  _get_next_cluster_FAT
+                  0x007b22                  _hmc5883l_get_scaled_mag_data
+                  0x0079d0                  _hmc5883l_init
+                  0x007ab6                  _hmc5883l_receive_mag_raw_data
+                  0x007a80                  _hmc5883l_set_averaged_samples
+                  0x0079f4                  _hmc5883l_set_continious_operating_mode
+                  0x007a02                  _hmc5883l_set_magnetic_gain
+                  0x007a6a                  _hmc5883l_set_output_rate
+                  0x006e24                  _i2c_ack
+                  0x006d44                  _i2c_idle
+                  0x006d80                  _i2c_init
+                  0x006e3a                  _i2c_nack
+                  0x007020                  _i2c_read_byte_eeprom
+                  0x006fc0                  _i2c_read_bytes_eeprom
+                  0x006e7c                  _i2c_receive_byte
+                  0x006edc                  _i2c_receive_bytes
+                  0x006e10                  _i2c_restart
+                  0x006e50                  _i2c_send_byte
+                  0x006ea0                  _i2c_send_bytes
+                  0x006de8                  _i2c_start
+                  0x006dfc                  _i2c_stop
+                  0x007038                  _i2c_write_bits_eeprom
+                  0x006f24                  _i2c_write_byte_eeprom
+                  0x006f66                  _i2c_write_word_eeprom
+                  0x00468a                  _ic_find_control
+                  0x00474e                  _ic_make_calibration
+                  0x003b84                  _init_FAT32
+                  0x006ab2                  _init_SDcard
+                  0x007824                  _init_UART1
+                  0x0046e8                  _init_input_control
+                  0x0065b6                  _init_sd_file_io
+                  0x007b74                  _lcd_init
+                  0x007bfa                  _lcd_init_4d
+                  0x007cb4                  _lcd_write_4
+                  0x007c80                  _lcd_write_character_4d
+                  0x007c9a                  _lcd_write_instruction_4d
+                  0x007c50                  _lcd_write_string_4d
                   0x0019a6                  _ldexpf
                   0x000980                  _log10f
                   0x000980                  _log10fx
                   0x000984                  _logf
                   0x000984                  _logfx
-                  0x005c5a                  _main
+                  0x006036                  _main
                   0x001c32                  _malloc
-                  0x00579a                  _mean_sensors
+                  0x005b76                  _mean_sensors
                   0x001de2                  _memcpy
                   0x001df0                  _memset
-                  0x006e4e                  _motors_init
-                  0x0059cc                  _mpu6050_calibration
-                  0x0055ca                  _mpu6050_get_gyro_accel_raw_data
-                  0x00549c                  _mpu6050_init
-                  0x0054da                  _mpu6050_receive_gyro_accel_raw_data
-                  0x005684                  _mpu6050_setXAccelOffset
-                  0x005720                  _mpu6050_setXGyroOffset
-                  0x0056b8                  _mpu6050_setYAccelOffset
-                  0x005754                  _mpu6050_setYGyroOffset
-                  0x0056ec                  _mpu6050_setZAccelOffset
-                  0x005788                  _mpu6050_setZGyroOffset
-                  0x005602                  _mpu6050_set_DLPF
-                  0x00562a                  _mpu6050_set_accel_fullscale
-                  0x0055ee                  _mpu6050_set_clock_source
-                  0x005616                  _mpu6050_set_gyro_fullscale
-                  0x00563e                  _mpu6050_set_interrupt_data_rdy_bit
-                  0x005652                  _mpu6050_set_sample_rate_divider
-                  0x0055da                  _mpu6050_set_sleep_bit
+                  0x00727a                  _motors_init
+                  0x005da8                  _mpu6050_calibration
+                  0x0059a6                  _mpu6050_get_gyro_accel_raw_data
+                  0x005878                  _mpu6050_init
+                  0x0058b6                  _mpu6050_receive_gyro_accel_raw_data
+                  0x005a60                  _mpu6050_setXAccelOffset
+                  0x005afc                  _mpu6050_setXGyroOffset
+                  0x005a94                  _mpu6050_setYAccelOffset
+                  0x005b30                  _mpu6050_setYGyroOffset
+                  0x005ac8                  _mpu6050_setZAccelOffset
+                  0x005b64                  _mpu6050_setZGyroOffset
+                  0x0059de                  _mpu6050_set_DLPF
+                  0x005a06                  _mpu6050_set_accel_fullscale
+                  0x0059ca                  _mpu6050_set_clock_source
+                  0x0059f2                  _mpu6050_set_gyro_fullscale
+                  0x005a1a                  _mpu6050_set_interrupt_data_rdy_bit
+                  0x005a2e                  _mpu6050_set_sample_rate_divider
+                  0x0059b6                  _mpu6050_set_sleep_bit
                   0x000540                  _powf
-                  0x00608c                  _process_control_system
-                  0x003b86                  _read_FAT_sector_with_cluster
+                  0x006418                  _process_control_system
+                  0x003f1c                  _read_FAT_sector_with_cluster
                   0x001d64                  _realloc
-                  0x004044                  _save_current_file
-                  0x004522                  _send_UART_calibration_data
-                  0x004802                  _send_UART_control_raw_data
-                  0x0047d6                  _send_UART_control_values
-                  0x007668                  _send_UART_magnetic_raw_data
-                  0x00559e                  _send_UART_mpu6050_data
-                  0x005c32                  _sensors_timer_init
-                  0x006d5e                  _set_motor1_power
-                  0x006d9a                  _set_motor2_power
-                  0x006dd6                  _set_motor3_power
-                  0x006e12                  _set_motor4_power
-                  0x006c7c                  _set_motors_started
-                  0x006ce6                  _set_motors_stopped
-                  0x006728                  _set_next_buffer
-                  0x003cb2                  _set_next_cluster_FAT
-                  0x003c1e                  _set_next_cluster_FAT_cache
-                  0x0071bc                  _setup_PLL_oscillator
-                  0x003b32                  _show_content_of_FAT
-                  0x007950                  _spi_cs_set
-                  0x0078d2                  _spi_init
-                  0x007994                  _spi_read
-                  0x007904                  _spi_set_speed
-                  0x00796a                  _spi_write
+                  0x0043e2                  _save_current_file
+                  0x0048fe                  _send_UART_calibration_data
+                  0x004bde                  _send_UART_control_raw_data
+                  0x004bb2                  _send_UART_control_values
+                  0x007a96                  _send_UART_magnetic_raw_data
+                  0x00597a                  _send_UART_mpu6050_data
+                  0x00600e                  _sensors_timer_init
+                  0x00718a                  _set_motor1_power
+                  0x0071c6                  _set_motor2_power
+                  0x007202                  _set_motor3_power
+                  0x00723e                  _set_motor4_power
+                  0x0070a8                  _set_motors_started
+                  0x007112                  _set_motors_stopped
+                  0x006796                  _set_next_buffer
+                  0x004048                  _set_next_cluster_FAT
+                  0x003fb4                  _set_next_cluster_FAT_cache
+                  0x0075ea                  _setup_PLL_oscillator
+                  0x003ec8                  _show_content_of_FAT
+                  0x007d7e                  _spi_cs_set
+                  0x007d00                  _spi_init
+                  0x007dc2                  _spi_read
+                  0x007d32                  _spi_set_speed
+                  0x007d98                  _spi_write
                   0x001468                  _sqrtf
                   0x001468                  _sqrtfx
-                  0x0073be                  _timer_restart
-                  0x0073a2                  _timer_start
-                  0x0073da                  _timer_stop
-                  0x003f40                  _write_data_buffer
-                  0x0060c6                  _write_data_to_SD
+                  0x0077ec                  _timer_restart
+                  0x0077d0                  _timer_start
+                  0x007808                  _timer_stop
+                  0x0042de                  _write_data_buffer
+                  0x006452                  _write_data_to_SD
 
 Memory Configuration
 
@@ -1359,90 +1361,90 @@ __FUID3
 .comment
  *(.comment)
 
-.debug_info       0x000000       0xaa89
+.debug_info       0x000000       0xad27
  *(.debug_info)
- .debug_info      0x000000       0x124c build/default/production/qmain.o
- .debug_info      0x00124c        0xae1 build/default/production/motor_control.o
- .debug_info      0x001d2d       0x25f1 build/default/production/input_control.o
- .debug_info      0x00431e        0x7ea build/default/production/LCD.o
- .debug_info      0x004b08        0x866 build/default/production/bmp180.o
- .debug_info      0x00536e        0x78d build/default/production/hmc5883l.o
- .debug_info      0x005afb        0xc56 build/default/production/mpu6050.o
- .debug_info      0x006751        0xeb6 build/default/production/FAT32.o
- .debug_info      0x007607        0x4f3 build/default/production/SDcard.o
- .debug_info      0x007afa        0x534 build/default/production/file_io.o
- .debug_info      0x00802e        0xa46 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
- .debug_info      0x008a74        0xa07 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
- .debug_info      0x00947b        0xba7 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .debug_info      0x00a022        0xa67 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+ .debug_info      0x000000       0x11e2 build/default/production/qmain.o
+ .debug_info      0x0011e2        0xae1 build/default/production/motor_control.o
+ .debug_info      0x001cc3       0x25f1 build/default/production/input_control.o
+ .debug_info      0x0042b4        0x7ea build/default/production/LCD.o
+ .debug_info      0x004a9e        0x866 build/default/production/bmp180.o
+ .debug_info      0x005304        0x78d build/default/production/hmc5883l.o
+ .debug_info      0x005a91        0xc56 build/default/production/mpu6050.o
+ .debug_info      0x0066e7        0xed4 build/default/production/FAT32.o
+ .debug_info      0x0075bb        0x4f3 build/default/production/SDcard.o
+ .debug_info      0x007aae        0x81e build/default/production/file_io.o
+ .debug_info      0x0082cc        0xa46 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+ .debug_info      0x008d12        0xa07 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+ .debug_info      0x009719        0xba7 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .debug_info      0x00a2c0        0xa67 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev     0x000000       0x1366
+.debug_abbrev     0x000000       0x1398
  *(.debug_abbrev)
- .debug_abbrev    0x000000        0x21f build/default/production/qmain.o
- .debug_abbrev    0x00021f        0x134 build/default/production/motor_control.o
- .debug_abbrev    0x000353        0x1fc build/default/production/input_control.o
- .debug_abbrev    0x00054f        0x10d build/default/production/LCD.o
- .debug_abbrev    0x00065c        0x170 build/default/production/bmp180.o
- .debug_abbrev    0x0007cc        0x12a build/default/production/hmc5883l.o
- .debug_abbrev    0x0008f6        0x18b build/default/production/mpu6050.o
- .debug_abbrev    0x000a81        0x1e5 build/default/production/FAT32.o
- .debug_abbrev    0x000c66         0xcb build/default/production/SDcard.o
- .debug_abbrev    0x000d31        0x14b build/default/production/file_io.o
- .debug_abbrev    0x000e7c        0x13a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
- .debug_abbrev    0x000fb6        0x124 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
- .debug_abbrev    0x0010da        0x14c ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .debug_abbrev    0x001226        0x140 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+ .debug_abbrev    0x000000        0x208 build/default/production/qmain.o
+ .debug_abbrev    0x000208        0x134 build/default/production/motor_control.o
+ .debug_abbrev    0x00033c        0x1fc build/default/production/input_control.o
+ .debug_abbrev    0x000538        0x10d build/default/production/LCD.o
+ .debug_abbrev    0x000645        0x170 build/default/production/bmp180.o
+ .debug_abbrev    0x0007b5        0x12a build/default/production/hmc5883l.o
+ .debug_abbrev    0x0008df        0x18b build/default/production/mpu6050.o
+ .debug_abbrev    0x000a6a        0x1e5 build/default/production/FAT32.o
+ .debug_abbrev    0x000c4f         0xcb build/default/production/SDcard.o
+ .debug_abbrev    0x000d1a        0x194 build/default/production/file_io.o
+ .debug_abbrev    0x000eae        0x13a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+ .debug_abbrev    0x000fe8        0x124 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+ .debug_abbrev    0x00110c        0x14c ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .debug_abbrev    0x001258        0x140 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
-.debug_line       0x000000       0x43dc
+.debug_line       0x000000       0x45ae
  *(.debug_line)
- .debug_line      0x000000        0x5a1 build/default/production/qmain.o
- .debug_line      0x0005a1        0x329 build/default/production/motor_control.o
- .debug_line      0x0008ca        0xa8e build/default/production/input_control.o
- .debug_line      0x001358        0x31b build/default/production/LCD.o
- .debug_line      0x001673        0x5b1 build/default/production/bmp180.o
- .debug_line      0x001c24        0x294 build/default/production/hmc5883l.o
- .debug_line      0x001eb8        0x768 build/default/production/mpu6050.o
- .debug_line      0x002620        0x731 build/default/production/FAT32.o
- .debug_line      0x002d51        0x467 build/default/production/SDcard.o
- .debug_line      0x0031b8        0x45f build/default/production/file_io.o
- .debug_line      0x003617        0x589 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
- .debug_line      0x003ba0        0x2b2 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
- .debug_line      0x003e52        0x33a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .debug_line      0x00418c        0x250 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+ .debug_line      0x000000        0x572 build/default/production/qmain.o
+ .debug_line      0x000572        0x329 build/default/production/motor_control.o
+ .debug_line      0x00089b        0xa8e build/default/production/input_control.o
+ .debug_line      0x001329        0x31b build/default/production/LCD.o
+ .debug_line      0x001644        0x5b1 build/default/production/bmp180.o
+ .debug_line      0x001bf5        0x294 build/default/production/hmc5883l.o
+ .debug_line      0x001e89        0x768 build/default/production/mpu6050.o
+ .debug_line      0x0025f1        0x86b build/default/production/FAT32.o
+ .debug_line      0x002e5c        0x467 build/default/production/SDcard.o
+ .debug_line      0x0032c3        0x526 build/default/production/file_io.o
+ .debug_line      0x0037e9        0x589 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+ .debug_line      0x003d72        0x2b2 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+ .debug_line      0x004024        0x33a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .debug_line      0x00435e        0x250 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
-.debug_frame      0x000000        0xedc
+.debug_frame      0x000000        0xecc
  *(.debug_frame)
- .debug_frame     0x000000        0x11c build/default/production/qmain.o
- .debug_frame     0x00011c         0x94 build/default/production/motor_control.o
- .debug_frame     0x0001b0        0x2cc build/default/production/input_control.o
- .debug_frame     0x00047c         0x74 build/default/production/LCD.o
- .debug_frame     0x0004f0        0x164 build/default/production/bmp180.o
- .debug_frame     0x000654         0xc8 build/default/production/hmc5883l.o
- .debug_frame     0x00071c        0x230 build/default/production/mpu6050.o
- .debug_frame     0x00094c        0x114 build/default/production/FAT32.o
- .debug_frame     0x000a60         0x54 build/default/production/SDcard.o
- .debug_frame     0x000ab4         0xa4 build/default/production/file_io.o
- .debug_frame     0x000b58        0x114 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
- .debug_frame     0x000c6c         0x74 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
- .debug_frame     0x000ce0        0x198 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .debug_frame     0x000e78         0x64 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+ .debug_frame     0x000000         0xfc build/default/production/qmain.o
+ .debug_frame     0x0000fc         0x94 build/default/production/motor_control.o
+ .debug_frame     0x000190        0x2cc build/default/production/input_control.o
+ .debug_frame     0x00045c         0x74 build/default/production/LCD.o
+ .debug_frame     0x0004d0        0x164 build/default/production/bmp180.o
+ .debug_frame     0x000634         0xc8 build/default/production/hmc5883l.o
+ .debug_frame     0x0006fc        0x230 build/default/production/mpu6050.o
+ .debug_frame     0x00092c        0x114 build/default/production/FAT32.o
+ .debug_frame     0x000a40         0x54 build/default/production/SDcard.o
+ .debug_frame     0x000a94         0xb4 build/default/production/file_io.o
+ .debug_frame     0x000b48        0x114 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+ .debug_frame     0x000c5c         0x74 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+ .debug_frame     0x000cd0        0x198 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .debug_frame     0x000e68         0x64 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
-.debug_str        0x000000        0x599
+.debug_str        0x000000        0x5a1
  *(.debug_str)
- .debug_str       0x000000         0x66 build/default/production/qmain.o
- .debug_str       0x000066         0x60 build/default/production/motor_control.o
- .debug_str       0x0000c6        0x13d build/default/production/input_control.o
- .debug_str       0x000203         0x47 build/default/production/LCD.o
- .debug_str       0x00024a         0x1b build/default/production/hmc5883l.o
- .debug_str       0x000265         0x79 build/default/production/mpu6050.o
- .debug_str       0x0002de        0x179 build/default/production/FAT32.o
- .debug_str       0x000457         0x2f build/default/production/SDcard.o
- .debug_str       0x000486         0x20 build/default/production/file_io.o
- .debug_str       0x0004a6         0x3e ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
- .debug_str       0x0004e4         0x35 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
- .debug_str       0x000519         0x41 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .debug_str       0x00055a         0x3f ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+ .debug_str       0x000000         0x5b build/default/production/qmain.o
+ .debug_str       0x00005b         0x60 build/default/production/motor_control.o
+ .debug_str       0x0000bb        0x13d build/default/production/input_control.o
+ .debug_str       0x0001f8         0x47 build/default/production/LCD.o
+ .debug_str       0x00023f         0x1b build/default/production/hmc5883l.o
+ .debug_str       0x00025a         0x79 build/default/production/mpu6050.o
+ .debug_str       0x0002d3        0x179 build/default/production/FAT32.o
+ .debug_str       0x00044c         0x2f build/default/production/SDcard.o
+ .debug_str       0x00047b         0x33 build/default/production/file_io.o
+ .debug_str       0x0004ae         0x3e ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+ .debug_str       0x0004ec         0x35 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+ .debug_str       0x000521         0x41 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .debug_str       0x000562         0x3f ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
 .debug_loc
  *(.debug_loc)
@@ -1451,36 +1453,36 @@ __FUID3
  *(.debug_macinfo)
 
 .debug_pubnames
-                  0x000000       0x1164
+                  0x000000       0x1169
  *(.debug_pubnames)
  .debug_pubnames
-                  0x000000         0xe6 build/default/production/qmain.o
+                  0x000000         0xd7 build/default/production/qmain.o
  .debug_pubnames
-                  0x0000e6         0xa4 build/default/production/motor_control.o
+                  0x0000d7         0xa4 build/default/production/motor_control.o
  .debug_pubnames
-                  0x00018a        0x145 build/default/production/input_control.o
+                  0x00017b        0x145 build/default/production/input_control.o
  .debug_pubnames
-                  0x0002cf         0xc7 build/default/production/LCD.o
+                  0x0002c0         0xc7 build/default/production/LCD.o
  .debug_pubnames
-                  0x000396        0x1c3 build/default/production/bmp180.o
+                  0x000387        0x1c3 build/default/production/bmp180.o
  .debug_pubnames
-                  0x000559        0x110 build/default/production/hmc5883l.o
+                  0x00054a        0x110 build/default/production/hmc5883l.o
  .debug_pubnames
-                  0x000669        0x3ac build/default/production/mpu6050.o
+                  0x00065a        0x3ac build/default/production/mpu6050.o
  .debug_pubnames
-                  0x000a15        0x2e1 build/default/production/FAT32.o
+                  0x000a06        0x2e1 build/default/production/FAT32.o
  .debug_pubnames
-                  0x000cf6         0x75 build/default/production/SDcard.o
+                  0x000ce7         0x75 build/default/production/SDcard.o
  .debug_pubnames
-                  0x000d6b         0x9b build/default/production/file_io.o
+                  0x000d5c         0xaf build/default/production/file_io.o
  .debug_pubnames
-                  0x000e06        0x141 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+                  0x000e0b        0x141 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
  .debug_pubnames
-                  0x000f47         0x76 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+                  0x000f4c         0x76 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
  .debug_pubnames
-                  0x000fbd        0x14c ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+                  0x000fc2        0x14c ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
  .debug_pubnames
-                  0x001109         0x5b ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+                  0x00110e         0x5b ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
 .debug_ranges
  *(.debug_ranges)
@@ -1526,17 +1528,17 @@ __FUID3
                   0x000010          0x4 LONG 0x29a DEFINED (__ReservedTrap6)?ABSOLUTE (__ReservedTrap6):ABSOLUTE (__DefaultInterrupt)
                   0x000012          0x4 LONG 0x29a DEFINED (__ReservedTrap7)?ABSOLUTE (__ReservedTrap7):ABSOLUTE (__DefaultInterrupt)
                   0x000014          0x4 LONG 0x29a DEFINED (__INT0Interrupt)?ABSOLUTE (__INT0Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000016          0x4 LONG 0x4884 DEFINED (__IC1Interrupt)?ABSOLUTE (__IC1Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000016          0x4 LONG 0x4c60 DEFINED (__IC1Interrupt)?ABSOLUTE (__IC1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000018          0x4 LONG 0x29a DEFINED (__OC1Interrupt)?ABSOLUTE (__OC1Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00001a          0x4 LONG 0x45dc DEFINED (__T1Interrupt)?ABSOLUTE (__T1Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00001a          0x4 LONG 0x49b8 DEFINED (__T1Interrupt)?ABSOLUTE (__T1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00001c          0x4 LONG 0x29a DEFINED (__DMA0Interrupt)?ABSOLUTE (__DMA0Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00001e          0x4 LONG 0x4940 DEFINED (__IC2Interrupt)?ABSOLUTE (__IC2Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00001e          0x4 LONG 0x4d1c DEFINED (__IC2Interrupt)?ABSOLUTE (__IC2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000020          0x4 LONG 0x29a DEFINED (__OC2Interrupt)?ABSOLUTE (__OC2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000022          0x4 LONG 0x29a DEFINED (__T2Interrupt)?ABSOLUTE (__T2Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000024          0x4 LONG 0x42ea DEFINED (__T3Interrupt)?ABSOLUTE (__T3Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000024          0x4 LONG 0x46c6 DEFINED (__T3Interrupt)?ABSOLUTE (__T3Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000026          0x4 LONG 0x29a DEFINED (__SPI1ErrInterrupt)?ABSOLUTE (__SPI1ErrInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000028          0x4 LONG 0x29a DEFINED (__SPI1Interrupt)?ABSOLUTE (__SPI1Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00002a          0x4 LONG 0x743a DEFINED (__U1RXInterrupt)?ABSOLUTE (__U1RXInterrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00002a          0x4 LONG 0x7868 DEFINED (__U1RXInterrupt)?ABSOLUTE (__U1RXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00002c          0x4 LONG 0x29a DEFINED (__U1TXInterrupt)?ABSOLUTE (__U1TXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00002e          0x4 LONG 0x29a DEFINED (__ADC1Interrupt)?ABSOLUTE (__ADC1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000030          0x4 LONG 0x29a DEFINED (__DMA1Interrupt)?ABSOLUTE (__DMA1Interrupt):ABSOLUTE (__DefaultInterrupt)
@@ -1553,7 +1555,7 @@ __FUID3
                   0x000046          0x4 LONG 0x29a DEFINED (__OC3Interrupt)?ABSOLUTE (__OC3Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000048          0x4 LONG 0x29a DEFINED (__OC4Interrupt)?ABSOLUTE (__OC4Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00004a          0x4 LONG 0x29a DEFINED (__T4Interrupt)?ABSOLUTE (__T4Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00004c          0x4 LONG 0x6140 DEFINED (__T5Interrupt)?ABSOLUTE (__T5Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00004c          0x4 LONG 0x653e DEFINED (__T5Interrupt)?ABSOLUTE (__T5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00004e          0x4 LONG 0x29a DEFINED (__INT2Interrupt)?ABSOLUTE (__INT2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000050          0x4 LONG 0x29a DEFINED (__U2RXInterrupt)?ABSOLUTE (__U2RXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000052          0x4 LONG 0x29a DEFINED (__U2TXInterrupt)?ABSOLUTE (__U2TXInterrupt):ABSOLUTE (__DefaultInterrupt)
@@ -1562,9 +1564,9 @@ __FUID3
                   0x000058          0x4 LONG 0x29a DEFINED (__C1RxRdyInterrupt)?ABSOLUTE (__C1RxRdyInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00005a          0x4 LONG 0x29a DEFINED (__C1Interrupt)?ABSOLUTE (__C1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00005c          0x4 LONG 0x29a DEFINED (__DMA3Interrupt)?ABSOLUTE (__DMA3Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00005e          0x4 LONG 0x49fc DEFINED (__IC3Interrupt)?ABSOLUTE (__IC3Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000060          0x4 LONG 0x4ab8 DEFINED (__IC4Interrupt)?ABSOLUTE (__IC4Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000062          0x4 LONG 0x4b66 DEFINED (__IC5Interrupt)?ABSOLUTE (__IC5Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00005e          0x4 LONG 0x4dd8 DEFINED (__IC3Interrupt)?ABSOLUTE (__IC3Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000060          0x4 LONG 0x4e94 DEFINED (__IC4Interrupt)?ABSOLUTE (__IC4Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000062          0x4 LONG 0x4f42 DEFINED (__IC5Interrupt)?ABSOLUTE (__IC5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000064          0x4 LONG 0x29a DEFINED (__IC6Interrupt)?ABSOLUTE (__IC6Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000066          0x4 LONG 0x29a DEFINED (__OC5Interrupt)?ABSOLUTE (__OC5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000068          0x4 LONG 0x29a DEFINED (__OC6Interrupt)?ABSOLUTE (__OC6Interrupt):ABSOLUTE (__DefaultInterrupt)
@@ -1654,17 +1656,17 @@ __FUID3
                   0x000110          0x4 LONG 0x29a DEFINED (__AltReservedTrap6)?ABSOLUTE (__AltReservedTrap6):DEFINED (__ReservedTrap6)?ABSOLUTE (__ReservedTrap6):ABSOLUTE (__DefaultInterrupt)
                   0x000112          0x4 LONG 0x29a DEFINED (__AltReservedTrap7)?ABSOLUTE (__AltReservedTrap7):DEFINED (__ReservedTrap7)?ABSOLUTE (__ReservedTrap7):ABSOLUTE (__DefaultInterrupt)
                   0x000114          0x4 LONG 0x29a DEFINED (__AltINT0Interrupt)?ABSOLUTE (__AltINT0Interrupt):DEFINED (__INT0Interrupt)?ABSOLUTE (__INT0Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000116          0x4 LONG 0x4884 DEFINED (__AltIC1Interrupt)?ABSOLUTE (__AltIC1Interrupt):DEFINED (__IC1Interrupt)?ABSOLUTE (__IC1Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000116          0x4 LONG 0x4c60 DEFINED (__AltIC1Interrupt)?ABSOLUTE (__AltIC1Interrupt):DEFINED (__IC1Interrupt)?ABSOLUTE (__IC1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000118          0x4 LONG 0x29a DEFINED (__AltOC1Interrupt)?ABSOLUTE (__AltOC1Interrupt):DEFINED (__OC1Interrupt)?ABSOLUTE (__OC1Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00011a          0x4 LONG 0x45dc DEFINED (__AltT1Interrupt)?ABSOLUTE (__AltT1Interrupt):DEFINED (__T1Interrupt)?ABSOLUTE (__T1Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00011a          0x4 LONG 0x49b8 DEFINED (__AltT1Interrupt)?ABSOLUTE (__AltT1Interrupt):DEFINED (__T1Interrupt)?ABSOLUTE (__T1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00011c          0x4 LONG 0x29a DEFINED (__AltDMA0Interrupt)?ABSOLUTE (__AltDMA0Interrupt):DEFINED (__DMA0Interrupt)?ABSOLUTE (__DMA0Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00011e          0x4 LONG 0x4940 DEFINED (__AltIC2Interrupt)?ABSOLUTE (__AltIC2Interrupt):DEFINED (__IC2Interrupt)?ABSOLUTE (__IC2Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00011e          0x4 LONG 0x4d1c DEFINED (__AltIC2Interrupt)?ABSOLUTE (__AltIC2Interrupt):DEFINED (__IC2Interrupt)?ABSOLUTE (__IC2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000120          0x4 LONG 0x29a DEFINED (__AltOC2Interrupt)?ABSOLUTE (__AltOC2Interrupt):DEFINED (__OC2Interrupt)?ABSOLUTE (__OC2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000122          0x4 LONG 0x29a DEFINED (__AltT2Interrupt)?ABSOLUTE (__AltT2Interrupt):DEFINED (__T2Interrupt)?ABSOLUTE (__T2Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000124          0x4 LONG 0x42ea DEFINED (__AltT3Interrupt)?ABSOLUTE (__AltT3Interrupt):DEFINED (__T3Interrupt)?ABSOLUTE (__T3Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000124          0x4 LONG 0x46c6 DEFINED (__AltT3Interrupt)?ABSOLUTE (__AltT3Interrupt):DEFINED (__T3Interrupt)?ABSOLUTE (__T3Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000126          0x4 LONG 0x29a DEFINED (__AltSPI1ErrInterrupt)?ABSOLUTE (__AltSPI1ErrInterrupt):DEFINED (__SPI1ErrInterrupt)?ABSOLUTE (__SPI1ErrInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000128          0x4 LONG 0x29a DEFINED (__AltSPI1Interrupt)?ABSOLUTE (__AltSPI1Interrupt):DEFINED (__SPI1Interrupt)?ABSOLUTE (__SPI1Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00012a          0x4 LONG 0x743a DEFINED (__AltU1RXInterrupt)?ABSOLUTE (__AltU1RXInterrupt):DEFINED (__U1RXInterrupt)?ABSOLUTE (__U1RXInterrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00012a          0x4 LONG 0x7868 DEFINED (__AltU1RXInterrupt)?ABSOLUTE (__AltU1RXInterrupt):DEFINED (__U1RXInterrupt)?ABSOLUTE (__U1RXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00012c          0x4 LONG 0x29a DEFINED (__AltU1TXInterrupt)?ABSOLUTE (__AltU1TXInterrupt):DEFINED (__U1TXInterrupt)?ABSOLUTE (__U1TXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00012e          0x4 LONG 0x29a DEFINED (__AltADC1Interrupt)?ABSOLUTE (__AltADC1Interrupt):DEFINED (__ADC1Interrupt)?ABSOLUTE (__ADC1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000130          0x4 LONG 0x29a DEFINED (__AltDMA1Interrupt)?ABSOLUTE (__AltDMA1Interrupt):DEFINED (__DMA1Interrupt)?ABSOLUTE (__DMA1Interrupt):ABSOLUTE (__DefaultInterrupt)
@@ -1681,7 +1683,7 @@ __FUID3
                   0x000146          0x4 LONG 0x29a DEFINED (__AltOC3Interrupt)?ABSOLUTE (__AltOC3Interrupt):DEFINED (__OC3Interrupt)?ABSOLUTE (__OC3Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000148          0x4 LONG 0x29a DEFINED (__AltOC4Interrupt)?ABSOLUTE (__AltOC4Interrupt):DEFINED (__OC4Interrupt)?ABSOLUTE (__OC4Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00014a          0x4 LONG 0x29a DEFINED (__AltT4Interrupt)?ABSOLUTE (__AltT4Interrupt):DEFINED (__T4Interrupt)?ABSOLUTE (__T4Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00014c          0x4 LONG 0x6140 DEFINED (__AltT5Interrupt)?ABSOLUTE (__AltT5Interrupt):DEFINED (__T5Interrupt)?ABSOLUTE (__T5Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00014c          0x4 LONG 0x653e DEFINED (__AltT5Interrupt)?ABSOLUTE (__AltT5Interrupt):DEFINED (__T5Interrupt)?ABSOLUTE (__T5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00014e          0x4 LONG 0x29a DEFINED (__AltINT2Interrupt)?ABSOLUTE (__AltINT2Interrupt):DEFINED (__INT2Interrupt)?ABSOLUTE (__INT2Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000150          0x4 LONG 0x29a DEFINED (__AltU2RXInterrupt)?ABSOLUTE (__AltU2RXInterrupt):DEFINED (__U2RXInterrupt)?ABSOLUTE (__U2RXInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000152          0x4 LONG 0x29a DEFINED (__AltU2TXInterrupt)?ABSOLUTE (__AltU2TXInterrupt):DEFINED (__U2TXInterrupt)?ABSOLUTE (__U2TXInterrupt):ABSOLUTE (__DefaultInterrupt)
@@ -1690,9 +1692,9 @@ __FUID3
                   0x000158          0x4 LONG 0x29a DEFINED (__AltC1RxRdyInterrupt)?ABSOLUTE (__AltC1RxRdyInterrupt):DEFINED (__C1RxRdyInterrupt)?ABSOLUTE (__C1RxRdyInterrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00015a          0x4 LONG 0x29a DEFINED (__AltC1Interrupt)?ABSOLUTE (__AltC1Interrupt):DEFINED (__C1Interrupt)?ABSOLUTE (__C1Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x00015c          0x4 LONG 0x29a DEFINED (__AltDMA3Interrupt)?ABSOLUTE (__AltDMA3Interrupt):DEFINED (__DMA3Interrupt)?ABSOLUTE (__DMA3Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x00015e          0x4 LONG 0x49fc DEFINED (__AltIC3Interrupt)?ABSOLUTE (__AltIC3Interrupt):DEFINED (__IC3Interrupt)?ABSOLUTE (__IC3Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000160          0x4 LONG 0x4ab8 DEFINED (__AltIC4Interrupt)?ABSOLUTE (__AltIC4Interrupt):DEFINED (__IC4Interrupt)?ABSOLUTE (__IC4Interrupt):ABSOLUTE (__DefaultInterrupt)
-                  0x000162          0x4 LONG 0x4b66 DEFINED (__AltIC5Interrupt)?ABSOLUTE (__AltIC5Interrupt):DEFINED (__IC5Interrupt)?ABSOLUTE (__IC5Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x00015e          0x4 LONG 0x4dd8 DEFINED (__AltIC3Interrupt)?ABSOLUTE (__AltIC3Interrupt):DEFINED (__IC3Interrupt)?ABSOLUTE (__IC3Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000160          0x4 LONG 0x4e94 DEFINED (__AltIC4Interrupt)?ABSOLUTE (__AltIC4Interrupt):DEFINED (__IC4Interrupt)?ABSOLUTE (__IC4Interrupt):ABSOLUTE (__DefaultInterrupt)
+                  0x000162          0x4 LONG 0x4f42 DEFINED (__AltIC5Interrupt)?ABSOLUTE (__AltIC5Interrupt):DEFINED (__IC5Interrupt)?ABSOLUTE (__IC5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000164          0x4 LONG 0x29a DEFINED (__AltIC6Interrupt)?ABSOLUTE (__AltIC6Interrupt):DEFINED (__IC6Interrupt)?ABSOLUTE (__IC6Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000166          0x4 LONG 0x29a DEFINED (__AltOC5Interrupt)?ABSOLUTE (__AltOC5Interrupt):DEFINED (__OC5Interrupt)?ABSOLUTE (__OC5Interrupt):ABSOLUTE (__DefaultInterrupt)
                   0x000168          0x4 LONG 0x29a DEFINED (__AltOC6Interrupt)?ABSOLUTE (__AltOC6Interrupt):DEFINED (__OC6Interrupt)?ABSOLUTE (__OC6Interrupt):ABSOLUTE (__DefaultInterrupt)
@@ -3078,7 +3080,7 @@ LOAD heap
 LOAD data_init
 
 .debug_pubtypes
-                  0x000150        0xbbe
+                  0x000150        0xbfa
  .debug_pubtypes
                   0x000150        0x14e build/default/production/qmain.o
  .debug_pubtypes
@@ -3098,158 +3100,158 @@ LOAD data_init
  .debug_pubtypes
                   0x000956         0x49 build/default/production/SDcard.o
  .debug_pubtypes
-                  0x00099f         0x4f build/default/production/file_io.o
+                  0x00099f         0x8b build/default/production/file_io.o
  .debug_pubtypes
-                  0x0009ee         0x9b ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+                  0x000a2a         0x9b ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
  .debug_pubtypes
-                  0x000a89         0xcd ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+                  0x000ac5         0xcd ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
  .debug_pubtypes
-                  0x000b56         0xca ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+                  0x000b92         0xca ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
  .debug_pubtypes
-                  0x000c20         0xee ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+                  0x000c5c         0xee ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
 
 __c30_signature
-                  0x000d0e        0x19e
+                  0x000d4a        0x19e
  __c30_signature
-                  0x000d0e          0x6 build/default/production/qmain.o
+                  0x000d4a          0x6 build/default/production/qmain.o
  __c30_signature
-                  0x000d14          0x6 build/default/production/motor_control.o
+                  0x000d50          0x6 build/default/production/motor_control.o
  __c30_signature
-                  0x000d1a          0x6 build/default/production/input_control.o
+                  0x000d56          0x6 build/default/production/input_control.o
  __c30_signature
-                  0x000d20          0x6 build/default/production/LCD.o
+                  0x000d5c          0x6 build/default/production/LCD.o
  __c30_signature
-                  0x000d26          0x6 build/default/production/bmp180.o
+                  0x000d62          0x6 build/default/production/bmp180.o
  __c30_signature
-                  0x000d2c          0x6 build/default/production/hmc5883l.o
+                  0x000d68          0x6 build/default/production/hmc5883l.o
  __c30_signature
-                  0x000d32          0x6 build/default/production/mpu6050.o
+                  0x000d6e          0x6 build/default/production/mpu6050.o
  __c30_signature
-                  0x000d38          0x6 build/default/production/FAT32.o
+                  0x000d74          0x6 build/default/production/FAT32.o
  __c30_signature
-                  0x000d3e          0x6 build/default/production/SDcard.o
+                  0x000d7a          0x6 build/default/production/SDcard.o
  __c30_signature
-                  0x000d44          0x6 build/default/production/file_io.o
+                  0x000d80          0x6 build/default/production/file_io.o
  __c30_signature
-                  0x000d4a          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+                  0x000d86          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
  __c30_signature
-                  0x000d50          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+                  0x000d8c          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
  __c30_signature
-                  0x000d56          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+                  0x000d92          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
  __c30_signature
-                  0x000d5c          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+                  0x000d98          0x6 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
  __c30_signature
-                  0x000d62          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(crt0_standard.o)
+                  0x000d9e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(crt0_standard.o)
  __c30_signature
-                  0x000d68          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(data_init_standard.o)
+                  0x000da4          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(data_init_standard.o)
  __c30_signature
-                  0x000d6e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(atan2f.eo)
+                  0x000daa          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(atan2f.eo)
  __c30_signature
-                  0x000d74          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(divsi3.eo)
+                  0x000db0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(divsi3.eo)
  __c30_signature
-                  0x000d7a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(errno.eo)
+                  0x000db6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(errno.eo)
  __c30_signature
-                  0x000d80          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixsfsi.eo)
+                  0x000dbc          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixsfsi.eo)
  __c30_signature
-                  0x000d86          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixunssfsi.eo)
+                  0x000dc2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixunssfsi.eo)
  __c30_signature
-                  0x000d8c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatdisf.eo)
+                  0x000dc8          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatdisf.eo)
  __c30_signature
-                  0x000d92          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatsisf.eo)
+                  0x000dce          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatsisf.eo)
  __c30_signature
-                  0x000d98          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatundisf.eo)
+                  0x000dd4          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatundisf.eo)
  __c30_signature
-                  0x000d9e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatunsisf.eo)
+                  0x000dda          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatunsisf.eo)
  __c30_signature
-                  0x000da4          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fpack.eo)
+                  0x000de0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fpack.eo)
  __c30_signature
-                  0x000daa          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(funpack.eo)
+                  0x000de6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(funpack.eo)
  __c30_signature
-                  0x000db0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(funpack2.eo)
+                  0x000dec          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(funpack2.eo)
  __c30_signature
-                  0x000db6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(futil.eo)
+                  0x000df2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(futil.eo)
  __c30_signature
-                  0x000dbc          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(powf.eo)
+                  0x000df8          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(powf.eo)
  __c30_signature
-                  0x000dc2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(divmoddi3.eo)
+                  0x000dfe          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(divmoddi3.eo)
  __c30_signature
-                  0x000dc8          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(muldi3.eo)
+                  0x000e04          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(muldi3.eo)
  __c30_signature
-                  0x000dce          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(_frexpf.eo)
+                  0x000e0a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(_frexpf.eo)
  __c30_signature
-                  0x000dd4          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fchop.eo)
+                  0x000e10          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fchop.eo)
  __c30_signature
-                  0x000dda          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(feqltle.eo)
+                  0x000e16          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(feqltle.eo)
  __c30_signature
-                  0x000de0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(ldexpf.eo)
+                  0x000e1c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(ldexpf.eo)
  __c30_signature
-                  0x000de6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(umuldi3.eo)
+                  0x000e22          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(umuldi3.eo)
  __c30_signature
-                  0x000dec          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fcompare.eo)
+                  0x000e28          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fcompare.eo)
  __c30_signature
-                  0x000df2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
+                  0x000e2e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
  __c30_signature
-                  0x000df8          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(memcpy.eo)
+                  0x000e34          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(memcpy.eo)
  __c30_signature
-                  0x000dfe          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(memset.eo)
+                  0x000e3a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(memset.eo)
  __c30_signature
-                  0x000e04          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(sprintf_cdfFnopuxX.XXeo)
+                  0x000e40          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(sprintf_cdfFnopuxX.XXeo)
  __c30_signature
-                  0x000e0a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
+                  0x000e46          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
  __c30_signature
-                  0x000e10          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(fputc.eo)
+                  0x000e4c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(fputc.eo)
  __c30_signature
-                  0x000e16          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
+                  0x000e52          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
  __c30_signature
-                  0x000e1c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                  0x000e58          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
  __c30_signature
-                  0x000e22          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(flsbuf.eo)
+                  0x000e5e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(flsbuf.eo)
  __c30_signature
-                  0x000e28          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(write.eo)
+                  0x000e64          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(write.eo)
  __c30_signature
-                  0x000e2e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(sbrk.eo)
+                  0x000e6a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(sbrk.eo)
  __c30_signature
-                  0x000e34          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(c30_uart.eo)
+                  0x000e70          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(c30_uart.eo)
  __c30_signature
-                  0x000e3a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(brk.elo)
+                  0x000e76          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(brk.elo)
  __c30_signature
-                  0x000e40          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(deqltle.eo)
+                  0x000e7c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(deqltle.eo)
  __c30_signature
-                  0x000e46          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dgtge.eo)
+                  0x000e82          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dgtge.eo)
  __c30_signature
-                  0x000e4c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dne.eo)
+                  0x000e88          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dne.eo)
  __c30_signature
-                  0x000e52          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(extendsfdf.eo)
+                  0x000e8e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(extendsfdf.eo)
  __c30_signature
-                  0x000e58          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixunsdfdi.eo)
+                  0x000e94          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(fixunsdfdi.eo)
  __c30_signature
-                  0x000e5e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatundidf.eo)
+                  0x000e9a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(floatundidf.eo)
  __c30_signature
-                  0x000e64          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(mulsi3.eo)
+                  0x000ea0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(mulsi3.eo)
  __c30_signature
-                  0x000e6a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpadd.eo)
+                  0x000ea6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpadd.eo)
  __c30_signature
-                  0x000e70          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpdiv.eo)
+                  0x000eac          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpdiv.eo)
  __c30_signature
-                  0x000e76          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpmul.eo)
+                  0x000eb2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpmul.eo)
  __c30_signature
-                  0x000e7c          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpsubs.eo)
+                  0x000eb8          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpsubs.eo)
  __c30_signature
-                  0x000e82          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(s_frexp.eo)
+                  0x000ebe          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(s_frexp.eo)
  __c30_signature
-                  0x000e88          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dcompare.eo)
+                  0x000ec4          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dcompare.eo)
  __c30_signature
-                  0x000e8e          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpack.eo)
+                  0x000eca          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpack.eo)
  __c30_signature
-                  0x000e94          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dtype.eo)
+                  0x000ed0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dtype.eo)
  __c30_signature
-                  0x000e9a          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dunpack.eo)
+                  0x000ed6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dunpack.eo)
  __c30_signature
-                  0x000ea0          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dunpack2.eo)
+                  0x000edc          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dunpack2.eo)
  __c30_signature
-                  0x000ea6          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpropagateNaN.eo)
+                  0x000ee2          0x6 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(dpropagateNaN.eo)
 
-.nbss               0x0800       0x12f4
+.nbss               0x0800       0x12d4
  .nbss              0x0800        0xa10 build/default/production/file_io.o
                     0x120e                  _out_counter
  .nbss              0x1210        0x442 build/default/production/FAT32.o
@@ -3276,317 +3278,321 @@ __c30_signature
  .nbss              0x1652        0x402 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
                     0x1652                  _UART_buffer
                     0x1a52                  _input_command
- .nbss              0x1a54         0xa0 build/default/production/qmain.o
+ .nbss              0x1a54         0x80 build/default/production/qmain.o
                     0x1a54                  _test_throttle
-                    0x1abf                  _writing_flag
-                    0x1ac0                  _filename
-                    0x1ad0                  _buffer_tmp
+                    0x1abf                  _filename
 
-.ndata              0x1af4         0x3c
- .ndata             0x1af4         0x3c build/default/production/input_control.o
+.ndata              0x1ad4         0x3c
+ .ndata             0x1ad4         0x3c build/default/production/input_control.o
 
-.nbss               0x1b30         0x38
- .nbss              0x1b30         0x38 build/default/production/mpu6050.o
-                    0x1b4e                  _mean_ax
-                    0x1b50                  _mean_ay
-                    0x1b52                  _mean_az
-                    0x1b54                  _mean_gx
-                    0x1b56                  _mean_gy
-                    0x1b58                  _mean_gz
-                    0x1b5a                  _state
-                    0x1b5c                  _ax_offset
-                    0x1b5e                  _ay_offset
-                    0x1b60                  _az_offset
-                    0x1b62                  _gx_offset
-                    0x1b64                  _gy_offset
-                    0x1b66                  _gz_offset
+.nbss               0x1b10         0x38
+ .nbss              0x1b10         0x38 build/default/production/mpu6050.o
+                    0x1b2e                  _mean_ax
+                    0x1b30                  _mean_ay
+                    0x1b32                  _mean_az
+                    0x1b34                  _mean_gx
+                    0x1b36                  _mean_gy
+                    0x1b38                  _mean_gz
+                    0x1b3a                  _state
+                    0x1b3c                  _ax_offset
+                    0x1b3e                  _ay_offset
+                    0x1b40                  _az_offset
+                    0x1b42                  _gx_offset
+                    0x1b44                  _gy_offset
+                    0x1b46                  _gz_offset
 
-.ndata              0x1b68         0x2c
- .ndata             0x1b68         0x2c build/default/production/LCD.o
-                    0x1b68                  _program_author
-                    0x1b76                  _program_version
-                    0x1b87                  _program_date
+.ndata              0x1b48         0x2c
+ .ndata             0x1b48         0x2c build/default/production/LCD.o
+                    0x1b48                  _program_author
+                    0x1b56                  _program_version
+                    0x1b67                  _program_date
 
-.nbss               0x1b94         0x48
- .nbss              0x1b94         0x20 build/default/production/input_control.o
- .nbss              0x1bb4         0x20 build/default/production/bmp180.o
-                    0x1bba                  _ac1
-                    0x1bbc                  _ac2
-                    0x1bbe                  _ac3
-                    0x1bc0                  _b1
-                    0x1bc2                  _b2
-                    0x1bc4                  _mc
-                    0x1bc6                  _mb
-                    0x1bc8                  _md
-                    0x1bca                  _ac4
-                    0x1bcc                  _ac5
-                    0x1bce                  _ac6
-                    0x1bd0                  _B5
- .nbss              0x1bd4          0x8 build/default/production/hmc5883l.o
+.nbss               0x1b74         0x40
+ .nbss              0x1b74         0x20 build/default/production/input_control.o
+ .nbss              0x1b94         0x20 build/default/production/bmp180.o
+                    0x1b9a                  _ac1
+                    0x1b9c                  _ac2
+                    0x1b9e                  _ac3
+                    0x1ba0                  _b1
+                    0x1ba2                  _b2
+                    0x1ba4                  _mc
+                    0x1ba6                  _mb
+                    0x1ba8                  _md
+                    0x1baa                  _ac4
+                    0x1bac                  _ac5
+                    0x1bae                  _ac6
+                    0x1bb0                  _B5
 
-.ndata              0x1bdc          0xc
- .ndata             0x1bdc          0x6 build/default/production/qmain.o
- .ndata             0x1be2          0x6 build/default/production/mpu6050.o
-                    0x1be2                  _buffersize
-                    0x1be4                  _acel_deadzone
-                    0x1be6                  _giro_deadzone
+.ndata              0x1bb4          0x8
+ .ndata             0x1bb4          0x8 build/default/production/qmain.o
+                    0x1bba                  _writing_flag
 
-.nbss               0x1be8          0x4
- .nbss              0x1be8          0x4 build/default/production/motor_control.o
+.nbss               0x1bbc          0x8
+ .nbss              0x1bbc          0x8 build/default/production/hmc5883l.o
 
-.ndata              0x1bec          0x2
- .ndata             0x1bec          0x2 build/default/production/hmc5883l.o
+.ndata              0x1bc4          0x6
+ .ndata             0x1bc4          0x6 build/default/production/mpu6050.o
+                    0x1bc4                  _buffersize
+                    0x1bc6                  _acel_deadzone
+                    0x1bc8                  _giro_deadzone
 
-.nbss               0x1bee          0x4
- .nbss              0x1bee          0x2 build/default/production/SDcard.o
-                    0x1bee                  _SDHC_flag
-                    0x1bef                  _card_type
- .nbss              0x1bf0          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(errno.eo)
-                    0x1bf0                  _errno
+.nbss               0x1bca          0x4
+ .nbss              0x1bca          0x4 build/default/production/motor_control.o
 
-.data._powers_      0x1bf2         0xb0
+.ndata              0x1bce          0x2
+ .ndata             0x1bce          0x2 build/default/production/hmc5883l.o
+
+.nbss               0x1bd0          0x4
+ .nbss              0x1bd0          0x2 build/default/production/SDcard.o
+                    0x1bd0                  _SDHC_flag
+                    0x1bd1                  _card_type
+ .nbss              0x1bd2          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(errno.eo)
+                    0x1bd2                  _errno
+
+.data._powers_      0x1bd4         0xb0
  .data._powers_
-                    0x1bf2         0xb0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
-                    0x1bf2                  __powers_
+                    0x1bd4         0xb0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
+                    0x1bd4                  __powers_
 
 .data._npowers_
-                    0x1ca2         0xb0
+                    0x1c84         0xb0
  .data._npowers_
-                    0x1ca2         0xb0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
-                    0x1ca2                  __npowers_
+                    0x1c84         0xb0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(powers.eo)
+                    0x1c84                  __npowers_
 
-.data.dpowers       0x1d52         0xa0
- .data.dpowers      0x1d52         0xa0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
+.data.dpowers       0x1d34         0xa0
+ .data.dpowers      0x1d34         0xa0 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
 
-.data               0x1df2         0x2a
- .data              0x1df2         0x2a /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
+.data               0x1dd4         0x2a
+ .data              0x1dd4         0x2a /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(doprnt_cdfFnopuxX.XXeo)
 
-.data._iob          0x1e1c         0x24
- .data._iob         0x1e1c         0x24 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
-                    0x1e1c                  __iob
+.data._iob          0x1dfe         0x24
+ .data._iob         0x1dfe         0x24 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                    0x1dfe                  __iob
 
-.bss.__allocs       0x1e40          0x8
- .bss.__allocs      0x1e40          0x8 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
-                    0x1e40                  ___allocs
+.bss.__allocs       0x1e22          0x8
+ .bss.__allocs      0x1e22          0x8 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
+                    0x1e22                  ___allocs
 
-.bss.__allocx       0x1e48          0x4
- .bss.__allocx      0x1e48          0x4 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
-                    0x1e48                  ___allocx
+.bss.__allocx       0x1e2a          0x4
+ .bss.__allocx      0x1e2a          0x4 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
+                    0x1e2a                  ___allocx
 
-.bss.__allocp       0x1e4c          0x2
- .bss.__allocp      0x1e4c          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
-                    0x1e4c                  ___allocp
+.bss.__allocp       0x1e2e          0x2
+ .bss.__allocp      0x1e2e          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
+                    0x1e2e                  ___allocp
 
-.bss.__alloct       0x1e4e          0x2
- .bss.__alloct      0x1e4e          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
-                    0x1e4e                  ___alloct
+.bss.__alloct       0x1e30          0x2
+ .bss.__alloct      0x1e30          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(malloc.eo)
+                    0x1e30                  ___alloct
 
-.data._Files        0x1e50          0x2
- .data._Files       0x1e50          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
-                    0x1e50                  __Files
+.data._Files        0x1e32          0x2
+ .data._Files       0x1e32          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                    0x1e32                  __Files
 
-.bss._outdone       0x1e52          0x2
- .bss._outdone      0x1e52          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
-                    0x1e52                  __outdone
+.bss._outdone       0x1e34          0x2
+ .bss._outdone      0x1e34          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                    0x1e34                  __outdone
 
-.bss._sibuf         0x1e54          0x2
- .bss._sibuf        0x1e54          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
-                    0x1e54                  __sibuf
+.bss._sibuf         0x1e36          0x2
+ .bss._sibuf        0x1e36          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                    0x1e36                  __sibuf
 
-.bss._sobuf         0x1e56          0x2
- .bss._sobuf        0x1e56          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
-                    0x1e56                  __sobuf
+.bss._sobuf         0x1e38          0x2
+ .bss._sobuf        0x1e38          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libc-elf.a(_iob.eo)
+                    0x1e38                  __sobuf
 
 .data.__C30_UART
-                    0x1e58          0x2
+                    0x1e3a          0x2
  .data.__C30_UART
-                    0x1e58          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(c30_uart.eo)
-                    0x1e58                  ___C30_UART
+                    0x1e3a          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(c30_uart.eo)
+                    0x1e3a                  ___C30_UART
 
-.bss.__curbrk       0x1e5a          0x2
- .bss.__curbrk      0x1e5a          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(brk.elo)
-                    0x1e5a                  ___curbrk
+.bss.__curbrk       0x1e3c          0x2
+ .bss.__curbrk      0x1e3c          0x2 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libpic30-elf.a(brk.elo)
+                    0x1e3c                  ___curbrk
 
-.heap               0x1e5c        0x200
- .heap              0x1e5c        0x200 heap
+.heap               0x1e3e        0x200
+ .heap              0x1e3e        0x200 heap
 
-.const              0xb414        0x3e6 load address 0x003414  
- .const             0xb414        0x12c build/default/production/qmain.o
- .const             0xb540         0xd2 build/default/production/mpu6050.o
- .const             0xb612         0xbe build/default/production/input_control.o
- .const             0xb6d0         0x72 build/default/production/FAT32.o
- .const             0xb742         0x54 build/default/production/SDcard.o
- .const             0xb796         0x32 build/default/production/file_io.o
- .const             0xb7c8         0x1a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
- .const             0xb7e2         0x12 build/default/production/hmc5883l.o
- .const             0xb7f4          0x6 build/default/production/motor_control.o
+.const              0xb414        0x5fc load address 0x003414  
+ .const             0xb414        0x2e8 build/default/production/FAT32.o
+ .const             0xb6fc         0xd2 build/default/production/mpu6050.o
+ .const             0xb7ce         0xbe build/default/production/input_control.o
+ .const             0xb88c         0xbc build/default/production/qmain.o
+ .const             0xb948         0x54 build/default/production/SDcard.o
+ .const             0xb99c         0x42 build/default/production/file_io.o
+ .const             0xb9de         0x1a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+ .const             0xb9f8         0x12 build/default/production/hmc5883l.o
+ .const             0xba0a          0x6 build/default/production/motor_control.o
 
-libmxconst          0xb7fa        0x174 load address 0x0037fa  
- libmxconst         0xb7fa         0x8c /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(logfx.eo)
- libmxconst         0xb886         0x64 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(atanfx.eo)
- libmxconst         0xb8ea         0x54 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(expfx.eo)
- libmxconst         0xb93e         0x30 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(ssqrtfx.eo)
+libmxconst          0xba10        0x174 load address 0x003a10  
+ libmxconst         0xba10         0x8c /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(logfx.eo)
+ libmxconst         0xba9c         0x64 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(atanfx.eo)
+ libmxconst         0xbb00         0x54 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(expfx.eo)
+ libmxconst         0xbb54         0x30 /opt/microchip/xc16/v1.24/bin/bin/../../lib/libfastm-elf.a(ssqrtfx.eo)
 
-.text             0x00396e       0x35b2
- .text            0x00396e        0x940 build/default/production/FAT32.o
-                  0x00396e                  _init_FAT32
-                  0x003b32                  _show_content_of_FAT
-                  0x003b86                  _read_FAT_sector_with_cluster
-                  0x003bb2                  _get_next_cluster_FAT
-                  0x003c1e                  _set_next_cluster_FAT_cache
-                  0x003cb2                  _set_next_cluster_FAT
-                  0x003d00                  _find_next_free_cluster
-                  0x003da0                  _get_first_sector_of_cluster
-                  0x003e8e                  _create_new_file
-                  0x003f40                  _write_data_buffer
-                  0x004044                  _save_current_file
-                  0x0040be                  _displayMemory
-                  0x004152                  _get_file_list_root
- .text            0x0042ae        0x91a build/default/production/input_control.o
-                  0x0042ae                  _ic_find_control
-                  0x0042ea                  __T3Interrupt
-                  0x00430c                  _init_input_control
-                  0x004372                  _ic_make_calibration
-                  0x004522                  _send_UART_calibration_data
-                  0x0045dc                  __T1Interrupt
-                  0x004600                  _get_direction_values
-                  0x0047d6                  _send_UART_control_values
-                  0x004802                  _send_UART_control_raw_data
-                  0x004884                  __IC1Interrupt
-                  0x004940                  __IC2Interrupt
-                  0x0049fc                  __IC3Interrupt
-                  0x004ab8                  __IC4Interrupt
-                  0x004b66                  __IC5Interrupt
- .text            0x004bc8        0x8d4 build/default/production/bmp180.o
-                  0x004c82                  _bmp180_init
-                  0x004cb2                  _bmp180_get_id
-                  0x004df6                  _bmp180_send_temperature_signal
-                  0x004e00                  _bmp180_send_pressure_signal
-                  0x004e18                  _bmp180_data_ready
-                  0x004e38                  _bmp180_read_temperature_C
-                  0x004e72                  _bmp180_read_pressure
-                  0x00511e                  _bmp180_get_raw_temperature
-                  0x005130                  _bmp180_get_temperature_C
-                  0x00516a                  _bmp180_get_temperature_F
-                  0x005194                  _bmp180_get_raw_pressure
-                  0x0051c8                  _bmp180_get_pressure
-                  0x005460                  _bmp180_get_altitude
- .text            0x00549c        0x786 build/default/production/mpu6050.o
-                  0x00549c                  _mpu6050_init
-                  0x0054da                  _mpu6050_receive_gyro_accel_raw_data
-                  0x00559e                  _send_UART_mpu6050_data
-                  0x0055ca                  _mpu6050_get_gyro_accel_raw_data
-                  0x0055da                  _mpu6050_set_sleep_bit
-                  0x0055ee                  _mpu6050_set_clock_source
-                  0x005602                  _mpu6050_set_DLPF
-                  0x005616                  _mpu6050_set_gyro_fullscale
-                  0x00562a                  _mpu6050_set_accel_fullscale
-                  0x00563e                  _mpu6050_set_interrupt_data_rdy_bit
-                  0x005652                  _mpu6050_set_sample_rate_divider
-                  0x005662                  _MPU6050_getXAccelOffset
-                  0x005684                  _mpu6050_setXAccelOffset
-                  0x005696                  _MPU6050_getYAccelOffset
-                  0x0056b8                  _mpu6050_setYAccelOffset
-                  0x0056ca                  _MPU6050_getZAccelOffset
-                  0x0056ec                  _mpu6050_setZAccelOffset
-                  0x0056fe                  _MPU6050_getXGyroOffset
-                  0x005720                  _mpu6050_setXGyroOffset
-                  0x005732                  _MPU6050_getYGyroOffset
-                  0x005754                  _mpu6050_setYGyroOffset
-                  0x005766                  _MPU6050_getZGyroOffset
-                  0x005788                  _mpu6050_setZGyroOffset
-                  0x00579a                  _mean_sensors
-                  0x0059cc                  _mpu6050_calibration
- .text            0x005c22        0x590 build/default/production/qmain.o
-                  0x005c22                  _get_clock_freq
-                  0x005c32                  _sensors_timer_init
-                  0x005c5a                  _main
-                  0x00608c                  _process_control_system
-                  0x0060c6                  _write_data_to_SD
-                  0x006140                  __T5Interrupt
- .text            0x0061b2        0x3be build/default/production/SDcard.o
-                  0x0061b2                  _SD_send_cmd
-                  0x0062de                  _init_SDcard
-                  0x006402                  _SD_read_sector
-                  0x0064aa                  _SD_write_sector
- .text            0x006570        0x3a8 build/default/production/file_io.o
-                  0x0065da                  _add_task
-                  0x006646                  _file_process_tasks
-                  0x0066ba                  _file_open
-                  0x006728                  _set_next_buffer
-                  0x0067a6                  _file_close
-                  0x0067be                  _file_write
-                  0x006802                  _convert_filename
- .text            0x006918        0x364 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
-                  0x006918                  _i2c_idle
-                  0x006954                  _i2c_init
-                  0x0069bc                  _i2c_start
-                  0x0069d0                  _i2c_stop
-                  0x0069e4                  _i2c_restart
-                  0x0069f8                  _i2c_ack
-                  0x006a0e                  _i2c_nack
-                  0x006a24                  _i2c_send_byte
-                  0x006a50                  _i2c_receive_byte
-                  0x006a74                  _i2c_send_bytes
-                  0x006ab0                  _i2c_receive_bytes
-                  0x006af8                  _i2c_write_byte_eeprom
-                  0x006b3a                  _i2c_write_word_eeprom
-                  0x006b94                  _i2c_read_bytes_eeprom
-                  0x006bf4                  _i2c_read_byte_eeprom
-                  0x006c0c                  _i2c_write_bits_eeprom
- .text            0x006c7c        0x2a4 build/default/production/motor_control.o
-                  0x006c7c                  _set_motors_started
-                  0x006ce6                  _set_motors_stopped
-                  0x006d5e                  _set_motor1_power
-                  0x006d9a                  _set_motor2_power
-                  0x006dd6                  _set_motor3_power
-                  0x006e12                  _set_motor4_power
-                  0x006e4e                  _motors_init
+.text             0x003b84       0x37c8
+ .text            0x003b84        0xb06 build/default/production/FAT32.o
+                  0x003b84                  _init_FAT32
+                  0x003ec8                  _show_content_of_FAT
+                  0x003f1c                  _read_FAT_sector_with_cluster
+                  0x003f48                  _get_next_cluster_FAT
+                  0x003fb4                  _set_next_cluster_FAT_cache
+                  0x004048                  _set_next_cluster_FAT
+                  0x004096                  _find_next_free_cluster
+                  0x004136                  _get_first_sector_of_cluster
+                  0x00422c                  _create_new_file
+                  0x0042de                  _write_data_buffer
+                  0x0043e2                  _save_current_file
+                  0x00445c                  _displayMemory
+                  0x0044f0                  _get_file_list_root
+ .text            0x00468a        0x91a build/default/production/input_control.o
+                  0x00468a                  _ic_find_control
+                  0x0046c6                  __T3Interrupt
+                  0x0046e8                  _init_input_control
+                  0x00474e                  _ic_make_calibration
+                  0x0048fe                  _send_UART_calibration_data
+                  0x0049b8                  __T1Interrupt
+                  0x0049dc                  _get_direction_values
+                  0x004bb2                  _send_UART_control_values
+                  0x004bde                  _send_UART_control_raw_data
+                  0x004c60                  __IC1Interrupt
+                  0x004d1c                  __IC2Interrupt
+                  0x004dd8                  __IC3Interrupt
+                  0x004e94                  __IC4Interrupt
+                  0x004f42                  __IC5Interrupt
+ .text            0x004fa4        0x8d4 build/default/production/bmp180.o
+                  0x00505e                  _bmp180_init
+                  0x00508e                  _bmp180_get_id
+                  0x0051d2                  _bmp180_send_temperature_signal
+                  0x0051dc                  _bmp180_send_pressure_signal
+                  0x0051f4                  _bmp180_data_ready
+                  0x005214                  _bmp180_read_temperature_C
+                  0x00524e                  _bmp180_read_pressure
+                  0x0054fa                  _bmp180_get_raw_temperature
+                  0x00550c                  _bmp180_get_temperature_C
+                  0x005546                  _bmp180_get_temperature_F
+                  0x005570                  _bmp180_get_raw_pressure
+                  0x0055a4                  _bmp180_get_pressure
+                  0x00583c                  _bmp180_get_altitude
+ .text            0x005878        0x786 build/default/production/mpu6050.o
+                  0x005878                  _mpu6050_init
+                  0x0058b6                  _mpu6050_receive_gyro_accel_raw_data
+                  0x00597a                  _send_UART_mpu6050_data
+                  0x0059a6                  _mpu6050_get_gyro_accel_raw_data
+                  0x0059b6                  _mpu6050_set_sleep_bit
+                  0x0059ca                  _mpu6050_set_clock_source
+                  0x0059de                  _mpu6050_set_DLPF
+                  0x0059f2                  _mpu6050_set_gyro_fullscale
+                  0x005a06                  _mpu6050_set_accel_fullscale
+                  0x005a1a                  _mpu6050_set_interrupt_data_rdy_bit
+                  0x005a2e                  _mpu6050_set_sample_rate_divider
+                  0x005a3e                  _MPU6050_getXAccelOffset
+                  0x005a60                  _mpu6050_setXAccelOffset
+                  0x005a72                  _MPU6050_getYAccelOffset
+                  0x005a94                  _mpu6050_setYAccelOffset
+                  0x005aa6                  _MPU6050_getZAccelOffset
+                  0x005ac8                  _mpu6050_setZAccelOffset
+                  0x005ada                  _MPU6050_getXGyroOffset
+                  0x005afc                  _mpu6050_setXGyroOffset
+                  0x005b0e                  _MPU6050_getYGyroOffset
+                  0x005b30                  _mpu6050_setYGyroOffset
+                  0x005b42                  _MPU6050_getZGyroOffset
+                  0x005b64                  _mpu6050_setZGyroOffset
+                  0x005b76                  _mean_sensors
+                  0x005da8                  _mpu6050_calibration
+ .text            0x005ffe        0x5b8 build/default/production/qmain.o
+                  0x005ffe                  _get_clock_freq
+                  0x00600e                  _sensors_timer_init
+                  0x006036                  _main
+                  0x006418                  _process_control_system
+                  0x006452                  _write_data_to_SD
+                  0x00653e                  __T5Interrupt
+ .text            0x0065b6        0x3d0 build/default/production/file_io.o
+                  0x0065b6                  _init_sd_file_io
+                  0x006644                  _add_task
+                  0x0066b0                  _file_process_tasks
+                  0x006728                  _file_open
+                  0x006796                  _set_next_buffer
+                  0x006814                  _file_close
+                  0x00682c                  _file_write
+                  0x006870                  _convert_filename
+ .text            0x006986        0x3be build/default/production/SDcard.o
+                  0x006986                  _SD_send_cmd
+                  0x006ab2                  _init_SDcard
+                  0x006bd6                  _SD_read_sector
+                  0x006c7e                  _SD_write_sector
+ .text            0x006d44        0x364 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(twi.o)
+                  0x006d44                  _i2c_idle
+                  0x006d80                  _i2c_init
+                  0x006de8                  _i2c_start
+                  0x006dfc                  _i2c_stop
+                  0x006e10                  _i2c_restart
+                  0x006e24                  _i2c_ack
+                  0x006e3a                  _i2c_nack
+                  0x006e50                  _i2c_send_byte
+                  0x006e7c                  _i2c_receive_byte
+                  0x006ea0                  _i2c_send_bytes
+                  0x006edc                  _i2c_receive_bytes
+                  0x006f24                  _i2c_write_byte_eeprom
+                  0x006f66                  _i2c_write_word_eeprom
+                  0x006fc0                  _i2c_read_bytes_eeprom
+                  0x007020                  _i2c_read_byte_eeprom
+                  0x007038                  _i2c_write_bits_eeprom
+ .text            0x0070a8        0x2a4 build/default/production/motor_control.o
+                  0x0070a8                  _set_motors_started
+                  0x007112                  _set_motors_stopped
+                  0x00718a                  _set_motor1_power
+                  0x0071c6                  _set_motor2_power
+                  0x007202                  _set_motor3_power
+                  0x00723e                  _set_motor4_power
+                  0x00727a                  _motors_init
 
-.dinit            0x006f20        0x29c
- .dinit           0x006f20        0x29c data_init
+.dinit            0x00734c        0x29e
+ .dinit           0x00734c        0x29e data_init
 
-.text             0x0071bc        0x7e6
- .text            0x0071bc        0x23a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
-                  0x0071bc                  _setup_PLL_oscillator
-                  0x007216                  _delay_ms
-                  0x0072dc                  _delay_us
-                  0x0073a2                  _timer_start
-                  0x0073be                  _timer_restart
-                  0x0073da                  _timer_stop
- .text            0x0073f6        0x1ac ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
-                  0x0073f6                  _init_UART1
-                  0x00743a                  __U1RXInterrupt
-                  0x00745c                  _UART_get_last_received_command
-                  0x007480                  _UART_write_byte
-                  0x00749c                  _UART_write_words
-                  0x0074e0                  _UART_write_string
-                  0x007508                  _UART_writeln_string
-                  0x007518                  _UART_write_int32
-                  0x007532                  _UART_write_int16
-                  0x00754a                  _UART_write_int
-                  0x007556                  _UART_write_float
-                  0x007570                  _UART_write_hint
-                  0x007588                  _UART_write_hint32
- .text            0x0075a2        0x1a4 build/default/production/hmc5883l.o
-                  0x0075a2                  _hmc5883l_init
-                  0x0075c6                  _hmc5883l_set_continious_operating_mode
-                  0x0075d4                  _hmc5883l_set_magnetic_gain
-                  0x00763c                  _hmc5883l_set_output_rate
-                  0x007652                  _hmc5883l_set_averaged_samples
-                  0x007668                  _send_UART_magnetic_raw_data
-                  0x007688                  _hmc5883l_receive_mag_raw_data
-                  0x0076f4                  _hmc5883l_get_scaled_mag_data
- .text            0x007746        0x18c build/default/production/LCD.o
-                  0x007746                  _lcd_init
-                  0x0077cc                  _lcd_init_4d
-                  0x007822                  _lcd_write_string_4d
-                  0x007852                  _lcd_write_character_4d
-                  0x00786c                  _lcd_write_instruction_4d
-                  0x007886                  _lcd_write_4
- .text            0x0078d2         0xd0 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
-                  0x0078d2                  _spi_init
-                  0x007904                  _spi_set_speed
-                  0x007950                  _spi_cs_set
-                  0x00796a                  _spi_write
-                  0x007994                  _spi_read
+.text             0x0075ea        0x7e6
+ .text            0x0075ea        0x23a ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(timing.o)
+                  0x0075ea                  _setup_PLL_oscillator
+                  0x007644                  _delay_ms
+                  0x00770a                  _delay_us
+                  0x0077d0                  _timer_start
+                  0x0077ec                  _timer_restart
+                  0x007808                  _timer_stop
+ .text            0x007824        0x1ac ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(UART.o)
+                  0x007824                  _init_UART1
+                  0x007868                  __U1RXInterrupt
+                  0x00788a                  _UART_get_last_received_command
+                  0x0078ae                  _UART_write_byte
+                  0x0078ca                  _UART_write_words
+                  0x00790e                  _UART_write_string
+                  0x007936                  _UART_writeln_string
+                  0x007946                  _UART_write_int32
+                  0x007960                  _UART_write_int16
+                  0x007978                  _UART_write_int
+                  0x007984                  _UART_write_float
+                  0x00799e                  _UART_write_hint
+                  0x0079b6                  _UART_write_hint32
+ .text            0x0079d0        0x1a4 build/default/production/hmc5883l.o
+                  0x0079d0                  _hmc5883l_init
+                  0x0079f4                  _hmc5883l_set_continious_operating_mode
+                  0x007a02                  _hmc5883l_set_magnetic_gain
+                  0x007a6a                  _hmc5883l_set_output_rate
+                  0x007a80                  _hmc5883l_set_averaged_samples
+                  0x007a96                  _send_UART_magnetic_raw_data
+                  0x007ab6                  _hmc5883l_receive_mag_raw_data
+                  0x007b22                  _hmc5883l_get_scaled_mag_data
+ .text            0x007b74        0x18c build/default/production/LCD.o
+                  0x007b74                  _lcd_init
+                  0x007bfa                  _lcd_init_4d
+                  0x007c50                  _lcd_write_string_4d
+                  0x007c80                  _lcd_write_character_4d
+                  0x007c9a                  _lcd_write_instruction_4d
+                  0x007cb4                  _lcd_write_4
+ .text            0x007d00         0xd0 ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a(spi.o)
+                  0x007d00                  _spi_init
+                  0x007d32                  _spi_set_speed
+                  0x007d7e                  _spi_cs_set
+                  0x007d98                  _spi_write
+                  0x007dc2                  _spi_read

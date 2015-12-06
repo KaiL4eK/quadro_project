@@ -44,17 +44,18 @@ int init_FAT32 ( void )
     struct MBRinfo_Structure *mbr;
     struct partitionInfo_Structure *partition;
     Sector_t    dataSectors;
-    uint8_t     buffer[512],
-                err_state = 0;
+    uint8_t     buffer[512];
     
-    if ( (err_state = init_SDcard()) < 0 )
     {
-        debug("SD card initialization failed");
-        debug( (err_state == TIMEOUT_ERROR_INIT_1 ? "Timeout 1" : 
-                            err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2" : "Unknown error") );
-        while(1);
+        int err_state = 0;
+        if ( (err_state = init_SDcard()) < 0 )
+        {
+            debug("SD card initialization failed");
+            debug( (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found" : 
+                                err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2" : "Unknown error") );
+            while(1);
+        }
     }
-    debug( "SD initialized" );
     
     SD_read_sector( first_sector, buffer );
 

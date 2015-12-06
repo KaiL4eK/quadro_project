@@ -75,7 +75,6 @@ void sensors_timer_init( void )
 
 int main(void) 
 {
-    int err_state = 0;
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
 #ifndef FREQ_32MHZ
@@ -94,14 +93,8 @@ int main(void)
 //    debug("IC calibrated");
     spi_init();
     debug( "SPI initialized" );
-    spi_set_speed( FREQ_125K );
-    if ( init_FAT32() < 0 )
-    {
-        debug("FAT32 not found!");
-        while(1);
-    }
-    debug( "FAT initialized" );
-    spi_set_speed( FREQ_16000K );
+    init_sd_file_io();
+    debug( "SD initialized" );
     i2c_init( 400000 );
     debug( "I2C initialized" );
     mpu6050_init();
@@ -332,13 +325,22 @@ inline void process_control_system ( void )
 
 uint8_t writing_flag = 0;
 
-char    filename[16],
-        buffer_tmp[32];
+char    filename[16];
+
+#define WRITE_PRESSURE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 24) & 0xff; \
+                                                buf[(off)+1] = ((val) >> 16) & 0xff; \
+                                                buf[(off)+2] = ((val) >> 8 ) & 0xff; \
+                                                buf[(off)+3] = ((val)      ) & 0xff; }
+
+#define WRITE_TWO_BYTE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 8) & 0xff; \
+                                                buf[(off)+1] = ((val)     ) & 0xff; }
 
 inline void write_data_to_SD ( void )
 {
     static uint16_t iter = 0;
     static uint8_t  file_num = 0;
+    uint8_t buffer[16];
+
     if ( iter == 0 )
     {
         sprintf( filename, "log%02d.txt", file_num );
@@ -347,7 +349,7 @@ inline void write_data_to_SD ( void )
     else if ( iter == 1000 )
     {
         file_close();
-        if ( file_num++ == 30 )
+        if ( file_num++ == 1 )
         {
             writing_flag = 0;
             debug( "Done" );
@@ -361,8 +363,14 @@ inline void write_data_to_SD ( void )
     }
     else
     {
-        sprintf( buffer_tmp, "%06d test str\n", iter );
-        file_write( buffer_tmp, 16 );
+        WRITE_PRESSURE_VAL( buffer, bmp180_press, 0 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.x_gyro, 4 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.y_gyro, 6 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.z_gyro, 8 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.x_accel, 10 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.y_accel, 12 );
+        WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.z_accel, 14 );
+        file_write( buffer, 16 );
     }
     iter++;
 }

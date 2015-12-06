@@ -37,7 +37,15 @@ static Task_t       *tasks_list = NULL,
 
 int init_sd_file_io ( void )
 {
-    
+    spi_set_speed( FREQ_125K );
+    if ( init_FAT32() < 0 )
+    {
+        debug("FAT32 not found!");
+        while(1);
+    }
+    spi_set_speed( FREQ_16000K );
+    PROCESSING_TRIS = 0;
+    PROCESSING_LIGHT = 1;
     return( 0 );
 }
 
@@ -99,9 +107,10 @@ int file_process_tasks ( void )
 {
     if ( tasks_list == NULL )
     {
+        PROCESSING_LIGHT = 1;
         return( 0 );
     }
-    
+    PROCESSING_LIGHT = 0;
     switch ( tasks_list->type )
     {
         case OPEN_FILE:
@@ -178,7 +187,7 @@ int file_close ( void )
 }
 
 
-int file_write( char *buffer, uint16_t buffer_length )
+int file_write( uint8_t *buffer, uint16_t buffer_length )
 {
     memcpy( &data_buffer[current_buffer][data_offset], buffer, buffer_length );
     data_offset += buffer_length;
