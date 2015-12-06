@@ -1,0 +1,6 @@
+/Libraries/Periphery_lib.X/build/default/
+/Quadro.X/build/default/
+/Libraries/Periphery_lib.X/dist/default/
+/Quadro.X/dist/default/
+*.txt
+*.TXT
