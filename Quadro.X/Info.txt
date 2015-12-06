@@ -1,0 +1,12 @@
+Timers:
+ - 1-Time measurement while calibrating
+ - 2-Input capture
+ - 3-Watchdog timer of input control
+ - 6,7-Delays
+ - 8,9-Time measurement
+ - 4,5-Sensors frequency settings
+
+Current project working on external 32 MHz!!
+When starting changing this must be fixed timers times!
+
+Set AR leg to diode for looking when calibration is active!
