@@ -53,21 +53,21 @@ typedef enum
     PRESS
 }BMP180_Stage_t;
 
-uint8_t bmp180_get_id();
+uint8_t bmp180_get_id ( void );
 int8_t bmp180_init( uint8_t oversampling );
-uint16_t bmp180_get_raw_temperature();
-float bmp180_get_temperature_C(); //Full protocol function
-float bmp180_get_temperature_F();
-uint32_t bmp180_get_raw_pressure();
-uint32_t bmp180_get_pressure();
-float bmp180_get_altitude(uint32_t pressure, float seaLevelPressure);
+uint16_t bmp180_get_raw_temperature ( void );
+float bmp180_get_temperature_C ( void ); //Full protocol function
+float bmp180_get_temperature_F ( void );
+uint32_t bmp180_get_raw_pressure ( void );
+uint32_t bmp180_get_pressure ( void );
+float bmp180_get_altitude (uint32_t pressure, float seaLevelPressure);
 
 /* Special API */
-void bmp180_send_temperature_signal();
-void bmp180_send_pressure_signal();
-uint8_t bmp180_data_ready();
-float bmp180_read_temperature_C(); //Half-part protocol function, just read from register and convert
-uint32_t bmp180_read_pressure();
+void bmp180_send_temperature_signal ( void );
+void bmp180_send_pressure_signal ( void );
+uint8_t bmp180_data_ready ( void );
+float bmp180_read_temperature_C ( void ); //Half-part protocol function, just read from register and convert
+uint32_t bmp180_read_pressure ( void );
 
 #endif	/* BMP180_H_ */
 

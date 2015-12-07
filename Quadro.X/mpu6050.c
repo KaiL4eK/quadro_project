@@ -6,8 +6,11 @@ static uint8_t              buffer[14],
                             init_flag = 0;
 static gyro_accel_data_t    raw_gyr_acc;
 
-int mpu6050_init()
+int mpu6050_init ( void )
 {
+    if ( mpu6050_get_id() != 0x68 )
+        return( -1 );
+
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
     mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
@@ -23,18 +26,13 @@ int mpu6050_init()
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
-    if ( !mpu6050_get_id() )
-    {
-        return( -1 );
-    }
-    
     init_flag = 1;
     return( 0 );
 }
 
 #define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
 
-int8_t mpu6050_receive_gyro_accel_raw_data( void )
+int8_t mpu6050_receive_gyro_accel_raw_data ( void )
 {
     if ( !init_flag )
         return( -1 );
@@ -54,7 +52,7 @@ int8_t mpu6050_receive_gyro_accel_raw_data( void )
     return( 0 );
 }
 
-void send_UART_mpu6050_data( void )
+void send_UART_mpu6050_data ( void )
 {
     char buffer_s[256];
     sprintf( buffer_s, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d",
@@ -68,61 +66,61 @@ void send_UART_mpu6050_data( void )
     UART_writeln_string(buffer_s);  
 }
 
-void mpu6050_get_gyro_accel_raw_data( gyro_accel_data_t *out_gyr_acc_data )
+void mpu6050_get_gyro_accel_raw_data ( gyro_accel_data_t *out_gyr_acc_data )
 {
     memcpy( out_gyr_acc_data, &raw_gyr_acc, sizeof(raw_gyr_acc) );
 }
 
-bool mpu6050_get_id()
+uint8_t mpu6050_get_id ( void )
 {
-    uint8_t mpu_id = i2c_read_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I );
-    return ( mpu_id == 0x68 ? true : false );
+    return( i2c_read_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I ) );
 }
 
-void mpu6050_set_sleep_bit( uint8_t value )
+void mpu6050_set_sleep_bit ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_PWR_MGMT_1, 
             MPU6050_PWR1_SLEEP_BIT, 1, value );
 }
 
-void mpu6050_set_clock_source( uint8_t value )
+void mpu6050_set_clock_source ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_PWR_MGMT_1, 
             MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, value );
 }
 
-void mpu6050_set_DLPF( uint8_t value )
+void mpu6050_set_DLPF ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_CONFIG, 
             MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, value );
 }
 
-void mpu6050_set_gyro_fullscale( uint8_t value )
+void mpu6050_set_gyro_fullscale ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_GYRO_CONFIG,
             MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, value );
 }
 
-void mpu6050_set_accel_fullscale( uint8_t value )
+void mpu6050_set_accel_fullscale ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 
             MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, value );
 }
 
-void mpu6050_set_interrupt_data_rdy_bit( uint8_t value )
+void mpu6050_set_interrupt_data_rdy_bit ( uint8_t value )
 {
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_INT_ENABLE, 
             MPU6050_INTERRUPT_DATA_RDY_BIT, 1, value );
 }
 
-void mpu6050_set_sample_rate_divider( uint8_t value )
+void mpu6050_set_sample_rate_divider ( uint8_t value )
 {
     i2c_write_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_SMPLRT_DIV, value );
 }
 
 // XA_OFFS_* registers
 
-int16_t MPU6050_getXAccelOffset() {
+int16_t MPU6050_getXAccelOffset ( void ) 
+{
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_XA_OFFS_H, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
@@ -136,47 +134,56 @@ int16_t MPU6050_getYAccelOffset() {
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_YA_OFFS_H, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
-void mpu6050_setYAccelOffset(int16_t offset) {
+void mpu6050_setYAccelOffset ( int16_t offset ) 
+{
     i2c_write_word_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_YA_OFFS_H, offset);
 }
 
 // ZA_OFFS_* register
 
-int16_t MPU6050_getZAccelOffset() {
+int16_t MPU6050_getZAccelOffset ( void ) 
+{
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZA_OFFS_H, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
-void mpu6050_setZAccelOffset(int16_t offset) {
+void mpu6050_setZAccelOffset ( int16_t offset ) 
+{
     i2c_write_word_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZA_OFFS_H, offset);
 }
 
 // XG_OFFS_USR* registers
 
-int16_t MPU6050_getXGyroOffset() {
+int16_t MPU6050_getXGyroOffset ( void ) 
+{
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_XG_OFFS_USRH, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
-void mpu6050_setXGyroOffset(int16_t offset) {
+void mpu6050_setXGyroOffset ( int16_t offset ) 
+{
     i2c_write_word_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_XG_OFFS_USRH, offset);
 }
 
 // YG_OFFS_USR* register
 
-int16_t MPU6050_getYGyroOffset() {
+int16_t MPU6050_getYGyroOffset ( void ) 
+{
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_YG_OFFS_USRH, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
-void mpu6050_setYGyroOffset(int16_t offset) {
+void mpu6050_setYGyroOffset ( int16_t offset ) 
+{
     i2c_write_word_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_YG_OFFS_USRH, offset);
 }
 
 // ZG_OFFS_USR* register
 
-int16_t MPU6050_getZGyroOffset() {
+int16_t MPU6050_getZGyroOffset ( void ) 
+{
     i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZG_OFFS_USRH, buffer, 2);
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
-void mpu6050_setZGyroOffset(int16_t offset) {
+void mpu6050_setZGyroOffset ( int16_t offset ) 
+{
     i2c_write_word_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZG_OFFS_USRH, offset);
 }
 
@@ -189,7 +196,7 @@ uint16_t giro_deadzone=1;     //Giro error allowed, make it lower to get more pr
 int16_t mean_ax,mean_ay,mean_az,mean_gx,mean_gy,mean_gz,state=0;
 int16_t ax_offset,ay_offset,az_offset,gx_offset,gy_offset,gz_offset;
 
-void mean_sensors()
+static void mean_sensors ( void )
 {
     int64_t i=0,buff_ax=0,buff_ay=0,buff_az=0,buff_gx=0,buff_gy=0,buff_gz=0;
     while (i<(buffersize+101)){
@@ -215,7 +222,7 @@ void mean_sensors()
     }
 }
 
-void mpu6050_calibration()
+void mpu6050_calibration ( void )
 {
     mpu6050_setXAccelOffset(0);
     mpu6050_setYAccelOffset(0);

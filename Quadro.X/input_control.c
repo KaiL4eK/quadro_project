@@ -24,7 +24,7 @@ static void init_channel_5();
 /*      MAIN INITIALIZATION     */
 /********************************/
 #define LOSS_LIGHT      _LATA3
-#define TRIS_LOSS_LIGHT _TRISA3
+#define TRIS_LOSS_L     _TRISA3
 #define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 0; LOSS_LIGHT = 1;}
 
 void ic_find_control()
@@ -65,7 +65,7 @@ void init_input_control()
     T2CONbits.TCKPS = TIMER_DIV_1;
     TMR2 = 0;
     PR2 = UINT16_MAX;
-    TRIS_LOSS_LIGHT = 0;
+    TRIS_LOSS_L = 0;
     init_channel_1();
     init_channel_2();
     init_channel_3();

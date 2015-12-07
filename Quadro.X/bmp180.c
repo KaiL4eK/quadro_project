@@ -9,7 +9,7 @@ int16_t     ac1, ac2, ac3, b1, b2, mc, mb, md;
 uint16_t    ac4, ac5, ac6;
 int32_t     B5;
 
-static void bmp180_load_calibration()
+static void bmp180_load_calibration ( void )
 {
     uint8_t c_buffer[22];
     memset( c_buffer, 0, sizeof(c_buffer) );
@@ -43,7 +43,7 @@ UART_writeln_string("/____________________/");
     calibration_loaded = true;
 }
 
-int8_t bmp180_init( uint8_t oversampling )
+int8_t bmp180_init ( uint8_t oversampling )
 {
     if ( oversampling >= BMP085_ULTRALOWPOWER && oversampling <= BMP085_ULTRAHIGHRES )
         measure_mode = oversampling;
@@ -51,47 +51,46 @@ int8_t bmp180_init( uint8_t oversampling )
         return( -1 );
     
     if ( bmp180_get_id() != 0x55 )
-    {
         return( -1 );
-    }
+    
     bmp180_load_calibration();
     bmp180_send_temperature_signal();
+    
     init_flag = 1;
     return( 0 );
 }
 
-uint8_t bmp180_get_id()
+uint8_t bmp180_get_id ( void )
 {
-    i2c_read_bytes_eeprom(BMP085_I2C_ADDRESS, BMP085_RA_ID, buffer, 1);
-    return ( buffer[0] );
+    return ( i2c_read_byte_eeprom( BMP085_I2C_ADDRESS, BMP085_RA_ID ) );
 }
 
 /* control register methods */
 
-static uint8_t get_control() 
+static uint8_t get_control ( void ) 
 {
     i2c_read_bytes_eeprom(BMP085_I2C_ADDRESS, BMP085_RA_CONTROL, buffer, 1);
     return( buffer[0] );
 }
 
-static void set_control(uint8_t value) 
+static void set_control ( uint8_t value ) 
 {
     i2c_write_byte_eeprom(BMP085_I2C_ADDRESS, BMP085_RA_CONTROL, value);
 }
 
-static uint16_t get_measurement_2() 
+static uint16_t get_measurement_2 ( void ) 
 {
     i2c_read_bytes_eeprom(BMP085_I2C_ADDRESS, BMP085_RA_MSB, buffer, 2);
     return ((uint16_t)buffer[0] << 8) | buffer[1];
 }
 
-static uint32_t get_measurement_3() 
+static uint32_t get_measurement_3 ( void ) 
 {
     i2c_read_bytes_eeprom(BMP085_I2C_ADDRESS, BMP085_RA_MSB, buffer, 3);
     return ((uint32_t)buffer[0] << 16) | ((uint16_t)buffer[1] << 8) | buffer[2];
 }
 
-static void delay_temperature() 
+static void delay_temperature ( void ) 
 {
 #ifdef DELAY_US_
     delay_us( 4500 );
@@ -100,7 +99,7 @@ static void delay_temperature()
 #endif
 }
 
-static void delay_pressure() 
+static void delay_pressure ( void ) 
 {
     switch( measure_mode )
     {
@@ -141,7 +140,8 @@ static void delay_pressure()
     }
 }
 
-static int32_t compute_B5(int32_t UT) {
+static int32_t compute_B5 ( int32_t UT ) 
+{
   int32_t X1 = (UT - (int32_t)ac6) * ((int32_t)ac5) >> 15;
   int32_t X2 = ((int32_t)mc << 11) / (X1+(int32_t)md);
   return( X1 + X2 );
@@ -149,31 +149,31 @@ static int32_t compute_B5(int32_t UT) {
 
 /* Special API */
 
-void bmp180_send_temperature_signal()
+void bmp180_send_temperature_signal ( void )
 {
     set_control( BMP085_MODE_TEMPERATURE );
 }
 
-void bmp180_send_pressure_signal()
+void bmp180_send_pressure_signal ( void )
 {
     set_control( BMP085_MODE_PRESSURE | (measure_mode << 6) );
 }
 
-uint8_t bmp180_data_ready()
+uint8_t bmp180_data_ready ( void )
 {
     if ( !init_flag )
         return( 0 );
     return( !((get_control() >> 5) & 0x1) );
 }
 
-float bmp180_read_temperature_C() 
+float bmp180_read_temperature_C ( void ) 
 {
     int32_t ut = get_measurement_2();
     B5 = compute_B5( ut );
     return( (float)((B5 + 8) >> 4) / 10.0f );
 }
 
-uint32_t bmp180_read_pressure()
+uint32_t bmp180_read_pressure ( void )
 {
     int32_t up = (get_measurement_3() >> (8 - measure_mode)),
             p, B3, B6, X1, X2, X3;
@@ -200,14 +200,14 @@ uint32_t bmp180_read_pressure()
 }
 /* ----------------------- */
 
-uint16_t bmp180_get_raw_temperature() 
+uint16_t bmp180_get_raw_temperature ( void ) 
 {
     set_control(BMP085_MODE_TEMPERATURE);
     delay_temperature();    
     return( get_measurement_2() );
 }
 
-float bmp180_get_temperature_C() 
+float bmp180_get_temperature_C ( void )
 {
     /*
     Datasheet formula:
@@ -222,19 +222,19 @@ float bmp180_get_temperature_C()
     return( (float)((B5 + 8) >> 4) / 10.0f );
 }
 
-float bmp180_get_temperature_F() 
+float bmp180_get_temperature_F ( void ) 
 {
     return( bmp180_get_temperature_C() * 9.0f / 5.0f + 32 );
 }
 
-uint32_t bmp180_get_raw_pressure() 
+uint32_t bmp180_get_raw_pressure ( void ) 
 {
     set_control(BMP085_MODE_PRESSURE | (measure_mode << 6));
     delay_pressure();
     return( get_measurement_3() >> (8 - measure_mode) );
 }
 
-uint32_t bmp180_get_pressure()
+uint32_t bmp180_get_pressure ( void )
 {
     /*
     Datasheet forumla
@@ -280,7 +280,7 @@ uint32_t bmp180_get_pressure()
     return( p + ((X1 + X2 + (int32_t)3791) >> 4) );
 }
 
-float bmp180_get_altitude(uint32_t pressure, float seaLevelPressure)
+float bmp180_get_altitude ( uint32_t pressure, float seaLevelPressure )
 {
     return( 44330 * (1.0 - pow(pressure / seaLevelPressure, 0.1903)) );
 }

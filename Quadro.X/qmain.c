@@ -29,6 +29,8 @@ void sensors_timer_init( void )
     T4CONbits.TON = 1;
 }
 
+static int file_num = 0;
+
 int main(void) 
 {
     OFF_WATCH_DOG_TIMER;
@@ -36,8 +38,14 @@ int main(void)
 #ifndef FREQ_32MHZ
     setup_PLL_oscillator();
 #endif
+    INIT_ERR_L;
     init_UART1( 57600 );
     debug( "/------------------------/" );
+    debug( "UART initialized" );
+    flash_read();
+    file_num = flash_get( FILE_NUM );
+    file_num = file_num < 0 ? 0 : file_num;
+    debug( "Flash successfully read" );
 //    ADC_init();
 //    motors_init();
 //    debug( "Motors initialized" );
@@ -47,30 +55,35 @@ int main(void)
 //    debug( "IC found" );
 //    ic_make_calibration();
 //    debug("IC calibrated");
-//    spi_init();
-//    debug( "SPI initialized" );
-//    init_sd_file_io();
-//    debug( "SD initialized" );
+    spi_init();
+    debug( "SPI initialized" );
+    init_sd_file_io();
+    debug( "SD initialized" );
     i2c_init( 400000 );
     debug( "I2C initialized" );
     if ( mpu6050_init() != 0 )
     {
-        debug("Bad MPU init");
+        debug("Failed MPU init");
         error_process();
     }
     debug( "MPU6050 initialized" );
 //    mpu6050_calibration();
     if ( bmp180_init(BMP085_STANDARD) != 0 )
     {
-        debug("Bad BMP init");
+        debug("Failed BMP init");
         error_process();
     }
     debug( "BMP180 initialized" );
-//    hmc5883l_init();
+    if ( hmc5883l_init() != 0 )
+    {
+        debug("Failed HMC init");
+        error_process();
+    }
     debug( "HMC5883L initialized" );
     sensors_timer_init();
-    
+
     debug( "Let`s begin!" );
+    
     
     while( 1 )
     {   
@@ -265,7 +278,7 @@ inline void process_control_system ( void )
 */
 }
 
-uint8_t writing_flag = 0;
+uint8_t writing_flag = 1;
 
 char    filename[16];
 
@@ -280,18 +293,20 @@ char    filename[16];
 inline void write_data_to_SD ( void )
 {
     static uint16_t iter = 0;
-    static uint8_t  file_num = 0;
     uint8_t buffer[16];
 
     if ( iter == 0 )
     {
-        sprintf( filename, "log%02d.txt", file_num );
+        sprintf( filename, "log%02d.txt", file_num++ );
         file_open( filename );
     }
-    else if ( iter == 1000 )
+    else if ( iter == 100 )
     {
+            
+        flash_set( FILE_NUM, file_num );
+        flash_flush();
         file_close();
-        if ( file_num++ == 1 )
+        if ( !(file_num % 3) )
         {
             writing_flag = 0;
             debug( "Done" );

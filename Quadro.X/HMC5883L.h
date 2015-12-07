@@ -115,14 +115,15 @@ typedef struct
             z_magnet;
 }magnetic_data_t;
 
-void hmc5883l_init();
-int8_t hmc5883l_receive_mag_raw_data();
-void hmc5883l_get_scaled_mag_data( magnetic_data_t *out_mag_data );
-void hmc5883l_set_magnetic_gain( Hmc5883l_mag_gain_t gain );
-void send_UART_magnetic_raw_data();
-void hmc5883l_set_continious_operating_mode();
-void hmc5883l_set_output_rate( Hmc5883l_output_rate_t rate );
-void hmc5883l_set_averaged_samples( Hmc5883l_avrg_samples_t avrgd_smpls );
+int hmc5883l_init ( void );
+uint8_t hmc5883l_get_id ( void );
+int8_t hmc5883l_receive_mag_raw_data ( void );
+void hmc5883l_get_scaled_mag_data ( magnetic_data_t *out_mag_data );
+void hmc5883l_set_magnetic_gain ( Hmc5883l_mag_gain_t gain );
+void send_UART_magnetic_raw_data ( void );
+void hmc5883l_set_continious_operating_mode ( void );
+void hmc5883l_set_output_rate ( Hmc5883l_output_rate_t rate );
+void hmc5883l_set_averaged_samples ( Hmc5883l_avrg_samples_t avrgd_smpls );
 
 #endif	/* HMC5883L_H_ */
 
