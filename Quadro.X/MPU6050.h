@@ -40,7 +40,7 @@ typedef union
   } value;
 }gyro_accel_data_t;
 
-void mpu6050_init();
+int mpu6050_init();
 void send_UART_mpu6050_data( void );
 int8_t mpu6050_receive_gyro_accel_raw_data( void );
 void mpu6050_get_gyro_accel_raw_data( gyro_accel_data_t *out_gyr_acc_data );
@@ -51,6 +51,8 @@ void mpu6050_set_gyro_fullscale( uint8_t value );
 void mpu6050_set_accel_fullscale( uint8_t value );
 void mpu6050_set_interrupt_data_rdy_bit( uint8_t value );
 void mpu6050_set_sample_rate_divider( uint8_t value );
+
+bool mpu6050_get_id();
 
 void mpu6050_calibration();
 

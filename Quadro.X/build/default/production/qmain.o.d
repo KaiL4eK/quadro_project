@@ -7,6 +7,4 @@ BMP180.h  \
 input_control.h  \
 motor_control.h  \
 per_proto.h  \
-FAT32.h  \
-SDcard.h  \
- file_io.h 
+file_io.h 

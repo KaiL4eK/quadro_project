@@ -37,7 +37,7 @@ int8_t i2c_write_byte_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t da
 int8_t i2c_write_word_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint16_t data);
 int8_t i2c_write_bits_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t bit_start, uint8_t length, uint8_t data);
 int8_t i2c_read_bytes_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t *data, uint8_t lenght);
-int8_t i2c_read_byte_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t *data);
+uint8_t i2c_read_byte_eeprom(uint8_t slave_addr, uint8_t eeprom_addr);
 
 typedef enum
 {

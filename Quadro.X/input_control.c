@@ -9,7 +9,9 @@ static Calibrated_control_t clbr_control_raw = { { 16839, 30125, 23482 },   //Ro
                                                  { 16787, 30145, 23466 }
                                                 };
 static Control_values_t     dir_values;
-static uint8_t              /* calibration_flag = 0, */input_control_online_flag = 0;
+static uint8_t              // calibration_flag = 0,
+                            input_control_online_flag = 0,
+                            init_flag = 0;
 
 /* Prototypes */
 static void init_channel_1();
@@ -71,6 +73,7 @@ void init_input_control()
     init_channel_5();
     T2CONbits.TON = 1;
     init_watch_dog_timer();
+    init_flag = 1;
 }
 
 /********************************/
@@ -167,7 +170,7 @@ int8_t get_direction_values( Control_values_t *out_dir_vals )
     Control_t tmp_count_cntrl_raw;
     
     memcpy( &tmp_count_cntrl_raw, &control_raw, sizeof( control_raw ) );
-    if ( input_control_online_flag == 0 )
+    if ( !input_control_online_flag || !init_flag )
     {
         tmp_count_cntrl_raw.channel_1 = clbr_control_raw.channel_1.mid;
         tmp_count_cntrl_raw.channel_2 = clbr_control_raw.channel_2.mid;

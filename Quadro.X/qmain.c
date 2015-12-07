@@ -5,11 +5,9 @@
 #include "input_control.h"
 #include "motor_control.h"
 #include "per_proto.h"
-#include "FAT32.h"
-#include "SDcard.h"
 #include "file_io.h"
 
-long long get_clock_freq() { return( FCY ); }
+long long fcy() { return( FCY ); }
 
 #ifdef FREQ_32MHZ
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
@@ -18,46 +16,6 @@ _FOSCSEL(FNOSC_PRIPLL & IESO_OFF);
 #endif
 _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
 _FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
-
-#ifdef NOT_USED
-static void 
-send_UART_sensors_data( void )
-{
-#ifndef UART_SENSORS_DEBUG
-    uint16_t buffer[8];
-    UART_write_byte( CONTROL_BYTE ); // Control byte - make control summ
-//    buffer[0] = curr_data_accel_gyro.value.x_gyro;
-//    buffer[1] = curr_data_accel_gyro.value.y_gyro;
-//    buffer[2] = curr_data_accel_gyro.value.z_gyro;
-//    buffer[3] = curr_data_accel_gyro.value.x_accel; 
-//    buffer[4] = curr_data_accel_gyro.value.y_accel; 
-//    buffer[5] = curr_data_accel_gyro.value.z_accel;
-//    buffer[6] = time_elapsed_us;
-//    buffer[7] = potenc_value;
-    buffer[0] = current_angles.pitch;
-//    buffer[1] = potenc_value;
-    buffer[1] = control_values.pitch*MAX_CONTROL_ANGLE;//input_control_pitch*MAX_CONTROL_ANGLE;
-//    buffer[3] = current_angles.acc_x;
-//    buffer[4] = current_angles.gyr_delta_x;
-    UART_write_words( buffer, 2 );
-    UART_write_byte( CONTROL_BYTE ); // Control byte - make control summ
-//    UART_write_int16( current_angles.pitch );
-#else
-//    send_UART_mpu6050_data();
-    char buffer_s[256];
-    sprintf( buffer_s, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d#R:%05d",
-                curr_data_accel_gyro.value.x_gyro, 
-                curr_data_accel_gyro.value.y_gyro, 
-                curr_data_accel_gyro.value.z_gyro,
-                curr_data_accel_gyro.value.x_accel, 
-                curr_data_accel_gyro.value.y_accel, 
-                curr_data_accel_gyro.value.z_accel,
-                potenc_value
-            );
-    UART_writeln_string(buffer_s);
-#endif
-}
-#endif
 
 void sensors_timer_init( void )
 {
@@ -89,18 +47,22 @@ int main(void)
 //    debug( "IC found" );
 //    ic_make_calibration();
 //    debug("IC calibrated");
-    spi_init();
-    debug( "SPI initialized" );
-    init_sd_file_io();
-    debug( "SD initialized" );
+//    spi_init();
+//    debug( "SPI initialized" );
+//    init_sd_file_io();
+//    debug( "SD initialized" );
     i2c_init( 400000 );
     debug( "I2C initialized" );
-    mpu6050_init();
-//    mpu6050_calibration();
+    if ( mpu6050_init() != 0 )
+    {
+        debug("Bad MPU init");
+        error_process();
+    }
     debug( "MPU6050 initialized" );
+//    mpu6050_calibration();
     if ( bmp180_init(BMP085_STANDARD) != 0 )
     {
-        debug("Bad init");
+        debug("Bad BMP init");
         error_process();
     }
     debug( "BMP180 initialized" );
@@ -381,7 +343,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
     hmc5883l_receive_mag_raw_data();
     hmc5883l_get_scaled_mag_data( &curr_data_mag ); // In mGauss
-//    get_direction_values( &control_values );
+    get_direction_values( &control_values );
 //    potenc_value = ADC_read() - 3655; // 3655 - mid of construction
     process_angles_counts();
 //    process_control_system();

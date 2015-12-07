@@ -107,7 +107,7 @@ int add_task ( TaskType_t task, uint8_t buffer_num, char *filename )
 
 int file_process_tasks ( void )
 {
-    if ( tasks_list == NULL )
+    if ( tasks_list == NULL || !init_flag )
     {
         PROCESSING_LIGHT = 1;
         return( 0 );

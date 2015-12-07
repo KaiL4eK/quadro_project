@@ -2,9 +2,9 @@
 #define	EXTERNAL_PERIPHERY_H_
 
 
-long long   get_clock_freq();
+long long fcy();
 
-#define FCY     get_clock_freq()
+#define FCY     fcy()
 
 #endif	/* EXTERNAL_PERIPHERY_H_ */
 

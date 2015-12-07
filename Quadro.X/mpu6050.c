@@ -6,7 +6,7 @@ static uint8_t              buffer[14],
                             init_flag = 0;
 static gyro_accel_data_t    raw_gyr_acc;
 
-void mpu6050_init()
+int mpu6050_init()
 {
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
@@ -23,7 +23,13 @@ void mpu6050_init()
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
+    if ( !mpu6050_get_id() )
+    {
+        return( -1 );
+    }
+    
     init_flag = 1;
+    return( 0 );
 }
 
 #define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
@@ -67,18 +73,11 @@ void mpu6050_get_gyro_accel_raw_data( gyro_accel_data_t *out_gyr_acc_data )
     memcpy( out_gyr_acc_data, &raw_gyr_acc, sizeof(raw_gyr_acc) );
 }
 
-/**
- * Not completed, must be checked
- * @return 
- */
-#ifdef NOT_DONE
-bool mpu6050_test_connection()
+bool mpu6050_get_id()
 {
-    i2c_read_bytes_eeprom( MPU6050_I2C_ADDRESS, MPU6050_WHO_AM_I, buffer, 1 );
-    UART_write_hint( buffer[0] );
-    return ( buffer[0] == 0x68 ? true : false ); //Whyyyyy???
+    uint8_t mpu_id = i2c_read_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I );
+    return ( mpu_id == 0x68 ? true : false );
 }
-#endif /* NOT_DONE */
 
 void mpu6050_set_sleep_bit( uint8_t value )
 {
