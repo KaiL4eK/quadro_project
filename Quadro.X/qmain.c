@@ -9,6 +9,9 @@
 
 long long fcy() { return( FCY ); }
 
+//#define SD_CARD
+#define TEST_MOTOR4
+
 #ifdef FREQ_32MHZ
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
 #else
@@ -17,7 +20,7 @@ _FOSCSEL(FNOSC_PRIPLL & IESO_OFF);
 _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
 _FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
 
-void sensors_timer_init( void )
+void interrupt_timer_init( void )
 {
     T4CONbits.TON = 0;
     T4CONbits.T32 = 1;
@@ -46,7 +49,6 @@ int main(void)
     file_num = flash_get( FILE_NUM );
     file_num = file_num < 0 ? 0 : file_num;
     debug( "Flash successfully read" );
-//    ADC_init();
     motors_init();
     debug( "Motors initialized" );
     init_input_control();
@@ -54,11 +56,13 @@ int main(void)
     ic_find_control();
     debug( "IC found" );
 //    ic_make_calibration();
-//    debug("IC calibrated");   
-//    spi_init();
-//    debug( "SPI initialized" );
-//    init_sd_file_io();
-//    debug( "SD initialized" );
+//    debug("IC calibrated");
+#ifdef SD_CARD
+    spi_init();
+    debug( "SPI initialized" );
+    init_sd_file_io();
+    debug( "SD initialized" );
+#endif /* SD_CARD */
     i2c_init( 400000 );
     debug( "I2C initialized" );
     if ( mpu6050_init() != 0 )
@@ -79,10 +83,8 @@ int main(void)
         error_process();
     }
     debug( "HMC5883L initialized" );
-    sensors_timer_init();
-
+    interrupt_timer_init();
     debug( "Let`s begin!" );
-    
     
     while( 1 )
     {   
@@ -122,9 +124,10 @@ static void process_UART_input_command( uint8_t input )
     sprintf( buffer_s, "%d, %d, %d", 
                         prop_k, integr_k, differ_k
             );
-    UART_writeln_string( buffer_s );
+    debug( buffer_s );
 }
 
+#ifdef TEST_MOTOR4
 uint16_t    test_throttle = 0;
 #define THROTTLE_STEP   1000
 static void process_UART_input_command2( uint8_t input )
@@ -142,12 +145,12 @@ static void process_UART_input_command2( uint8_t input )
     }
     idebug( "P", test_throttle );
 }
+#endif /* TEST_MOTOR4 */
 
 static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
 static magnetic_data_t      curr_data_mag;
 static Angles_t             current_angles = { 0, 0, 0 };
-//static uint16_t             potenc_value = 0;
 static uint16_t             time_elapsed_us = 0;
 
 static BMP180_Stage_t       bmp_rcv_data_stage = TEMP;
@@ -195,11 +198,13 @@ static int32_t  diff = 0, prev_pitch = 0, pitch_error = 0;
                             control_values.rudder < START_ANGLES && \
                             control_values.roll < START_ANGLES && \
                             control_values.pitch < START_ANGLES )
-
+#ifdef TEST_MOTOR4
 static uint8_t power_flag = 0;
+#endif /* TEST_MOTOR4 */
 
 inline void process_control_system ( void )
 {
+#ifdef TEST_MOTOR4
     if ( power_flag != control_values.two_pos_switch )
     {
         power_flag = control_values.two_pos_switch;
@@ -216,6 +221,8 @@ inline void process_control_system ( void )
     
     process_UART_input_command2( UART_get_last_received_command() );
     set_motor4_power( test_throttle );
+#endif /* TEST_MOTOR4 */
+    
 #ifdef MAGNET
     float angle = atan2( curr_data_mag.y_magnet, curr_data_mag.x_magnet )*RADIANS_TO_DEGREES;
 
@@ -282,9 +289,8 @@ inline void process_control_system ( void )
 */
 }
 
-uint8_t writing_flag = 0;
-
-char    filename[16];
+#ifdef SD_CARD
+static uint8_t writing_flag = 0;
 
 #define WRITE_PRESSURE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 24) & 0xff; \
                                                 buf[(off)+1] = ((val) >> 16) & 0xff; \
@@ -294,36 +300,30 @@ char    filename[16];
 #define WRITE_TWO_BYTE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 8) & 0xff; \
                                                 buf[(off)+1] = ((val)     ) & 0xff; }
 
-inline void write_data_to_SD ( void )
+inline void process_saving_data ( void )
 {
-    static uint16_t iter = 0;
-    uint8_t buffer[16];
-
-    if ( iter == 0 )
+    if ( writing_flag != control_values.two_pos_switch )
     {
-        sprintf( filename, "log%02d.txt", file_num++ );
-        file_open( filename );
-    }
-    else if ( iter == 100 )
-    {
-            
-        flash_set( FILE_NUM, file_num );
-        flash_flush();
-        file_close();
-        if ( !(file_num % 3) )
+        writing_flag = control_values.two_pos_switch;
+        if ( writing_flag )
         {
-            writing_flag = 0;
-            debug( "Done" );
+            char filename[16];
+            sprintf( filename, "log%d.txt", file_num++ );
+            file_open( filename );
+            return;
         }
         else
         {
-            iter = 0;
-            _T5IF = 0;
+            file_close();
+            flash_set( FILE_NUM, file_num );
+            flash_flush();
             return;
         }
     }
-    else
+    
+    if ( writing_flag )
     {
+        uint8_t buffer[16];
         WRITE_PRESSURE_VAL( buffer, bmp180_press, 0 );
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.x_gyro, 4 );
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.y_gyro, 6 );
@@ -333,8 +333,8 @@ inline void write_data_to_SD ( void )
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.z_accel, 14 );
         file_write( buffer, 16 );
     }
-    iter++;
 }
+#endif /* SD_CARD */
 
 void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 {
@@ -360,14 +360,17 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     }
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
+    
     hmc5883l_receive_mag_raw_data();
     hmc5883l_get_scaled_mag_data( &curr_data_mag ); // In mGauss
+    
     get_direction_values( &control_values );
-//    potenc_value = ADC_read() - 3655; // 3655 - mid of construction
+    
     process_angles_counts();
     process_control_system();
-    if ( writing_flag )
-        write_data_to_SD();
+#ifdef SD_CARD
+    process_saving_data();
+#endif /* SD_CARD */
     
 //    time_elapsed_us = timer_stop()/TIMER_US_TICK;
 //    idebug( "T", time_elapsed_us );
