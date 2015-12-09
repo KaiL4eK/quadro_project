@@ -54,12 +54,11 @@ int main(void)
     ic_find_control();
     debug( "IC found" );
 //    ic_make_calibration();
-//    debug("IC calibrated");
-#ifdef SENSORS    
-    spi_init();
-    debug( "SPI initialized" );
-    init_sd_file_io();
-    debug( "SD initialized" );
+//    debug("IC calibrated");   
+//    spi_init();
+//    debug( "SPI initialized" );
+//    init_sd_file_io();
+//    debug( "SD initialized" );
     i2c_init( 400000 );
     debug( "I2C initialized" );
     if ( mpu6050_init() != 0 )
@@ -68,7 +67,6 @@ int main(void)
         error_process();
     }
     debug( "MPU6050 initialized" );
-//    mpu6050_calibration();
     if ( bmp180_init(BMP085_STANDARD) != 0 )
     {
         debug("Failed BMP init");
@@ -81,7 +79,6 @@ int main(void)
         error_process();
     }
     debug( "HMC5883L initialized" );
-#endif
     sensors_timer_init();
 
     debug( "Let`s begin!" );
@@ -209,10 +206,10 @@ inline void process_control_system ( void )
         if ( control_values.two_pos_switch )
         {
             set_motors_started( MOTOR_4 );
+            test_throttle = 0;
         }
         else
         {
-            test_throttle = 0;
             set_motors_stopped();
         }
     }

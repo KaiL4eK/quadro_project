@@ -16,12 +16,12 @@ int mpu6050_init ( void )
     mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     
-    mpu6050_setXAccelOffset(-3850);
-    mpu6050_setYAccelOffset(320);
-    mpu6050_setZAccelOffset(1715);
+    mpu6050_setXAccelOffset(-3905);
+    mpu6050_setYAccelOffset(333);
+    mpu6050_setZAccelOffset(1721);
     
-    mpu6050_setXGyroOffset(113);
-    mpu6050_setYGyroOffset(-11);
+    mpu6050_setXGyroOffset(114);
+    mpu6050_setYGyroOffset(-12);
     mpu6050_setZGyroOffset(-26);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
@@ -193,7 +193,7 @@ uint16_t buffersize=1000;     //Amount of readings used to average, make it high
 uint16_t acel_deadzone=8;     //Acelerometer error allowed, make it lower to get more precision, but sketch may not converge  (default:8)
 uint16_t giro_deadzone=1;     //Giro error allowed, make it lower to get more precision, but sketch may not converge  (default:1)
 
-int16_t mean_ax,mean_ay,mean_az,mean_gx,mean_gy,mean_gz,state=0;
+int32_t mean_ax,mean_ay,mean_az,mean_gx,mean_gy,mean_gz,state=0;
 int16_t ax_offset,ay_offset,az_offset,gx_offset,gy_offset,gz_offset;
 
 static void mean_sensors ( void )
@@ -233,16 +233,6 @@ void mpu6050_calibration ( void )
     UART_writeln_string("\nReading sensors for first time...");
     mean_sensors();
     UART_writeln_string("\nCalculating offsets...");
-    char buffer_s[256];
-    sprintf( buffer_s, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d",
-                mean_ax,
-                mean_ay,
-                mean_az,
-                mean_gx,
-                mean_gy,
-                mean_gz
-            );
-    UART_writeln_string(buffer_s);
     {
         ax_offset=-mean_ax/8;
         ay_offset=-mean_ay/8;
@@ -252,6 +242,7 @@ void mpu6050_calibration ( void )
         gy_offset=-mean_gy/4;
         gz_offset=-mean_gz/4;
         while (1){
+            send_UART_mpu6050_data();
             int ready=0;
             mpu6050_setXAccelOffset(ax_offset);
             mpu6050_setYAccelOffset(ay_offset);
