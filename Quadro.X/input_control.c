@@ -25,13 +25,13 @@ static void init_channel_5();
 /********************************/
 #define LOSS_LIGHT      _LATA3
 #define TRIS_LOSS_L     _TRISA3
-#define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 0; LOSS_LIGHT = 1;}
+#define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 1; LOSS_LIGHT = 1;}
 
 void ic_find_control()
 {
     LOSS_LIGHT = 1;
     memset( &control_raw, 0, sizeof(control_raw) );
-    while( input_control_online_flag != 1 )
+    while( !input_control_online_flag )
     {
         LOSS_LIGHT = 0;
     }

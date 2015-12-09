@@ -47,14 +47,15 @@ int main(void)
     file_num = file_num < 0 ? 0 : file_num;
     debug( "Flash successfully read" );
 //    ADC_init();
-//    motors_init();
-//    debug( "Motors initialized" );
-//    init_input_control();
-//    debug( "IC initialized" );    
-//    ic_find_control();
-//    debug( "IC found" );
+    motors_init();
+    debug( "Motors initialized" );
+    init_input_control();
+    debug( "IC initialized" );    
+    ic_find_control();
+    debug( "IC found" );
 //    ic_make_calibration();
 //    debug("IC calibrated");
+#ifdef SENSORS    
     spi_init();
     debug( "SPI initialized" );
     init_sd_file_io();
@@ -80,6 +81,7 @@ int main(void)
         error_process();
     }
     debug( "HMC5883L initialized" );
+#endif
     sensors_timer_init();
 
     debug( "Let`s begin!" );
@@ -205,9 +207,14 @@ inline void process_control_system ( void )
     {
         power_flag = control_values.two_pos_switch;
         if ( control_values.two_pos_switch )
+        {
             set_motors_started( MOTOR_4 );
+        }
         else
+        {
+            test_throttle = 0;
             set_motors_stopped();
+        }
     }
     
     process_UART_input_command2( UART_get_last_received_command() );
@@ -278,7 +285,7 @@ inline void process_control_system ( void )
 */
 }
 
-uint8_t writing_flag = 1;
+uint8_t writing_flag = 0;
 
 char    filename[16];
 
@@ -361,7 +368,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     get_direction_values( &control_values );
 //    potenc_value = ADC_read() - 3655; // 3655 - mid of construction
     process_angles_counts();
-//    process_control_system();
+    process_control_system();
     if ( writing_flag )
         write_data_to_SD();
     
