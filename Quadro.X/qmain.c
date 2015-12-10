@@ -36,6 +36,8 @@ void interrupt_timer_init( void )
 static int file_num = 0;
 #endif /* SD_CARD */
 
+static uint32_t    bmp180_initial_press = 0;
+
 int main(void) 
 {
     OFF_WATCH_DOG_TIMER;
@@ -44,6 +46,7 @@ int main(void)
     setup_PLL_oscillator();
 #endif
     INIT_ERR_L;
+    ERR_LIGHT = 0;
     init_UART1( 57600 );
     debug( "/------------------------/" );
     debug( "UART initialized" );
@@ -81,6 +84,8 @@ int main(void)
         error_process();
     }
     debug( "BMP180 initialized" );
+    bmp180_calibrate( &bmp180_initial_press );
+    idebug( "BMP180 calibrated", bmp180_initial_press );
     if ( hmc5883l_init() != 0 )
     {
         debug("Failed HMC init");
@@ -89,6 +94,7 @@ int main(void)
     debug( "HMC5883L initialized" );
     interrupt_timer_init();
     debug( "Let`s begin!" );
+    ERR_LIGHT = 1;
     
     while( 1 )
     {   
@@ -157,16 +163,19 @@ static magnetic_data_t      curr_data_mag;
 static Angles_t             current_angles = { 0, 0, 0 };
 static uint16_t             time_elapsed_us = 0;
 
-static BMP180_Stage_t       bmp_rcv_data_stage = TEMP;
-static float                bmp180_temp = 0;
-static uint32_t             bmp180_press = 0;
+static uint32_t             bmp180_press = 0,
+                            bmp180_temp = 0,    // Temperature is multiplied by TEMP_MULTIPLYER
+                            bmp180_altitude = 0;
+
+// p = p0*exp(-0.0341593/(t+273)*h)
+// h = ln(p0/p) * (t+273)/0.0341593 
 
 #define RADIANS_TO_DEGREES  (180/3.14159)
 #define GYR_COEF            131L // = 65535/2/250
 #define ANGLES_COEFF        1000L
 #define SENS_TIME           2500L/1000000
 
-static void process_angles_counts( void )
+static void process_counts( void )
 {
     gyro_accel_data_t *c_d = &curr_data_accel_gyro;
     
@@ -187,6 +196,8 @@ static void process_angles_counts( void )
     current_angles.pitch = (0.995 * (current_angles.gyr_delta_x + current_angles.pitch)) + 0.005 * current_angles.acc_x;
     current_angles.roll  = (0.995 * (current_angles.gyr_delta_y + current_angles.roll)) + 0.005 * current_angles.acc_y;
     current_angles.yaw   = current_angles.gyr_delta_z + current_angles.yaw;  
+    
+    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
 }
 
 #define START_STOP_COND (   control_values.throttle < THROTTLE_OFF_LIMIT && \
@@ -295,7 +306,7 @@ inline void process_control_system ( void )
 #ifdef SD_CARD
 static uint8_t writing_flag = 0;
 
-#define WRITE_PRESSURE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 24) & 0xff; \
+#define WRITE_ALTITUDE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 24) & 0xff; \
                                                 buf[(off)+1] = ((val) >> 16) & 0xff; \
                                                 buf[(off)+2] = ((val) >> 8 ) & 0xff; \
                                                 buf[(off)+3] = ((val)      ) & 0xff; }
@@ -327,7 +338,7 @@ void process_saving_data ( void )
     if ( writing_flag )
     {
         uint8_t buffer[16];
-        WRITE_PRESSURE_VAL( buffer, bmp180_press, 0 );
+        WRITE_ALTITUDE_VAL( buffer, bmp180_altitude, 0 );
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.x_gyro, 4 );
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.y_gyro, 6 );
         WRITE_TWO_BYTE_VAL( buffer, curr_data_accel_gyro.value.z_gyro, 8 );
@@ -342,25 +353,8 @@ void process_saving_data ( void )
 void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 {
 //    timer_start();
-    switch ( bmp_rcv_data_stage )
-    {
-        case TEMP:
-            if ( bmp180_data_ready() )
-            {
-                bmp180_temp = bmp180_read_temperature_C();
-                bmp180_send_pressure_signal();
-                bmp_rcv_data_stage = PRESS;
-            }
-            break;
-        case PRESS:
-            if ( bmp180_data_ready() )
-            {
-                bmp180_press = bmp180_read_pressure();
-                bmp180_send_temperature_signal();
-                bmp_rcv_data_stage = TEMP;
-            }
-            break;
-    }
+    bmp180_rcv_press_temp_data( &bmp180_press, &bmp180_temp );
+    
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
     
@@ -369,7 +363,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     
     get_direction_values( &control_values );
     
-    process_angles_counts();
+    process_counts();
 //    process_control_system();
 #ifdef SD_CARD
     process_saving_data();
@@ -386,7 +380,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     UART_write_float(angle);
 #endif /* HMC5883L */ 
     
-//    send_UART_control_values();
+    UART_write_float( bmp180_get_altitude( bmp180_press, bmp180_initial_press ) );
     
 //    time_elapsed_us = timer_stop()/TIMER_US_TICK;
 //    idebug( "T", time_elapsed_us );

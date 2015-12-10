@@ -43,6 +43,63 @@ UART_writeln_string("/____________________/");
     calibration_loaded = true;
 }
 
+int bmp180_rcv_press_temp_data( uint32_t *out_pressure, uint32_t *out_temp )
+{
+    static BMP180_Stage_t       bmp_rcv_data_stage = TEMP;
+    static uint32_t             read_temp = 0,
+                                read_press = 0;
+    
+    int                         res = 0;
+    
+    switch ( bmp_rcv_data_stage )
+    {
+        case TEMP:
+            if ( bmp180_data_ready() )
+            {
+                read_temp = bmp180_read_temperature_C() * TEMP_MULTIPLYER;
+                bmp180_send_pressure_signal();
+                bmp_rcv_data_stage = PRESS;
+            }
+            break;
+        case PRESS:
+            if ( bmp180_data_ready() )
+            {
+                read_press = bmp180_read_pressure();
+                bmp180_send_temperature_signal();
+                bmp_rcv_data_stage = TEMP;
+                res = 1;
+            }
+            break;
+    }
+    
+    if ( out_pressure != NULL )
+        *out_pressure = read_press;
+    
+    if ( out_temp != NULL )
+        *out_temp = read_temp;
+    return( res );
+}
+
+#define CALIBRATION_READINGS_AMOUNT 500
+void bmp180_calibrate ( uint32_t *out_pressure )
+{
+    uint64_t    buffer_press = 0;
+    uint32_t    tmp_press = 0;
+    uint16_t    iter = 0;
+    
+    for ( iter = 0; iter < CALIBRATION_READINGS_AMOUNT; )
+    {
+        if ( bmp180_rcv_press_temp_data( &tmp_press, NULL ) )
+        {
+            buffer_press += tmp_press;
+            iter++;
+        }
+    }
+    
+    if ( out_pressure != NULL )
+        *out_pressure = buffer_press/CALIBRATION_READINGS_AMOUNT;
+}
+
 int8_t bmp180_init ( uint8_t oversampling )
 {
     if ( oversampling >= BMP085_ULTRALOWPOWER && oversampling <= BMP085_ULTRAHIGHRES )

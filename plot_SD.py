@@ -44,6 +44,8 @@ sensor_time = 2.5/1000
 gyro_sensitivity = 65535/2/250
 alpha = 0.995
 
+press_init = 100953.0
+
 with open( filename, 'r' ) as f:
 	while True:
 		rdata = f.read(token_size)
@@ -51,6 +53,11 @@ with open( filename, 'r' ) as f:
 			break
 		
 		press = ord(rdata[0]) << 24 | ord(rdata[1]) << 16 | ord(rdata[2]) << 8 | ord(rdata[3])
+
+		altitude = m.log( press_init/press ) / 0.00012
+
+		pressure.append( altitude )
+
 		gyr_x = ord(rdata[4]) << 8 | ord(rdata[5])
 		gyr_y = ord(rdata[6]) << 8 | ord(rdata[7])
 		gyr_z = ord(rdata[8]) << 8 | ord(rdata[9])
@@ -106,15 +113,10 @@ f.close()
 # fig = plt.figure()
 # fig.subplots_adjust(right=0.99, left=0.04, top=0.98, bottom=0.06)
 
-# plt.plot( time, input, 	    'm-', label='Inpt' )
-plt.plot( time, acc_roll, 'r-', label='Accl' )
-# plt.plot( time, gyro_data,  'c-', label='Gyro' )
-# plt.plot( time, real_data,  'b-', label='Ptnc' )
-plt.plot( time, angle_roll,  'k-', label='Snsr' )
-# plt.plot( time, signal,  	'g-', label='Sign' )
-# plt.plot( time, count_data,  'y-', label='Cnt' )
+# plt.plot( time, acc_roll, 'r-', label='Accl' )
+plt.plot( time, pressure,  'k-', label='Snsr' )
 
-plt.axis([ 0, fulltime, -20, 20 ])
+# plt.axis([ 0, fulltime, -20, 20 ])
 plt.ylabel('Angle')
 plt.xlabel('Time')
 plt.grid()

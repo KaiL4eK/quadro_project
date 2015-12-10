@@ -53,6 +53,8 @@ typedef enum
     PRESS
 }BMP180_Stage_t;
 
+#define TEMP_MULTIPLYER     1000L
+
 uint8_t bmp180_get_id ( void );
 int8_t bmp180_init( uint8_t oversampling );
 uint16_t bmp180_get_raw_temperature ( void );
@@ -61,6 +63,11 @@ float bmp180_get_temperature_F ( void );
 uint32_t bmp180_get_raw_pressure ( void );
 uint32_t bmp180_get_pressure ( void );
 float bmp180_get_altitude (uint32_t pressure, float seaLevelPressure);
+
+void bmp180_calibrate ( uint32_t *out_pressure );
+int bmp180_rcv_press_temp_data( uint32_t *out_pressure, uint32_t *out_temp );
+
+int8_t bmp180_init ( uint8_t oversampling );
 
 /* Special API */
 void bmp180_send_temperature_signal ( void );

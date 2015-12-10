@@ -4,9 +4,8 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/qmain.c</file>
-            <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/input_control.h</file>
-            <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/motor_control.c</file>
-            <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/motor_control.h</file>
+            <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/bmp180.c</file>
+            <file>file:/home/alex/Programms/dsPIC_Quadro/Quadro.X/BMP180.h</file>
         </group>
     </open-files>
 </project-private>
