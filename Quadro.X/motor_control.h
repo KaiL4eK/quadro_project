@@ -13,6 +13,8 @@ void set_motor4_power( int16_t power );
 #define MOTOR_2 ( 1 << 1 )
 #define MOTOR_3 ( 1 << 2 )
 #define MOTOR_4 ( 1 << 3 )
+#define MOTORS_ALL ( MOTOR_1 | MOTOR_2 | MOTOR_3 | MOTOR_4 )
+
 
 #define INPUT_POWER_RANGE 10000L
 

@@ -14,38 +14,38 @@ static const uint16_t   esc_max_power = PWM_USEC(1900),
                         esc_min_power = PWM_USEC(1100),
                         esc_stop_power = PWM_USEC(900);
 
-static uint8_t  motor1_started = 0,
-                motor2_started = 0,
-                motor3_started = 0,
-                motor4_started = 0;
+static uint8_t  motor1_armed = 0,
+                motor2_armed = 0,
+                motor3_armed = 0,
+                motor4_armed = 0;
 
 void set_motors_started( uint8_t motor_nums )
 {
     if ( motor_nums & MOTOR_1 )
     {
-        motor1_started = 1;
+        motor1_armed = 1;
         PDC1 = esc_min_power << 1;
     }
     if ( motor_nums & MOTOR_2 )
     {
-        motor2_started = 1;
+        motor2_armed = 1;
         PDC2 = esc_min_power << 1;
     }
     if ( motor_nums & MOTOR_3 )
     {
-        motor3_started = 1;
+        motor3_armed = 1;
         PDC3 = esc_min_power << 1;
     }
     if ( motor_nums & MOTOR_4 )
     {
-        motor4_started = 1;
+        motor4_armed = 1;
         PDC4 = esc_min_power << 1;
     }
 }
 
 void set_motors_stopped()
 {
-    motor1_started = motor2_started = motor3_started = motor4_started = 0;
+    motor1_armed = motor2_armed = motor3_armed = motor4_armed = 0;
     PDC1 = PDC2 = PDC3 = PDC4 = esc_stop_power << 1;
 }
 
@@ -57,7 +57,7 @@ static uint16_t map_power( uint32_t val )
 // Always shift duty cycle << 1 if prescaler not 1:1
 void set_motor1_power( int16_t power ) //Power [0 --- 10000]
 {
-    if ( !motor1_started )
+    if ( !motor1_armed )
         return;
     uint16_t input_power = power > INPUT_POWER_RANGE ? INPUT_POWER_RANGE : power < 0 ? 0 : power;
     uint16_t mapped_power = map_power( input_power );
@@ -66,7 +66,7 @@ void set_motor1_power( int16_t power ) //Power [0 --- 10000]
 
 void set_motor2_power( int16_t power ) //Power [0 --- 10000]
 {
-    if ( !motor2_started )
+    if ( !motor2_armed )
         return;
     uint16_t input_power = power > INPUT_POWER_RANGE ? INPUT_POWER_RANGE : power < 0 ? 0 : power;
     uint16_t mapped_power = map_power( input_power );
@@ -75,7 +75,7 @@ void set_motor2_power( int16_t power ) //Power [0 --- 10000]
 
 void set_motor3_power( int16_t power ) //Power [0 --- 10000]
 {
-    if ( !motor3_started)
+    if ( !motor3_armed)
         return;
     uint16_t input_power = power > INPUT_POWER_RANGE ? INPUT_POWER_RANGE : power < 0 ? 0 : power;
     uint16_t mapped_power = map_power( input_power );
@@ -84,7 +84,7 @@ void set_motor3_power( int16_t power ) //Power [0 --- 10000]
 
 void set_motor4_power( int16_t power ) //Power [0 --- 10000]
 {
-    if ( !motor4_started )
+    if ( !motor4_armed )
         return;
     uint16_t input_power = power > INPUT_POWER_RANGE ? INPUT_POWER_RANGE : power < 0 ? 0 : power;
     uint16_t mapped_power = map_power( input_power );

@@ -10,7 +10,7 @@
 long long fcy() { return( FCY ); }
 
 //#define SD_CARD
-#define TEST_MOTOR4
+//#define TEST_MOTOR4
 
 #ifdef FREQ_32MHZ
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
@@ -32,7 +32,9 @@ void interrupt_timer_init( void )
     T4CONbits.TON = 1;
 }
 
+#ifdef SD_CARD
 static int file_num = 0;
+#endif /* SD_CARD */
 
 int main(void) 
 {
@@ -45,9 +47,11 @@ int main(void)
     init_UART1( 57600 );
     debug( "/------------------------/" );
     debug( "UART initialized" );
+#ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
     file_num = file_num < 0 ? 0 : file_num;
+#endif /* SD_CARD */
     debug( "Flash successfully read" );
     motors_init();
     debug( "Motors initialized" );
@@ -157,10 +161,6 @@ static BMP180_Stage_t       bmp_rcv_data_stage = TEMP;
 static float                bmp180_temp = 0;
 static uint32_t             bmp180_press = 0;
 
-#define MAX_CONTROL_ANGLE   45L
-static int16_t input_control_pitch = 0;
-static int32_t regul = 0;
-
 #define RADIANS_TO_DEGREES  (180/3.14159)
 #define GYR_COEF            131L // = 65535/2/250
 #define ANGLES_COEFF        1000L
@@ -189,22 +189,17 @@ static void process_angles_counts( void )
     current_angles.yaw   = current_angles.gyr_delta_z + current_angles.yaw;  
 }
 
-static bool     sticks_used = false, 
-                new_data_flag = false;          
-static int64_t  integr = 0; 
-static int32_t  diff = 0, prev_pitch = 0, pitch_error = 0;
-
-#define LOWER_LEFT_STICKS ( control_values.throttle < THROTTLE_OFF_LIMIT && \
-                            control_values.rudder < START_ANGLES && \
+#define START_STOP_COND (   control_values.throttle < THROTTLE_OFF_LIMIT && \
+                            control_values.rudder < (-1*START_ANGLES) && \
                             control_values.roll < START_ANGLES && \
-                            control_values.pitch < START_ANGLES )
-#ifdef TEST_MOTOR4
-static uint8_t power_flag = 0;
-#endif /* TEST_MOTOR4 */
+                            control_values.pitch < (-1*START_ANGLES) )
+
+#define MAX_CONTROL_ANGLE   45L
 
 inline void process_control_system ( void )
 {
 #ifdef TEST_MOTOR4
+    static uint8_t power_flag = 0;
     if ( power_flag != control_values.two_pos_switch )
     {
         power_flag = control_values.two_pos_switch;
@@ -221,9 +216,9 @@ inline void process_control_system ( void )
     
     process_UART_input_command2( UART_get_last_received_command() );
     set_motor4_power( test_throttle );
-#endif /* TEST_MOTOR4 */
+#else
     
-#ifdef MAGNET
+#ifdef HMC5883L
     float angle = atan2( curr_data_mag.y_magnet, curr_data_mag.x_magnet )*RADIANS_TO_DEGREES;
 
     if ( angle < 0 )
@@ -232,61 +227,76 @@ inline void process_control_system ( void )
         angle -= 360;
 
     UART_write_float(angle);
-#endif /* MAGNET */ 
-            
-/*
-// Make flag of armed/disarmed in main loop
-    if ( LOWER_LEFT_STICKS && !sticks_used )
+#endif /* HMC5883L */ 
+
+    static bool     start_stop_flag = false,
+                    motors_armed = false;
+    static int64_t  integr = 0; 
+    static int32_t  diff = 0,
+                    prev_pitch = 0, 
+                    pitch_error = 0,
+                    regul = 0;
+
+    static int16_t  input_control_pitch = 0,
+                    stop_counter = 0;
+    
+    bool sticks_in_start_position = START_STOP_COND;
+    
+    if ( sticks_in_start_position != start_stop_flag )
     {
-        if ( get_motors_state() == 0 )
+        start_stop_flag = sticks_in_start_position;
+        if ( sticks_in_start_position )
         {
-            integr = 0;
-            set_motors_started();   
+            if ( motors_armed )
+            {
+                set_motors_stopped();
+            }
+            else
+            {
+                integr = 0;
+                set_motors_started( MOTOR_4 );
+            }
+            motors_armed = !motors_armed;
         }
-        else
-        {
-            set_motors_stopped();
-        }
-        sticks_used = true;
-        continue;
-    }
-    else if ( !LOWER_LEFT_STICKS )
-    {
-        sticks_used = false;
-    }
-    else if ( LOWER_LEFT_STICKS && sticks_used )
-    {
-        continue;
     }
 
     // Each angle presents as integer 30.25 = 30250
     // control pitch [-1000 --- 1000]
 
-    input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
+    if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
+    {
+        input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
 
-    pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);            
-    diff = pitch_error - prev_pitch;
-    integr += pitch_error;
-//#define COMMAND
+        pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);            
+        diff = pitch_error - prev_pitch;
+        integr += pitch_error;
 
-#ifdef COMMAND
-    process_UART_input_command( UART_get_last_received_command() );
-#endif
-    regul = (pitch_error/prop_k + integr/integr_k + diff*differ_k);
+        process_UART_input_command( UART_get_last_received_command() );
 
-    prev_pitch = pitch_error;
+        regul = (pitch_error/prop_k + integr/integr_k + diff*differ_k);
 
-    control_values.throttle = 1000;
+        prev_pitch = pitch_error;
 
-    set_motor1_power( control_values.throttle*2 + regul);
-    set_motor2_power( control_values.throttle*2 + regul);
+        control_values.throttle = 1000;
 
-    set_motor3_power( control_values.throttle*2 - regul);
-    set_motor4_power( control_values.throttle*2 - regul);
-#ifndef COMMAND
-    send_UART_sensors_data( );
-#endif
-*/
+        set_motor1_power( control_values.throttle*2 + regul);
+        set_motor2_power( control_values.throttle*2 + regul);
+
+        set_motor3_power( control_values.throttle*2 - regul);
+        set_motor4_power( control_values.throttle*2 - regul);
+        
+        stop_counter = 0;
+    }
+    else
+    {
+        if ( stop_counter++ == 1000 )
+        {
+            motors_armed = false;
+            set_motors_stopped();
+        }
+    }
+
+#endif /* TEST_MOTOR4 */
 }
 
 #ifdef SD_CARD
