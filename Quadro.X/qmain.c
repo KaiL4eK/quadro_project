@@ -9,7 +9,7 @@
 
 long long fcy() { return( FCY ); }
 
-//#define SD_CARD
+#define SD_CARD
 //#define TEST_MOTOR4
 
 #ifdef FREQ_32MHZ
@@ -53,12 +53,12 @@ int main(void)
     file_num = file_num < 0 ? 0 : file_num;
 #endif /* SD_CARD */
     debug( "Flash successfully read" );
-    motors_init();
-    debug( "Motors initialized" );
+//    motors_init();
+//    debug( "Motors initialized" );
     init_input_control();
     debug( "IC initialized" );    
-    ic_find_control();
-    debug( "IC found" );
+//    ic_find_control();
+//    debug( "IC found" );
 //    ic_make_calibration();
 //    debug("IC calibrated");
 #ifdef SD_CARD
@@ -190,11 +190,13 @@ static void process_angles_counts( void )
 }
 
 #define START_STOP_COND (   control_values.throttle < THROTTLE_OFF_LIMIT && \
-                            control_values.rudder < (-1*START_ANGLES) && \
+                            control_values.rudder > (-1*START_ANGLES) && \
                             control_values.roll < START_ANGLES && \
-                            control_values.pitch < (-1*START_ANGLES) )
+                            control_values.pitch > (-1*START_ANGLES) )
 
 #define MAX_CONTROL_ANGLE   45L
+#define STOP_LIMIT          1000L
+#define INPUT_REG_LIMIT     1000L
 
 inline void process_control_system ( void )
 {
@@ -217,18 +219,6 @@ inline void process_control_system ( void )
     process_UART_input_command2( UART_get_last_received_command() );
     set_motor4_power( test_throttle );
 #else
-    
-#ifdef HMC5883L
-    float angle = atan2( curr_data_mag.y_magnet, curr_data_mag.x_magnet )*RADIANS_TO_DEGREES;
-
-    if ( angle < 0 )
-        angle += 360;
-    if ( angle > 360 )
-        angle -= 360;
-
-    UART_write_float(angle);
-#endif /* HMC5883L */ 
-
     static bool     start_stop_flag = false,
                     motors_armed = false;
     static int64_t  integr = 0; 
@@ -240,7 +230,7 @@ inline void process_control_system ( void )
     static int16_t  input_control_pitch = 0,
                     stop_counter = 0;
     
-    bool sticks_in_start_position = START_STOP_COND;
+    bool sticks_in_start_position = START_STOP_COND;   
     
     if ( sticks_in_start_position != start_stop_flag )
     {
@@ -263,39 +253,42 @@ inline void process_control_system ( void )
     // Each angle presents as integer 30.25 = 30250
     // control pitch [-1000 --- 1000]
 
-    if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
+    if ( motors_armed )
     {
-        input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
-
-        pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);            
-        diff = pitch_error - prev_pitch;
-        integr += pitch_error;
-
-        process_UART_input_command( UART_get_last_received_command() );
-
-        regul = (pitch_error/prop_k + integr/integr_k + diff*differ_k);
-
-        prev_pitch = pitch_error;
-
-        control_values.throttle = 1000;
-
-        set_motor1_power( control_values.throttle*2 + regul);
-        set_motor2_power( control_values.throttle*2 + regul);
-
-        set_motor3_power( control_values.throttle*2 - regul);
-        set_motor4_power( control_values.throttle*2 - regul);
-        
-        stop_counter = 0;
-    }
-    else
-    {
-        if ( stop_counter++ == 1000 )
+        if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
-            motors_armed = false;
-            set_motors_stopped();
+            input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
+
+            pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);            
+            diff = pitch_error - prev_pitch;
+            integr += pitch_error;
+
+            process_UART_input_command( UART_get_last_received_command() );
+
+            regul = (pitch_error/prop_k + integr/integr_k + diff*differ_k);
+            regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
+                    regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
+                                                    regul;
+            
+            prev_pitch = pitch_error;
+
+            set_motor1_power( control_values.throttle*2 + regul);
+            set_motor2_power( control_values.throttle*2 + regul);
+
+            set_motor3_power( control_values.throttle*2 - regul);
+            set_motor4_power( control_values.throttle*2 - regul);
+
+            stop_counter = 0;
+        }
+        else
+        {
+            if ( stop_counter++ == STOP_LIMIT )
+            {
+                motors_armed = false;
+                set_motors_stopped();
+            }
         }
     }
-
 #endif /* TEST_MOTOR4 */
 }
 
@@ -310,7 +303,7 @@ static uint8_t writing_flag = 0;
 #define WRITE_TWO_BYTE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 8) & 0xff; \
                                                 buf[(off)+1] = ((val)     ) & 0xff; }
 
-inline void process_saving_data ( void )
+void process_saving_data ( void )
 {
     if ( writing_flag != control_values.two_pos_switch )
     {
@@ -377,10 +370,23 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     get_direction_values( &control_values );
     
     process_angles_counts();
-    process_control_system();
+//    process_control_system();
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
+    
+    #ifdef HMC5883L
+    float angle = atan2( curr_data_mag.y_magnet, curr_data_mag.x_magnet )*RADIANS_TO_DEGREES;
+
+    if ( angle < 0 )
+        angle += 360;
+    if ( angle > 360 )
+        angle -= 360;
+
+    UART_write_float(angle);
+#endif /* HMC5883L */ 
+    
+//    send_UART_control_values();
     
 //    time_elapsed_us = timer_stop()/TIMER_US_TICK;
 //    idebug( "T", time_elapsed_us );
