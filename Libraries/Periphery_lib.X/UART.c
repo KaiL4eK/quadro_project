@@ -5,7 +5,7 @@
 /*              UART            */
 /********************************/
 
-#define BUFFER_MAX_SIZE 1024
+#define BUFFER_MAX_SIZE 512
 
 void UART_write_byte( uint8_t elem );
 
@@ -61,52 +61,17 @@ void UART_write_words( uint16_t *arr, uint8_t count )
     }
 }
 
-void UART_write_string( char *string )
+void UART_write_string( const char *fstring, ... )
 {
     int iter = 0;
-    while( string[iter] != '\0' )
+    va_list str_args;
+    
+    va_start( str_args, fstring );
+    vsprintf( UART_buffer, fstring, str_args );
+    va_end( str_args );
+    
+    while( UART_buffer[iter] != '\0' )
     {
-        UART_write_byte( string[iter++] );
+        UART_write_byte( UART_buffer[iter++] );
     }
-}
-
-void UART_writeln_string( char *string )
-{
-    UART_write_string( string );
-    UART_write_string( "\r\n" );
-}
-
-void UART_write_int32( int32_t num )
-{
-    sprintf(UART_buffer, "%ld", num);
-    UART_writeln_string( UART_buffer );
-}
-
-void UART_write_int16( int16_t num )
-{
-    sprintf(UART_buffer, "%d", num);
-    UART_writeln_string( UART_buffer );
-}
-
-void UART_write_int( int num )
-{
-    UART_write_int16( num );
-}
-
-void UART_write_float( double num )
-{
-    sprintf(UART_buffer, "%f", num);
-    UART_writeln_string( UART_buffer );
-}
-
-void UART_write_hint( int num )
-{
-    sprintf(UART_buffer, "0x%x", num);
-    UART_writeln_string( UART_buffer );
-}
-
-void UART_write_hint32( uint32_t num )
-{
-    sprintf(UART_buffer, "0x%08lx", num);
-    UART_writeln_string( UART_buffer );
 }

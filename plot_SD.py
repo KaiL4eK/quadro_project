@@ -44,7 +44,7 @@ sensor_time = 2.5/1000
 gyro_sensitivity = 65535/2/250
 alpha = 0.995
 
-press_init = 100953.0
+altitude_multiplyer = 1000.0
 
 with open( filename, 'r' ) as f:
 	while True:
@@ -52,11 +52,12 @@ with open( filename, 'r' ) as f:
 		if not rdata: 
 			break
 		
-		press = ord(rdata[0]) << 24 | ord(rdata[1]) << 16 | ord(rdata[2]) << 8 | ord(rdata[3])
+		altitude = ord(rdata[0]) << 24 | ord(rdata[1]) << 16 | ord(rdata[2]) << 8 | ord(rdata[3])
 
-		altitude = m.log( press_init/press ) / 0.00012
+		if altitude > 2147483647:
+			altitude = altitude - 4294967295
 
-		pressure.append( altitude )
+		pressure.append( altitude / altitude_multiplyer )
 
 		gyr_x = ord(rdata[4]) << 8 | ord(rdata[5])
 		gyr_y = ord(rdata[6]) << 8 | ord(rdata[7])

@@ -156,7 +156,7 @@ int SD_read_sector ( uint32_t start_block, uint8_t *buffer )
     while ( (response = SD_send_cmd( READ_SINGLE_BLOCK, start_block )) != 0 )
         if ( retry++ == UINT8_MAX )
         {
-            debug( "Reading command wasn`t accepted" );
+            UART_write_string( "Reading command wasn`t accepted\n" );
             return( TIMEOUT_ERROR_READ );
         }
     
@@ -197,7 +197,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
     while ( (response = SD_send_cmd( WRITE_SINGLE_BLOCK, start_block )) != 0 )
         if ( retry++ == UINT8_MAX )
         {
-            debug( "Writing command wasn`t accepted" );
+            UART_write_string( "Writing command wasn`t accepted\n" );
             return( TIMEOUT_ERROR_WRITE );
         }
         
@@ -219,7 +219,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
     {
         spi_read();
         spi_cs_set( 1 );
-        fdebug( "SD writing error", response );
+        UART_write_string( "SD writing error: 0x%08x\n", response );
         error_process();
         return( TIMEOUT_ERROR_WRITE_NOT_ACCEPTED );
     }

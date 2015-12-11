@@ -81,11 +81,8 @@ void hmc5883l_set_averaged_samples ( Hmc5883l_avrg_samples_t avrgd_smpls )
 
 void send_UART_magnetic_raw_data ( void )
 {
-    char buffer_s[256];
-    sprintf( buffer_s, "#M:%05d,%05d,%05d",
-                    raw_magnetic.value.x_magnet, raw_magnetic.value.y_magnet, raw_magnetic.value.z_magnet
-            );
-    UART_writeln_string(buffer_s);
+    UART_write_string( "#M:%05d,%05d,%05d\n",
+                    raw_magnetic.value.x_magnet, raw_magnetic.value.y_magnet, raw_magnetic.value.z_magnet );
 }
 
 #define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }

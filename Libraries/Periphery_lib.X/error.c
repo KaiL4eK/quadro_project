@@ -6,6 +6,6 @@
 void error_process ( void )
 {
     SET_ERR_L;
-    debug("Err");
+    UART_write_string( "Err\n" );
     while ( 1 );
 }

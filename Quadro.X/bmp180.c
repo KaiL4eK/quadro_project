@@ -9,7 +9,7 @@ int16_t     ac1, ac2, ac3, b1, b2, mc, mb, md;
 uint16_t    ac4, ac5, ac6;
 int32_t     B5;
 
-static void bmp180_load_calibration ( void )
+inline void bmp180_load_calibration ( void )
 {
     uint8_t c_buffer[22];
     memset( c_buffer, 0, sizeof(c_buffer) );
@@ -25,22 +25,25 @@ static void bmp180_load_calibration ( void )
     mb =  ((int16_t)c_buffer[16] << 8) | c_buffer[17];
     mc =  ((int16_t)c_buffer[18] << 8) | c_buffer[19];
     md =  ((int16_t)c_buffer[20] << 8) | c_buffer[21];
-#ifdef BMP180_DEBUG
-UART_write_string("ac1 = ");
-UART_write_int(ac1);
-UART_write_string("ac2 = ");
-UART_write_int(ac2);
-UART_write_string("ac3 = ");
-UART_write_int(ac3);
-UART_write_string("ac4 = ");
-UART_write_int(ac4);
-UART_write_string("ac5 = ");
-UART_write_int(ac5);
-UART_write_string("ac6 = ");
-UART_write_int(ac6);
-UART_writeln_string("/____________________/");
-#endif
+
     calibration_loaded = true;
+}
+
+int8_t bmp180_init ( uint8_t oversampling )
+{
+    if ( oversampling >= BMP085_ULTRALOWPOWER && oversampling <= BMP085_ULTRAHIGHRES )
+        measure_mode = oversampling;
+    else
+        return( -1 );
+    
+    if ( bmp180_get_id() != 0x55 )
+        return( -1 );
+    
+    bmp180_load_calibration();
+    bmp180_send_temperature_signal();
+    
+    init_flag = 1;
+    return( 0 );
 }
 
 int bmp180_rcv_press_temp_data( uint32_t *out_pressure, uint32_t *out_temp )
@@ -80,7 +83,7 @@ int bmp180_rcv_press_temp_data( uint32_t *out_pressure, uint32_t *out_temp )
     return( res );
 }
 
-#define CALIBRATION_READINGS_AMOUNT 500
+#define CALIBRATION_READINGS_AMOUNT 50
 void bmp180_calibrate ( uint32_t *out_pressure )
 {
     uint64_t    buffer_press = 0;
@@ -98,23 +101,6 @@ void bmp180_calibrate ( uint32_t *out_pressure )
     
     if ( out_pressure != NULL )
         *out_pressure = buffer_press/CALIBRATION_READINGS_AMOUNT;
-}
-
-int8_t bmp180_init ( uint8_t oversampling )
-{
-    if ( oversampling >= BMP085_ULTRALOWPOWER && oversampling <= BMP085_ULTRAHIGHRES )
-        measure_mode = oversampling;
-    else
-        return( -1 );
-    
-    if ( bmp180_get_id() != 0x55 )
-        return( -1 );
-    
-    bmp180_load_calibration();
-    bmp180_send_temperature_signal();
-    
-    init_flag = 1;
-    return( 0 );
 }
 
 uint8_t bmp180_get_id ( void )

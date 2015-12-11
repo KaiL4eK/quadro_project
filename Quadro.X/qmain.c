@@ -36,7 +36,10 @@ void interrupt_timer_init( void )
 static int file_num = 0;
 #endif /* SD_CARD */
 
-static uint32_t    bmp180_initial_press = 0;
+static uint32_t     bmp180_initial_press = 0,
+                    bmp180_press = 0,
+                    bmp180_temp = 0;    // Temperature is multiplied by TEMP_MULTIPLYER
+static int32_t      bmp180_altitude = 0;
 
 int main(void) 
 {
@@ -48,52 +51,53 @@ int main(void)
     INIT_ERR_L;
     ERR_LIGHT = 0;
     init_UART1( 57600 );
-    debug( "/------------------------/" );
-    debug( "UART initialized" );
+    UART_write_string( "/------------------------/\n" );
+    UART_write_string( "UART initialized\n" );
 #ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
     file_num = file_num < 0 ? 0 : file_num;
 #endif /* SD_CARD */
-    debug( "Flash successfully read" );
+    UART_write_string( "Flash successfully read\n" );
 //    motors_init();
 //    debug( "Motors initialized" );
     init_input_control();
-    debug( "IC initialized" );    
+    UART_write_string( "IC initialized\n" );    
 //    ic_find_control();
 //    debug( "IC found" );
 //    ic_make_calibration();
 //    debug("IC calibrated");
 #ifdef SD_CARD
     spi_init();
-    debug( "SPI initialized" );
+    UART_write_string( "SPI initialized\n" );
     init_sd_file_io();
-    debug( "SD initialized" );
+    UART_write_string( "SD initialized\n" );
 #endif /* SD_CARD */
     i2c_init( 400000 );
-    debug( "I2C initialized" );
+    UART_write_string( "I2C initialized\n" );
     if ( mpu6050_init() != 0 )
     {
-        debug("Failed MPU init");
+        UART_write_string("Failed MPU init\n");
         error_process();
     }
-    debug( "MPU6050 initialized" );
-    if ( bmp180_init(BMP085_STANDARD) != 0 )
+    UART_write_string( "MPU6050 initialized\n" );
+    if ( bmp180_init( BMP085_ULTRAHIGHRES ) != 0 )
     {
-        debug("Failed BMP init");
+        UART_write_string("Failed BMP init\n");
         error_process();
     }
-    debug( "BMP180 initialized" );
-    bmp180_calibrate( &bmp180_initial_press );
-    idebug( "BMP180 calibrated", bmp180_initial_press );
+    UART_write_string( "BMP180 initialized\n" );
+    bmp180_calibrate( &bmp180_press );
+    bmp180_initial_press = bmp180_press;
+    UART_write_string( "BMP180 calibrated: %ld\n", bmp180_initial_press );
     if ( hmc5883l_init() != 0 )
     {
-        debug("Failed HMC init");
+        UART_write_string("Failed HMC init\n");
         error_process();
     }
-    debug( "HMC5883L initialized" );
+    UART_write_string( "HMC5883L initialized\n" );
     interrupt_timer_init();
-    debug( "Let`s begin!" );
+    UART_write_string( "Let`s begin!\n" );
     ERR_LIGHT = 1;
     
     while( 1 )
@@ -107,7 +111,6 @@ static uint16_t prop_k = 30, integr_k = 10000, differ_k= 3;
 
 static void process_UART_input_command( uint8_t input )
 {
-    char buffer_s[256];
     switch ( input )
     {
         case 0:
@@ -131,10 +134,8 @@ static void process_UART_input_command( uint8_t input )
             differ_k--;
             break;
     }
-    sprintf( buffer_s, "%d, %d, %d", 
-                        prop_k, integr_k, differ_k
-            );
-    debug( buffer_s );
+    UART_write_string( "Coeffs: %d, %d, %d\n", 
+            prop_k, integr_k, differ_k );
 }
 
 #ifdef TEST_MOTOR4
@@ -162,10 +163,6 @@ static gyro_accel_data_t    curr_data_accel_gyro;
 static magnetic_data_t      curr_data_mag;
 static Angles_t             current_angles = { 0, 0, 0 };
 static uint16_t             time_elapsed_us = 0;
-
-static uint32_t             bmp180_press = 0,
-                            bmp180_temp = 0,    // Temperature is multiplied by TEMP_MULTIPLYER
-                            bmp180_altitude = 0;
 
 // p = p0*exp(-0.0341593/(t+273)*h)
 // h = ln(p0/p) * (t+273)/0.0341593 
@@ -196,8 +193,6 @@ static void process_counts( void )
     current_angles.pitch = (0.995 * (current_angles.gyr_delta_x + current_angles.pitch)) + 0.005 * current_angles.acc_x;
     current_angles.roll  = (0.995 * (current_angles.gyr_delta_y + current_angles.roll)) + 0.005 * current_angles.acc_y;
     current_angles.yaw   = current_angles.gyr_delta_z + current_angles.yaw;  
-    
-    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
 }
 
 #define START_STOP_COND (   control_values.throttle < THROTTLE_OFF_LIMIT && \
@@ -350,10 +345,18 @@ void process_saving_data ( void )
 }
 #endif /* SD_CARD */
 
+#define BMP180_FILTER_PART  1
+inline void bmp180_rcv_filtered_data ( void )
+{
+    uint32_t    tmp_pressure;
+    bmp180_rcv_press_temp_data( &tmp_pressure, &bmp180_temp );
+    bmp180_press = (tmp_pressure*BMP180_FILTER_PART/10) + (bmp180_press*(10-BMP180_FILTER_PART)/10);
+}
+
 void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 {
 //    timer_start();
-    bmp180_rcv_press_temp_data( &bmp180_press, &bmp180_temp );
+    bmp180_rcv_filtered_data();
     
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
@@ -364,6 +367,13 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     get_direction_values( &control_values );
     
     process_counts();
+    
+//    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
+    
+    bmp180_altitude = bmp180_get_altitude( bmp180_press, bmp180_initial_press ) * TEMP_MULTIPLYER;
+    
+    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
+    
 //    process_control_system();
 #ifdef SD_CARD
     process_saving_data();
@@ -379,8 +389,6 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 
     UART_write_float(angle);
 #endif /* HMC5883L */ 
-    
-    UART_write_float( bmp180_get_altitude( bmp180_press, bmp180_initial_press ) );
     
 //    time_elapsed_us = timer_stop()/TIMER_US_TICK;
 //    idebug( "T", time_elapsed_us );

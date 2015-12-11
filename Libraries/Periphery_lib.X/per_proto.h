@@ -4,19 +4,6 @@
 #include <stdint.h>
 #include <xc.h>
 
-#define DEBUG
-#ifdef DEBUG
-#define debug( x ) UART_writeln_string( x );
-#define fdebug( x, y )  { UART_write_string( x": " );UART_write_hint32( y ); }
-#define idebug( x, y )  { UART_write_string( x": " );UART_write_int32( y ); }
-#define hdebug( x ) UART_write_hint( x );
-#else
-#define debug( x )
-#define fdebug( x, y )
-#define idebug( x, y )
-#define hdebug( x )
-#endif
-
 /*** ADC.c ***/
 
 void ADC_init();
@@ -26,16 +13,9 @@ int16_t ADC_read( void );
 
 void init_UART1( uint32_t UART_br );
 void UART_write_words( uint16_t *arr, uint8_t count );
-void UART_write_string( char *string );
-void UART_writeln_string( char *string );
-void UART_write_hint( int num );
-void UART_write_int32( int32_t num );
-void UART_write_int( int num );
-void UART_write_int16( int16_t num );
-void UART_write_float( double num );
+void UART_write_string( const char *fstring, ... );
 void UART_write_byte( uint8_t elem );
 uint8_t UART_get_last_received_command();
-void UART_write_hint32( uint32_t num );
 
 /*** twi.c ***/
 
