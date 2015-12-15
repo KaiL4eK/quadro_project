@@ -9,8 +9,8 @@
 
 long long fcy() { return( FCY ); }
 
-#define SD_CARD
-//#define TEST_MOTOR4
+//#define SD_CARD
+#define TEST_MOTOR4
 
 #ifdef FREQ_32MHZ
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
@@ -36,7 +36,8 @@ void interrupt_timer_init( void )
 static int file_num = 0;
 #endif /* SD_CARD */
 
-static uint32_t     bmp180_initial_press = 0,
+static float        bmp180_initial_altitude = 0.0;
+static uint32_t     //bmp180_initial_press = 0,
                     bmp180_press = 0,
                     bmp180_temp = 0;    // Temperature is multiplied by TEMP_MULTIPLYER
 static int32_t      bmp180_altitude = 0;
@@ -88,8 +89,9 @@ int main(void)
     }
     UART_write_string( "BMP180 initialized\n" );
     bmp180_calibrate( &bmp180_press );
-    bmp180_initial_press = bmp180_press;
-    UART_write_string( "BMP180 calibrated: %ld\n", bmp180_initial_press );
+//    bmp180_initial_press = bmp180_press;
+    bmp180_initial_altitude = bmp180_get_altitude( bmp180_press, 101325 );
+//    UART_write_string( "BMP180 calibrated: %ld\n", bmp180_initial_press );
     if ( hmc5883l_init() != 0 )
     {
         UART_write_string("Failed HMC init\n");
@@ -140,21 +142,21 @@ static void process_UART_input_command( uint8_t input )
 
 #ifdef TEST_MOTOR4
 uint16_t    test_throttle = 0;
-#define THROTTLE_STEP   1000
+#define THROTTLE_STEP   500
 static void process_UART_input_command2( uint8_t input )
 {
     switch ( input )
     {
-        case 0:
-            return;
         case 'q':
             test_throttle = test_throttle >= INPUT_POWER_RANGE ? INPUT_POWER_RANGE : (test_throttle + THROTTLE_STEP);
             break;
         case 'a':
             test_throttle = test_throttle == 0 ? 0 : (test_throttle - THROTTLE_STEP);
             break;
+        default:
+            return;
     }
-    idebug( "P", test_throttle );
+    UART_write_string( "P: %d\n", test_throttle );
 }
 #endif /* TEST_MOTOR4 */
 
@@ -345,12 +347,13 @@ void process_saving_data ( void )
 }
 #endif /* SD_CARD */
 
-#define BMP180_FILTER_PART  1
+#define BMP180_EXP_FILTER_PART  0.03D
 inline void bmp180_rcv_filtered_data ( void )
 {
-    uint32_t    tmp_pressure;
-    bmp180_rcv_press_temp_data( &tmp_pressure, &bmp180_temp );
-    bmp180_press = (tmp_pressure*BMP180_FILTER_PART/10) + (bmp180_press*(10-BMP180_FILTER_PART)/10);
+    float    tmp_altitude;
+    bmp180_rcv_press_temp_data( &bmp180_press, &bmp180_temp );
+    tmp_altitude = bmp180_get_altitude( bmp180_press, 101325 ) - bmp180_initial_altitude;
+    bmp180_altitude = ((tmp_altitude*BMP180_EXP_FILTER_PART) + (bmp180_altitude/1000.0*(1.0-BMP180_EXP_FILTER_PART))) * TEMP_MULTIPLYER;
 }
 
 void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
@@ -370,11 +373,9 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
     
-    bmp180_altitude = bmp180_get_altitude( bmp180_press, bmp180_initial_press ) * TEMP_MULTIPLYER;
+//    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
     
-    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
-    
-//    process_control_system();
+    process_control_system();
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
@@ -391,6 +392,6 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 #endif /* HMC5883L */ 
     
 //    time_elapsed_us = timer_stop()/TIMER_US_TICK;
-//    idebug( "T", time_elapsed_us );
+//    UART_write_string( "T: %d\n", time_elapsed_us );
     _T5IF = 0;
 }
