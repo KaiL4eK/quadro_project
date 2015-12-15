@@ -60,14 +60,14 @@ int main(void)
     file_num = file_num < 0 ? 0 : file_num;
 #endif /* SD_CARD */
     UART_write_string( "Flash successfully read\n" );
-//    motors_init();
-//    debug( "Motors initialized" );
+    motors_init();
+    UART_write_string( "Motors initialized\n" );
     init_input_control();
     UART_write_string( "IC initialized\n" );    
-//    ic_find_control();
-//    debug( "IC found" );
+    ic_find_control();
+    UART_write_string( "IC found\n" );
 //    ic_make_calibration();
-//    debug("IC calibrated");
+//    UART_write_string("IC calibrated\n");
 #ifdef SD_CARD
     spi_init();
     UART_write_string( "SPI initialized\n" );
