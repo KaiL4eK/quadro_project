@@ -224,8 +224,8 @@ inline void process_control_system ( void )
         }
     }
     
-    process_UART_input_command2( UART_get_last_received_command() );
-    set_motor4_power( test_throttle );
+//    process_UART_input_command2( UART_get_last_received_command() );
+    set_motor4_power( 5000 );
 #else
     static bool     start_stop_flag = false,
                     motors_armed = false;
