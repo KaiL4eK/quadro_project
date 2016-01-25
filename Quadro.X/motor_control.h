@@ -16,7 +16,8 @@ void set_motor4_power( int16_t power );
 #define MOTORS_ALL ( MOTOR_1 | MOTOR_2 | MOTOR_3 | MOTOR_4 )
 
 
-#define INPUT_POWER_RANGE 10000L
+#define INPUT_POWER_MAX 10000L
+#define INPUT_POWER_MIN 0L
 
 void set_motors_started( uint8_t motor_nums );
 void set_motors_stopped();

@@ -179,22 +179,22 @@ int8_t get_direction_values( Control_values_t *out_dir_vals )
     
     int32_t throttle_delta = tmp_count_cntrl_raw.channel_3 - clbr_control_raw.channel_3.min;
     throttle_delta = throttle_delta <= 0 ? 1 : throttle_delta;
-    res = throttle_delta*THROTTLE_RANGE/(clbr_control_raw.channel_3.max - clbr_control_raw.channel_3.min);
-    dir_values.throttle = res > THROTTLE_RANGE ? THROTTLE_RANGE : res < 0 ? 0 : res;
+    res = throttle_delta*THROTTLE_MAX/(clbr_control_raw.channel_3.max - clbr_control_raw.channel_3.min);
+    dir_values.throttle = res < THROTTLE_MIN ? THROTTLE_MIN : THROTTLE_MAX < res ? THROTTLE_MAX : res;
 
     int32_t rudder_delta = tmp_count_cntrl_raw.channel_4 - clbr_control_raw.channel_4.mid;
-    res = rudder_delta*ANGLES_RANGE/(clbr_control_raw.channel_4.mid - clbr_control_raw.channel_4.min);
-    dir_values.rudder = res > ANGLES_RANGE ? ANGLES_RANGE : res < -ANGLES_RANGE ? -ANGLES_RANGE : res;
-
+    res = rudder_delta*ANGLES_MAX/(clbr_control_raw.channel_4.mid - clbr_control_raw.channel_4.min);
+    dir_values.rudder = res < ANGLES_MIN ? ANGLES_MIN : ANGLES_MAX < res ? ANGLES_MAX : res;
+    
     int32_t roll_delta = tmp_count_cntrl_raw.channel_1 - clbr_control_raw.channel_1.mid;
-    res = roll_delta*ANGLES_RANGE/(clbr_control_raw.channel_1.mid - clbr_control_raw.channel_1.min);
-    dir_values.roll = res > ANGLES_RANGE ? ANGLES_RANGE : res < -ANGLES_RANGE ? -ANGLES_RANGE : res;
+    res = roll_delta*ANGLES_MAX/(clbr_control_raw.channel_1.mid - clbr_control_raw.channel_1.min);
+    dir_values.roll =  res < ANGLES_MIN ? ANGLES_MIN : ANGLES_MAX < res ? ANGLES_MAX : res;
 
     int32_t pitch_delta = tmp_count_cntrl_raw.channel_2 - clbr_control_raw.channel_2.mid;
-    res = pitch_delta*ANGLES_RANGE/(clbr_control_raw.channel_2.mid - clbr_control_raw.channel_2.min);
-    dir_values.pitch = res > ANGLES_RANGE ? ANGLES_RANGE : res < -ANGLES_RANGE ? -ANGLES_RANGE : res;
+    res = pitch_delta*ANGLES_MAX/(clbr_control_raw.channel_2.mid - clbr_control_raw.channel_2.min);
+    dir_values.pitch = res < ANGLES_MIN ? ANGLES_MIN : ANGLES_MAX < res ? ANGLES_MAX : res;
     
-    dir_values.two_pos_switch = tmp_count_cntrl_raw.channel_5 > clbr_control_raw.channel_5.mid ? 1 : 0;
+    dir_values.two_pos_switch = tmp_count_cntrl_raw.channel_5 > clbr_control_raw.channel_5.mid ? TWO_POS_SWITCH_ON : TWO_POS_SWITCH_OFF;
     
     memcpy( out_dir_vals, &dir_values, sizeof( dir_values ) );
     

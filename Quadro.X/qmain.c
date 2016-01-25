@@ -142,16 +142,16 @@ static void process_UART_input_command( uint8_t input )
 
 #ifdef TEST_MOTOR4
 uint16_t    test_throttle = 0;
-#define THROTTLE_STEP   500
+#define THROTTLE_STEP   (INPUT_POWER_MAX/20)
 static void process_UART_input_command2( uint8_t input )
 {
     switch ( input )
     {
         case 'q':
-            test_throttle = test_throttle >= INPUT_POWER_RANGE ? INPUT_POWER_RANGE : (test_throttle + THROTTLE_STEP);
+            test_throttle = test_throttle >= INPUT_POWER_MAX ? INPUT_POWER_MAX : (test_throttle + THROTTLE_STEP);
             break;
         case 'a':
-            test_throttle = test_throttle == 0 ? 0 : (test_throttle - THROTTLE_STEP);
+            test_throttle = test_throttle == THROTTLE_MIN ? THROTTLE_MIN : (test_throttle - THROTTLE_STEP);
             break;
         default:
             return;
@@ -167,7 +167,7 @@ static Angles_t             current_angles = { 0, 0, 0 };
 static uint16_t             time_elapsed_us = 0;
 
 // p = p0*exp(-0.0341593/(t+273)*h)
-// h = ln(p0/p) * (t+273)/0.0341593 
+// h = ln(p0/p) * (t+273)/0.0341593
 
 #define RADIANS_TO_DEGREES  (180/3.14159)
 #define GYR_COEF            131L // = 65535/2/250
@@ -209,11 +209,11 @@ static void process_counts( void )
 inline void process_control_system ( void )
 {
 #ifdef TEST_MOTOR4
-    static uint8_t power_flag = 0;
+    static uint8_t power_flag = TWO_POS_SWITCH_OFF;
     if ( power_flag != control_values.two_pos_switch )
     {
         power_flag = control_values.two_pos_switch;
-        if ( control_values.two_pos_switch )
+        if ( power_flag )
         {
             set_motors_started( MOTOR_4 );
             test_throttle = 0;
@@ -224,8 +224,14 @@ inline void process_control_system ( void )
         }
     }
     
-//    process_UART_input_command2( UART_get_last_received_command() );
-    set_motor4_power( 5000 );
+//    send_UART_control_values();
+    process_UART_input_command2( UART_get_last_received_command() );
+//    if ( INPUT_POWER_MAX > THROTTLE_MAX )
+    {
+        set_motor4_power( test_throttle );
+    }
+    
+    
 #else
     static bool     start_stop_flag = false,
                     motors_armed = false;

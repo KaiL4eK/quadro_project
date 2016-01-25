@@ -20,11 +20,16 @@
 #define IC_INT_MODE_3RD_CE    0b10
 #define IC_INT_MODE_4TH_CE    0b11
 
-#define THROTTLE_RANGE  2000L    //[0 --- 2000]
-#define ANGLES_RANGE    1000L   //[-1000 --- 1000]
+#define THROTTLE_MAX    2000L    //[0 --- 2000]
+#define THROTTLE_MIN    0L
+#define ANGLES_MAX      1000L   //[-1000 --- 1000]
+#define ANGLES_MIN      -1000L
 
-#define THROTTLE_OFF_LIMIT (THROTTLE_RANGE/10)
-#define START_ANGLES    (-ANGLES_RANGE + (ANGLES_RANGE/5))
+#define TWO_POS_SWITCH_ON   1
+#define TWO_POS_SWITCH_OFF  0
+
+#define THROTTLE_OFF_LIMIT (THROTTLE_MAX/10)
+#define START_ANGLES    (ANGLES_MIN + (ANGLES_MAX/5))
 
 typedef struct
 {
