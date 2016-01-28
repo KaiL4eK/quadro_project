@@ -11,6 +11,7 @@ long long fcy() { return( FCY ); }
 
 //#define SD_CARD
 #define TEST_MOTOR4
+#define NO_CONTROL
 
 #ifdef FREQ_32MHZ
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
@@ -50,7 +51,7 @@ int main(void)
     setup_PLL_oscillator();
 #endif
     INIT_ERR_L;
-    ERR_LIGHT = 0;
+    ERR_LIGHT = ERR_LIGHT_ERR;
     init_UART1( 57600 );
     UART_write_string( "/------------------------/\n" );
     UART_write_string( "UART initialized\n" );
@@ -64,8 +65,10 @@ int main(void)
     UART_write_string( "Motors initialized\n" );
     init_input_control();
     UART_write_string( "IC initialized\n" );    
+#ifndef NO_CONTROL
     ic_find_control();
     UART_write_string( "IC found\n" );
+#endif /* NO_CONTROL */
 //    ic_make_calibration();
 //    UART_write_string("IC calibrated\n");
 #ifdef SD_CARD
@@ -100,7 +103,7 @@ int main(void)
     UART_write_string( "HMC5883L initialized\n" );
     interrupt_timer_init();
     UART_write_string( "Let`s begin!\n" );
-    ERR_LIGHT = 1;
+    ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
     while( 1 )
     {   
@@ -152,6 +155,13 @@ static void process_UART_input_command2( uint8_t input )
             break;
         case 'a':
             test_throttle = test_throttle == THROTTLE_MIN ? THROTTLE_MIN : (test_throttle - THROTTLE_STEP);
+            break;
+        case 'w':
+            set_motors_started( MOTOR_4 );
+            test_throttle = 0;
+            break;
+        case 's':
+            set_motors_stopped();
             break;
         default:
             return;
@@ -209,6 +219,7 @@ static void process_counts( void )
 inline void process_control_system ( void )
 {
 #ifdef TEST_MOTOR4
+#ifndef NO_CONTROL
     static uint8_t power_flag = TWO_POS_SWITCH_OFF;
     if ( power_flag != control_values.two_pos_switch )
     {
@@ -223,6 +234,7 @@ inline void process_control_system ( void )
             set_motors_stopped();
         }
     }
+#endif /* NO_CONTROL */
     
 //    send_UART_control_values();
     process_UART_input_command2( UART_get_last_received_command() );

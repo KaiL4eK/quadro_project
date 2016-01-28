@@ -4,3 +4,6 @@
 /Quadro.X/dist/
 *.txt
 *.TXT
+/SpeedMeter.X/nbproject/private/
+/SpeedMeter.X/build/default/
+/SpeedMeter.X/dist/default/

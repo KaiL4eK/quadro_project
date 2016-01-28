@@ -1,7 +1,16 @@
 #ifndef MOTOR_CONTROL_H_
 #define	MOTOR_CONTROL_H_
 
-#include "core.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include <xc.h>
+
+#define FOSC        32000000ULL
+#define FCY         (FOSC/2)
 
 void motors_init();
 void set_motor1_power( int16_t power );

@@ -10,7 +10,7 @@ static Calibrated_control_t clbr_control_raw = { { 16839, 30125, 23482 },   //Ro
                                                 };
 static Control_values_t     dir_values;
 static uint8_t              // calibration_flag = 0,
-                            input_control_online_flag = 0,
+                            input_control_online = 0,
                             init_flag = 0;
 
 /* Prototypes */
@@ -25,17 +25,19 @@ static void init_channel_5();
 /********************************/
 #define LOSS_LIGHT      _LATA3
 #define TRIS_LOSS_L     _TRISA3
-#define WD_TIMER_RESET {TMR3 = 0; input_control_online_flag = 1; LOSS_LIGHT = 1;}
+#define LOSS_LIGHT_LOST     0
+#define LOSS_LIGHT_FOUND    1
+#define WD_TIMER_RESET {TMR3 = 0; input_control_online = 1; LOSS_LIGHT = LOSS_LIGHT_FOUND;}
 
 void ic_find_control()
 {
-    LOSS_LIGHT = 1;
+    LOSS_LIGHT = LOSS_LIGHT_FOUND;
     memset( &control_raw, 0, sizeof(control_raw) );
-    while( !input_control_online_flag )
+    while( !input_control_online )
     {
-        LOSS_LIGHT = 0;
+        LOSS_LIGHT = LOSS_LIGHT_LOST;
     }
-    LOSS_LIGHT = 1;
+    LOSS_LIGHT = LOSS_LIGHT_FOUND;
 }
 
 static void 
@@ -54,8 +56,8 @@ init_watch_dog_timer()
 void __attribute__( (__interrupt__, auto_psv) ) _T3Interrupt()
 {
     // Processing losing signal from transmitter
-    LOSS_LIGHT = 0;
-    input_control_online_flag = 0;
+    LOSS_LIGHT = LOSS_LIGHT_LOST;
+    input_control_online = 0;
     _T3IF = 0;
 }
 
@@ -118,7 +120,7 @@ void ic_make_calibration()
     clbr_control_raw.channel_4.min = UINT16_MAX;
     clbr_control_raw.channel_5.min = UINT16_MAX;
     turn_on_timer1_time_measurement();
-    while( input_control_online_flag != 1 );
+    while( input_control_online != 1 );
     delay_ms(500);
     while( elapsed_seconds < CLBR_TIME )
     {
@@ -168,7 +170,7 @@ int8_t get_direction_values( Control_values_t *out_dir_vals )
     Control_t tmp_count_cntrl_raw;
     
     memcpy( &tmp_count_cntrl_raw, &control_raw, sizeof( control_raw ) );
-    if ( !input_control_online_flag || !init_flag )
+    if ( !input_control_online || !init_flag )
     {
         tmp_count_cntrl_raw.channel_1 = clbr_control_raw.channel_1.mid;
         tmp_count_cntrl_raw.channel_2 = clbr_control_raw.channel_2.mid;

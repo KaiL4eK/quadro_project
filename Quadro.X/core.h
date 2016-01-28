@@ -22,9 +22,6 @@
 #define FCY         (FOSC/2)
 #define FSENS       400L
 
-#define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN=0; }
-#define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL=0xffff; }
-
 typedef struct
 {
     int32_t roll,

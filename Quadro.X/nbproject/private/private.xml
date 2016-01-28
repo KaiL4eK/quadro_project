@@ -5,7 +5,6 @@
         <group>
             <file>file:/home/alexey/Programms/dsPIC_Quadro/Quadro.X/qmain.c</file>
             <file>file:/home/alexey/Programms/dsPIC_Quadro/Quadro.X/motor_control.c</file>
-            <file>file:/home/alexey/Programms/dsPIC_Quadro/Libraries/Periphery_lib.X/per_proto.h</file>
             <file>file:/home/alexey/Programms/dsPIC_Quadro/Quadro.X/input_control.c</file>
             <file>file:/home/alexey/Programms/dsPIC_Quadro/Quadro.X/motor_control.h</file>
             <file>file:/home/alexey/Programms/dsPIC_Quadro/Quadro.X/input_control.h</file>
