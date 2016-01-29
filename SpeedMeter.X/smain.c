@@ -26,7 +26,6 @@ int main ( void ) {
     init_UART1( 57600 );
     UART_write_string("UART initialized\r\n");
     motors_init();
-    delay_ms(1000);
     init_input_capture();
     
     while ( 1 ) 
@@ -38,35 +37,79 @@ int main ( void ) {
 }
 
 uint16_t    test_throttle = 0;
-uint64_t    time_sum = 0;
+uint32_t    time_sum = 0;
+uint8_t     first_check = 1,
+            stop_flag = 1;
 #define THROTTLE_MAX    2000L    //[0 --- 2000]
 #define THROTTLE_MIN    0L
 #define THROTTLE_STEP   (INPUT_POWER_MAX/20)
+
+void startup_init()
+{
+    if ( stop_flag )
+    {
+        set_motors_started( MOTOR_4 );
+        stop_flag = 0;
+    }
+    set_motor4_power( test_throttle );
+}
+
 static void process_UART_input_command2( uint8_t input )
 {
     switch ( input )
     {
-        case 'w':
-            set_motors_started( MOTOR_4 );
+        case '0':
             test_throttle = 0; // Here we set stable value
-            set_motor4_power( test_throttle );
-            TMR2 = 0;
-            time_sum = 0;
+            startup_init();
+            break;
+        case '1':
+            test_throttle = 1000; // Here we set stable value
+            startup_init();
+            break;
+        case '2':
+            test_throttle = 2000; // Here we set stable value
+            startup_init();
+            break;
+        case '3':
+            test_throttle = 3000; // Here we set stable value
+            startup_init();
+            break;
+        case '4':
+            test_throttle = 4000; // Here we set stable value
+            startup_init();
+            break;
+        case '5':
+            test_throttle = 5000; // Here we set stable value
+            startup_init();
+            break;
+        case '6':
+            test_throttle = 6000; // Here we set stable value
+            startup_init();
+            break;
+        case '7':
+            test_throttle = 7000; // Here we set stable value
+            startup_init();
+            break;
+        case '8':
+            test_throttle = 8000; // Here we set stable value
+            startup_init();
             break;
         case 's':
             set_motors_stopped();
             init_input_capture();
+            stop_flag = 1;
+            first_check = 1;
+            time_sum = 0;
             break;
         default:
             return;
     }
-//    UART_write_string( "P: %d\n\r", test_throttle );
 }
 
 uint32_t    timer_divider = 0,
             next_timer_divider = 0;
 
-uint8_t     first_check = 0;
+
 
 void init_input_capture()
 {
@@ -85,8 +128,6 @@ void init_input_capture()
     TMR2 = 0;
     PR2 = UINT16_MAX;
     T2CONbits.TON = 1;
-    
-    first_check = 1;
 }
 
 void set_next_timer_divider()
@@ -103,31 +144,44 @@ void set_next_timer_divider()
     timer_divider = next_timer_divider;
 }
 
+uint16_t send_rotor_array[4];
+#define SEND_ROTOR_DATA_COUNT (sizeof(send_rotor_array)/sizeof(send_rotor_array[0]))
+
 void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt() 
 {
     uint32_t half_round_time = 0;
     uint32_t current_timer_divider = timer_divider;
+    
     if ( next_timer_divider != timer_divider )
     {
         set_next_timer_divider();
     }
+    
     TMR2 = 0;
     
-    if ( !first_check )
+    if ( !first_check && !stop_flag )
     {
         half_round_time = IC5BUF*current_timer_divider/TIMER_US_TICK; // last is timer scale coeff
-        time_sum += half_round_time;
-    
-//        if ( timer_divider > 1 && half_round_time < 1L*UINT16_MAX*TIMER_US_TICK )
-//        {
-//            next_timer_divider = 1;
-//        }
-//        else if ( timer_divider > 8 && half_round_time < 8L*UINT16_MAX*TIMER_US_TICK )
-//        {
-//            next_timer_divider = 8;
-//        }
+        time_sum += half_round_time/1000;
+
+        if ( timer_divider > 1 && half_round_time < 1L*UINT16_MAX/TIMER_US_TICK*2/3 ) //half is just for safe
+        {
+            next_timer_divider = 1;
+        }
+        else if ( timer_divider > 8 && half_round_time < 8L*UINT16_MAX/TIMER_US_TICK*2/3 )
+        {
+            next_timer_divider = 8;
+        }
+
+        uint32_t round_speed = 30*1000000L/half_round_time;
+
+        send_rotor_array[0] = round_speed >> 16;
+        send_rotor_array[1] = round_speed;
+        send_rotor_array[2] = time_sum >> 16;
+        send_rotor_array[3] = time_sum;
         
-        UART_write_string("%ld, %lld\r\n", 30*1000000L/half_round_time, time_sum); // 1000 cause we count in msecs
+        UART_write_words( send_rotor_array, SEND_ROTOR_DATA_COUNT );
+//        UART_write_string("%ld,%ld,%lld\r\n", current_timer_divider, 30*1000000L/half_round_time, time_sum); // 1000 cause we count in msecs
     }
     else
     {

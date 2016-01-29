@@ -56,8 +56,8 @@ void UART_write_words( uint16_t *arr, uint8_t count )
     uint8_t iter = 0;
     for ( iter = 0; iter < count; iter++ )
     {
-        UART_write_byte( LOW( arr[iter] ) );
         UART_write_byte( HIGH( arr[iter] ) );
+        UART_write_byte( LOW( arr[iter] ) );
     }
 }
 
