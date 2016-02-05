@@ -23,6 +23,7 @@ int main ( void ) {
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
     
+    ADC_init();
     init_UART1( 57600 );
     UART_write_string("UART initialized\r\n");
     motors_init();
@@ -30,7 +31,14 @@ int main ( void ) {
     
     while ( 1 ) 
     { 
+        int i = 0;
         process_UART_input_command2( UART_get_last_received_command() );
+        int32_t tenzo_sensor_potenc_data_12bit = 0;
+        for ( i = 0; i < 3; i++ )
+        {
+            tenzo_sensor_potenc_data_12bit += ADC_read();
+        }
+        UART_write_string( "T: %d\n", (int16_t)(tenzo_sensor_potenc_data_12bit/3) );
     }
     
     return( 0 );
@@ -180,8 +188,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt()
         send_rotor_array[2] = time_sum >> 16;
         send_rotor_array[3] = time_sum;
         
-        UART_write_words( send_rotor_array, SEND_ROTOR_DATA_COUNT );
-//        UART_write_string("%ld,%ld,%lld\r\n", current_timer_divider, 30*1000000L/half_round_time, time_sum); // 1000 cause we count in msecs
+//        UART_write_words( send_rotor_array, SEND_ROTOR_DATA_COUNT );
     }
     else
     {
