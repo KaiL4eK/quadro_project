@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=smain.c motor_control.c
+SOURCEFILES_QUOTED_IF_SPACED=smain.c motor_control.c hx711.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/smain.o.d ${OBJECTDIR}/motor_control.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/smain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/hx711.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o
+OBJECTFILES=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o
 
 # Source Files
-SOURCEFILES=smain.c motor_control.c
+SOURCEFILES=smain.c motor_control.c hx711.c
 
 
 CFLAGS=
@@ -96,6 +96,13 @@ ${OBJECTDIR}/motor_control.o: motor_control.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/motor_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/hx711.o: hx711.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/hx711.o.d 
+	@${RM} ${OBJECTDIR}/hx711.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hx711.c  -o ${OBJECTDIR}/hx711.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hx711.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/hx711.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/smain.o: smain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
@@ -110,6 +117,13 @@ ${OBJECTDIR}/motor_control.o: motor_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/motor_control.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"        -g -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/motor_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/hx711.o: hx711.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/hx711.o.d 
+	@${RM} ${OBJECTDIR}/hx711.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hx711.c  -o ${OBJECTDIR}/hx711.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hx711.o.d"        -g -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/hx711.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

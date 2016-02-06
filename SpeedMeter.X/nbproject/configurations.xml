@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>per_proto.h</itemPath>
       <itemPath>motor_control.h</itemPath>
+      <itemPath>hx711.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -16,6 +17,7 @@
                    projectFiles="true">
       <itemPath>smain.c</itemPath>
       <itemPath>motor_control.c</itemPath>
+      <itemPath>hx711.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

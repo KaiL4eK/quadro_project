@@ -7,6 +7,7 @@
 #include <xc.h>
 #include "per_proto.h"
 #include "motor_control.h"
+#include "hx711.h"
 
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
 _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
@@ -19,26 +20,23 @@ long long fcy() { return( FCY ); }
 static void process_UART_input_command2( uint8_t input );
 void init_input_capture();
 
+int16_t tenzo_data = 0;
+
 int main ( void ) {
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
     
-    ADC_init();
+    init_hx711();
     init_UART1( 57600 );
     UART_write_string("UART initialized\r\n");
     motors_init();
-    init_input_capture();
+//    init_input_capture();
     
     while ( 1 ) 
-    { 
-        int i = 0;
+    {
+        tenzo_data = read_calibrated_tenzo_data();
+//        UART_write_string( "T: %d\n", tenzo_data );
         process_UART_input_command2( UART_get_last_received_command() );
-        int32_t tenzo_sensor_potenc_data_12bit = 0;
-        for ( i = 0; i < 3; i++ )
-        {
-            tenzo_sensor_potenc_data_12bit += ADC_read();
-        }
-        UART_write_string( "T: %d\n", (int16_t)(tenzo_sensor_potenc_data_12bit/3) );
     }
     
     return( 0 );
@@ -117,8 +115,6 @@ static void process_UART_input_command2( uint8_t input )
 uint32_t    timer_divider = 0,
             next_timer_divider = 0;
 
-
-
 void init_input_capture()
 {
     _TRISD12 = 1;
@@ -152,8 +148,18 @@ void set_next_timer_divider()
     timer_divider = next_timer_divider;
 }
 
-uint16_t send_rotor_array[4];
+inline void
+send_UART_motor_data ( uint32_t speed, int16_t thrust, uint32_t time )
+{
+    uint16_t send_rotor_array[5];
 #define SEND_ROTOR_DATA_COUNT (sizeof(send_rotor_array)/sizeof(send_rotor_array[0]))
+    send_rotor_array[0] = speed >> 16;
+    send_rotor_array[1] = speed;
+    send_rotor_array[2] = time_sum >> 16;
+    send_rotor_array[3] = time_sum;
+    send_rotor_array[4] = thrust < 0 ? 0 : thrust;
+    UART_write_words( send_rotor_array, SEND_ROTOR_DATA_COUNT );
+}
 
 void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt() 
 {
@@ -181,14 +187,8 @@ void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt()
             next_timer_divider = 8;
         }
 
-        uint32_t round_speed = 30*1000000L/half_round_time;
-
-        send_rotor_array[0] = round_speed >> 16;
-        send_rotor_array[1] = round_speed;
-        send_rotor_array[2] = time_sum >> 16;
-        send_rotor_array[3] = time_sum;
-        
-//        UART_write_words( send_rotor_array, SEND_ROTOR_DATA_COUNT );
+        uint32_t round_speed = 30000000L/half_round_time;
+        send_UART_motor_data( round_speed, tenzo_data, time_sum );
     }
     else
     {

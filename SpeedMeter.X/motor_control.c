@@ -11,7 +11,7 @@
 
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2
 static const uint16_t   esc_max_power = PWM_USEC(1900),
-                        esc_min_power = PWM_USEC(1150),
+                        esc_min_power = PWM_USEC(1200),
                         esc_stop_power = PWM_USEC(900);
 
 static uint8_t  motor1_armed = 0,
