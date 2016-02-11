@@ -9,9 +9,7 @@
 #define CLK_PIN         _LATA15
 #define CLK_TRIS_PIN    _TRISA15
 
-#define HX711_MULTI         10000
-// Proportional coefficient = 3.1472 discr/g
-#define HX711_CALIBR_VAL    31472
+#define HX711_CALIBR_VAL    393
 
 #define NUM_DATA_TARE 20
 

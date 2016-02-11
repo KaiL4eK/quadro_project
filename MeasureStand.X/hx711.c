@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include "hx711.h"
+#include "per_proto.h"
 
-uint32_t tare_value = 0;
+int32_t tare_value = 0;
 
 int init_hx711 ( void )
 {
@@ -22,7 +23,7 @@ int init_hx711 ( void )
 
 int32_t read_tenzo_data ( void ) // Max out is 2^24-1 as ADC is 24 bit
 {
-    uint32_t ADC_value = 0;
+    int32_t ADC_value = 0;
     
     while ( DAT_PIN );
     
@@ -30,15 +31,14 @@ int32_t read_tenzo_data ( void ) // Max out is 2^24-1 as ADC is 24 bit
     for ( i = 0; i < 24; i++ )
     {
         CLK_PIN = 1;
-        ADC_value = ADC_value << 1;
+        ADC_value <<= 1;
         CLK_PIN = 0;
         if ( DAT_PIN )
             ADC_value++;
     }
     
     CLK_PIN = 1;
-    ADC_value = ADC_value ^ 0x800000;
-//    loadOut = load / 128.0f;
+    ADC_value ^= 0x800000;
     CLK_PIN = 0;
     
     return ( ADC_value );
@@ -46,10 +46,10 @@ int32_t read_tenzo_data ( void ) // Max out is 2^24-1 as ADC is 24 bit
 
 int32_t read_tared_tenzo_data ( void )
 {
-    return( (int32_t)read_tenzo_data() - (int32_t)tare_value );
+    return( read_tenzo_data() - tare_value );
 }
 
 int16_t read_calibrated_tenzo_data ( void )
 {
-    return( read_tared_tenzo_data()*HX711_MULTI/31472/128 );
+    return( read_tared_tenzo_data()/HX711_CALIBR_VAL );
 }

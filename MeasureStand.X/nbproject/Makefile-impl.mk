@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=SpeedMeter.X
+PROJECTNAME=MeasureStand.X
 
 # Active Configuration
 DEFAULTCONF=default

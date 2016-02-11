@@ -9,8 +9,9 @@
 #include <string.h>
 #include <xc.h>
 
-#define FOSC        32000000ULL
-#define FCY         (FOSC/2)
+#define FOSC            32000000ULL
+#define FCY             (FOSC/2)
+#define PWM_PRESCALE    4
 
 void motors_init();
 void set_motor1_power( int16_t power );

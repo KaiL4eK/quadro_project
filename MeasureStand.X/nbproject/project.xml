@@ -3,7 +3,7 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>SpeedMeter</name>
+            <name>MeasureStand</name>
             <creation-uuid>b50a1b45-5117-4168-9fe0-6edb4d168aa7</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
