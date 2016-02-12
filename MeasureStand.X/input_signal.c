@@ -48,8 +48,8 @@ int init_square ( uint16_t lowLevel, uint16_t highLevel, uint16_t halfTime )
         tableSignal = NULL;
     }
     
-    numPoints = SYS_FREQ*halfTime/500L;
-    if ( numPoints < 4 || lowLevel < highLevel )
+    numPoints = SYS_FREQ*(2L*halfTime)/1000L;
+    if ( numPoints < 4 || lowLevel > highLevel )
     {
         return( -1 );
     }

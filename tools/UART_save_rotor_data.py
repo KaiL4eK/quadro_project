@@ -12,7 +12,7 @@ ser = serial.Serial(
     )
 
 filename = "Serial.log"
-bytes_amount = 8;
+bytes_amount = 6;
 
 time_speed = [ 0.0 ]
 time_other = []
@@ -24,8 +24,8 @@ electr_data = [ ]
 time_sum = 0.0 # milliseconds for all time_* variables
 time_step = 2.5; 
 
-fullTime = 3500
-changeSpeedTime = fullTime - 2000
+fullTime = 7000
+changeSpeedTime = 500
 delayTime = 1
 
 next_flag = False
@@ -36,7 +36,7 @@ while time_sum < fullTime:
     current_speed =  ord(data[0]) << 8 | ord(data[1])
     thrust = ord(data[2]) << 8 | ord(data[3])
     target = ord(data[4]) << 8 | ord(data[5])
-    electr = ord(data[6]) << 8 | ord(data[7])
+    # electr = ord(data[6]) << 8 | ord(data[7])
 
     time_sum = time_sum + time_step
 
@@ -44,12 +44,13 @@ while time_sum < fullTime:
     	time_speed.append( time_sum )
     	speed_data.append( current_speed )
 
-    electr_data.append( electr )
+    # electr_data.append( electr )
     target_data.append( target )
     thrust_data.append( thrust )
     time_other.append( time_sum )
 
-    wrt_str = "#S:%d#Th:%d#T:%d#C:%d" % (current_speed, thrust, target, electr)
+    # wrt_str = "#S:%d#Th:%d#T:%d#C:%d" % (current_speed, thrust, target, electr)
+    wrt_str = "#S:%d#Th:%d#T:%d" % (current_speed, thrust, target)
     print wrt_str
 
     if ( not next_flag and time_sum > changeSpeedTime ):
@@ -62,33 +63,31 @@ ser.close()
 plt.close('all')
 
 # Save to logsile
-# logFile = open( filename, 'w' );
 
-# logFile.write("#Speed\n");
-# for time_s in sorted(speed_data):
-#     logFile.write( "%f,%d\n" % (time_s, speed_data[time_s]) )
+speed_d = dict( zip( time_speed, speed_data ) )
+thrust_d = dict( zip( time_other, thrust_data ) )
+target_d = dict( zip( time_other, target_data ) )
+# electr_d = dict( zip( time_other, electr_data ) )
 
-# logFile.write("#Thrust\n");
-# for time_t in sorted(thrust_data):
-#     logFile.write( "%f,%d\n" % (time_t, thrust_data[time_t]) )
-
-# logFile.write("#Target\n");
-# for time_t in sorted(target_data):
-#     logFile.write( "%f,%d\n" % (time_t, target_data[time_t]) )
-
-# logFile.write("#Electr\n");
-# for time_e in sorted(electr_data):
-#     logFile.write( "%f,%d\n" % (time_e, electr_data[time_e]) )
-
-# logFile.close()
-
-
+with open( filename, 'w' ) as logFile:
+	logFile.write("#Speed\n");
+	for time_s in sorted( speed_d ):
+	    logFile.write( "%f,%d\n" % (time_s, speed_d[time_s]) )
+	logFile.write("#Thrust\n");
+	for time_t in sorted( thrust_d ):
+	    logFile.write( "%f,%d\n" % (time_t, thrust_d[time_t]) )
+	logFile.write("#Target\n");
+	for time_t in sorted( target_d ):
+	    logFile.write( "%f,%d\n" % (time_t, target_d[time_t]) )
+	# logFile.write("#Electr\n");
+	# for time_e in sorted( electr_d ):
+	#     logFile.write( "%f,%d\n" % (time_e, electr_d[time_e]) )
 
 f, ax1 = plt.subplots()
 plt.grid()
 ax1.plot( time_speed, speed_data, 'k', label='Speed' )
 ax1.plot( time_other, target_data, label='Target' )
-ax1.plot( time_other, electr_data, label='Current' )
+# ax1.plot( time_other, electr_data, label='Current' )
 for tl in ax1.get_yticklabels():
     tl.set_color( 'k' )
 # ax1.set_ylabel( 'Speed' )

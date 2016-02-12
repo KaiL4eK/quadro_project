@@ -37,9 +37,9 @@ int main ( void ) {
     init_control_system_interrupt();
     
 //    if ( init_sin_table( 1000, 1000, 1000 ) != 0 )
-    if ( init_square( 0, 2000, 2000 ) != 0 )
+    if ( init_square( 0, 8000, 2000 ) != 0 )
     {
-        UART_write_string( "Init sin table failed" );
+        UART_write_string( "Init signal table failed\n" );
         while(1);
     }
     
@@ -122,7 +122,7 @@ static void process_UART_input_command2 ( uint8_t input )
 
 void send_UART_motor_data ( uint16_t speed, int16_t thrust, uint16_t inputSignal, uint16_t current )
 {
-    uint16_t send_rotor_array[] = { speed, thrust < 0 ? 0 : thrust, inputSignal, current };
+    uint16_t send_rotor_array[] = { speed, thrust < 0 ? 0 : thrust, inputSignal/*, current */};
     UART_write_words( send_rotor_array, ROTOR_DATA_COUNT );
 }
 

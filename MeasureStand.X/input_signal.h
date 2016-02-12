@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 int init_sinus ( uint16_t halfAmpl, uint16_t period_time_ms, uint16_t offset );
+int init_square ( uint16_t lowLevel, uint16_t highLevel, uint16_t halfTime );
 uint16_t get_next_signal_value ( void );
 uint16_t get_signal_zero_lvl ( void );
 
