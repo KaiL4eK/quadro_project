@@ -6,6 +6,10 @@
 
 #define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN=0; }
 #define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL=0xffff; }
+// Next macrop works just with board dsPIC33FJ256MC710
+#define SWITCH_TO_32MHZ         _FOSCSEL(FNOSC_PRI & IESO_OFF); \
+                                _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD); \
+                                _FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
 
 /*** ADC.c ***/
 
@@ -64,8 +68,8 @@ uint32_t timer_stop();
 
 /** Timer module **/
 
-#define TIMER_MS_TICK (FCY/1000) // Last is prescale of timer
-#define TIMER_US_TICK (FCY/1000000) // Last is prescale of timer
+#define TIMER_MS_TICK (FCY/1000)
+#define TIMER_US_TICK (FCY/1000000)
 
 #define TIMER_DIV_1   0b00
 #define TIMER_DIV_8   0b01

@@ -14,14 +14,12 @@ long long fcy() { return( FCY ); }
 #define NO_CONTROL
 
 #ifdef FREQ_32MHZ
-_FOSCSEL(FNOSC_PRI & IESO_OFF);
+SWITCH_TO_32MHZ
 #else
-_FOSCSEL(FNOSC_PRIPLL & IESO_OFF);
-#endif
-_FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
-_FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
 
-void interrupt_timer_init( void )
+#endif
+
+void control_system_timer_init( void )
 {
     T4CONbits.TON = 0;
     T4CONbits.T32 = 1;
@@ -101,7 +99,7 @@ int main(void)
         error_process();
     }
     UART_write_string( "HMC5883L initialized\n" );
-    interrupt_timer_init();
+    control_system_timer_init();
     UART_write_string( "Let`s begin!\n" );
     ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
