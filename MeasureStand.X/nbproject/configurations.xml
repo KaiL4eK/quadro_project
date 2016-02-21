@@ -4,12 +4,12 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>per_proto.h</itemPath>
       <itemPath>motor_control.h</itemPath>
       <itemPath>hx711.h</itemPath>
       <itemPath>core.h</itemPath>
       <itemPath>tachometer.h</itemPath>
       <itemPath>input_signal.h</itemPath>
+      <itemPath>per_proto.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
