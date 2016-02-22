@@ -1,20 +1,20 @@
 #ifndef HMC5883L_H_
 #define	HMC5883L_H_
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <math.h>
 #include <string.h>
-#include <xc.h>
+#include "per_proto.h"
 
-int8_t i2c_write_byte_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t data);
-int8_t i2c_write_word_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint16_t data);
-int8_t i2c_read_bytes_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t *data, uint8_t lenght);
-int8_t i2c_write_bits_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t bit_start, uint8_t length, uint8_t data);
+#define RADIANS_TO_DEGREES  (180.0f/3.14159)
+#define DEGREES_TO_RADIANS  (3.14159/180.0f)
+#define GAIN_MULTIPLYER     100L
+#define INIT_CALIBRATION_SAMPLES 100
 
-void UART_writeln_string( char *string );
+#define MATH_MULTIPLYER     1000L
 
 #define HMC5883_ADDRESS            0x1E
 
@@ -108,22 +108,16 @@ typedef union
     } value;
 } mag_raw_data_t;
 
-typedef struct
-{
-    int16_t x_magnet,
-            y_magnet,
-            z_magnet;
-}magnetic_data_t;
-
-int hmc5883l_init ( void );
+int hmc5883l_init ( int16_t offset_x, int16_t offset_y );
 uint8_t hmc5883l_get_id ( void );
 int8_t hmc5883l_receive_mag_raw_data ( void );
-void hmc5883l_get_scaled_mag_data ( magnetic_data_t *out_mag_data );
+int16_t hmc5883l_get_yaw_angle ( void );
 void hmc5883l_set_magnetic_gain ( Hmc5883l_mag_gain_t gain );
 void send_UART_magnetic_raw_data ( void );
 void hmc5883l_set_continious_operating_mode ( void );
 void hmc5883l_set_output_rate ( Hmc5883l_output_rate_t rate );
 void hmc5883l_set_averaged_samples ( Hmc5883l_avrg_samples_t avrgd_smpls );
+void hmc5883l_make_calibration ( uint32_t calibration_times );
 
 #endif	/* HMC5883L_H_ */
 

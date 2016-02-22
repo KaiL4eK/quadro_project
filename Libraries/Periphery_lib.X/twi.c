@@ -1,6 +1,5 @@
 #include "twi.h"
-#include "timing.h"
-#include "external.h"
+#include "per_proto.h"
 
 inline void i2c_idle( void )
 {

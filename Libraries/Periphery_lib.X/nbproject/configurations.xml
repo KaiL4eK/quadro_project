@@ -9,7 +9,6 @@
       <itemPath>UART.h</itemPath>
       <itemPath>twi.h</itemPath>
       <itemPath>per_proto.h</itemPath>
-      <itemPath>external.h</itemPath>
       <itemPath>spi.h</itemPath>
       <itemPath>error.h</itemPath>
       <itemPath>flash.h</itemPath>

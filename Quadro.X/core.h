@@ -11,16 +11,7 @@
 
 #define CONTROL_BYTE    0xff
 
-//Nice setup for external HS 32MHz Quartz
-#define FREQ_32MHZ
-
-#ifndef FREQ_32MHZ
-#define FOSC        80000000ULL
-#else
-#define FOSC        32000000ULL
-#endif
-#define FCY         (FOSC/2)
-#define FSENS       400L
+#define FREQ_CONTROL_SYSTEM   400L
 
 typedef struct
 {

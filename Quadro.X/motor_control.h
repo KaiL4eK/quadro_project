@@ -18,6 +18,10 @@ void set_motor4_power( int16_t power );
 #define INPUT_POWER_MAX 10000L
 #define INPUT_POWER_MIN 0L
 
+#define PWM_PRESCALE    4
+#define PWM_PERIOD      ((FCY/FREQ_CONTROL_SYSTEM/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767 | 32 MHz = 9999
+#define PWM_USEC(x)     ((FCY/1000000L)*(x)/PWM_PRESCALE - 1)
+
 void set_motors_started( uint8_t motor_nums );
 void set_motors_stopped();
 

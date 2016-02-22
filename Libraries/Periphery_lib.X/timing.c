@@ -1,6 +1,5 @@
 #include "timing.h"
 #include "per_proto.h"
-#include "external.h"
 
 void setup_PLL_oscillator( void )
 {

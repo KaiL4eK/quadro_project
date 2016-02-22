@@ -1,5 +1,5 @@
 #include "UART.h"
-#include "external.h"
+#include "per_proto.h"
 
 /********************************/
 /*              UART            */

@@ -6,18 +6,13 @@
 #include "motor_control.h"
 #include "per_proto.h"
 #include "file_io.h"
-
-long long fcy() { return( FCY ); }
+#include "math_proto.h"
 
 //#define SD_CARD
 #define TEST_MOTOR4
 #define NO_CONTROL
 
-#ifdef FREQ_32MHZ
 SWITCH_TO_32MHZ
-#else
-
-#endif
 
 void control_system_timer_init( void )
 {
@@ -26,8 +21,8 @@ void control_system_timer_init( void )
     T4CONbits.TCKPS = TIMER_DIV_1;
     _T5IP = 1;
     _T5IE = 1;
-    PR5 = (((FCY/FSENS) >> 16) & 0xffff);
-    PR4 = ((FCY/FSENS) & 0xffff);
+    PR5 = (((FCY/FREQ_CONTROL_SYSTEM) >> 16) & 0xffff);
+    PR4 = ((FCY/FREQ_CONTROL_SYSTEM) & 0xffff);
     T4CONbits.TON = 1;
 }
 
@@ -45,9 +40,9 @@ int main(void)
 {
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
-#ifndef FREQ_32MHZ
-    setup_PLL_oscillator();
-#endif
+    
+//    setup_PLL_oscillator();
+    
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     init_UART1( 57600 );
@@ -93,7 +88,7 @@ int main(void)
 //    bmp180_initial_press = bmp180_press;
     bmp180_initial_altitude = bmp180_get_altitude( bmp180_press, 101325 );
 //    UART_write_string( "BMP180 calibrated: %ld\n", bmp180_initial_press );
-    if ( hmc5883l_init() != 0 )
+    if ( hmc5883l_init( -48, -440 ) != 0 )
     {
         UART_write_string("Failed HMC init\n");
         error_process();
@@ -170,14 +165,12 @@ static void process_UART_input_command2( uint8_t input )
 
 static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
-static magnetic_data_t      curr_data_mag;
 static Angles_t             current_angles = { 0, 0, 0 };
 static uint16_t             time_elapsed_us = 0;
 
 // p = p0*exp(-0.0341593/(t+273)*h)
 // h = ln(p0/p) * (t+273)/0.0341593
 
-#define RADIANS_TO_DEGREES  (180/3.14159)
 #define GYR_COEF            131L // = 65535/2/250
 #define ANGLES_COEFF        1000L
 #define SENS_TIME           2500L/1000000
@@ -192,9 +185,17 @@ static void process_counts( void )
             acc_z = c_d->value.z_accel;
     
     current_angles.acc_x = 
+#ifdef MATH_LIB_
+                atan2_fp(acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * ANGLES_COEFF,
+#else
                 atan2(acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF,
+#endif
     current_angles.acc_y = 
+#ifdef MATH_LIB_
+                atan2_fp(-1 * acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * ANGLES_COEFF;
+#else
                 atan2(-1 * acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF;
+#endif
     
     current_angles.gyr_delta_x = (c_d->value.x_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME,
     current_angles.gyr_delta_y = (c_d->value.y_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME,
@@ -374,14 +375,13 @@ inline void bmp180_rcv_filtered_data ( void )
 
 void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
 {
-//    timer_start();
+    timer_start();
     bmp180_rcv_filtered_data();
     
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
     
-    hmc5883l_receive_mag_raw_data();
-    hmc5883l_get_scaled_mag_data( &curr_data_mag ); // In mGauss
+    int16_t angle_deg = hmc5883l_get_yaw_angle();
     
     get_direction_values( &control_values );
     
@@ -396,18 +396,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     process_saving_data();
 #endif /* SD_CARD */
     
-    #ifdef HMC5883L
-    float angle = atan2( curr_data_mag.y_magnet, curr_data_mag.x_magnet )*RADIANS_TO_DEGREES;
-
-    if ( angle < 0 )
-        angle += 360;
-    if ( angle > 360 )
-        angle -= 360;
-
-    UART_write_float(angle);
-#endif /* HMC5883L */ 
-    
-//    time_elapsed_us = timer_stop()/TIMER_US_TICK;
-//    UART_write_string( "T: %d\n", time_elapsed_us );
+    time_elapsed_us = timer_stop()/TIMER_US_TICK;
+    UART_write_string( "%d\n", time_elapsed_us );
     _T5IF = 0;
 }

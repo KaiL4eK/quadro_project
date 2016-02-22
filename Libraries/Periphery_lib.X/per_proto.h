@@ -11,6 +11,9 @@
                                 _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD); \
                                 _FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
 
+#define FOSC        32000000ULL
+#define FCY         (FOSC/2)
+
 /*** ADC.c ***/
 
 void ADC_init();

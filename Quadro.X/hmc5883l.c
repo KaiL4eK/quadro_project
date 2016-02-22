@@ -1,24 +1,48 @@
 #include "HMC5883L.h"
-#include "per_proto.h"
+#include "math_proto.h"
 
 static mag_raw_data_t   raw_magnetic;
 static uint8_t          init_flag = 0;
 static int16_t          _hmc5883l_mGauss_LSb = 92;
-#define GAIN_MULTIPLYER     100L
 
-int hmc5883l_init ( void )
+static int16_t          g_offset_x = 0,
+                        g_offset_y = 0;
+static int32_t          sin_angle_offset_rad = 0,
+                        cos_angle_offset_rad = MATH_MULTIPLYER;
+                        
+
+int hmc5883l_init ( int16_t offset_x, int16_t offset_y )
 {
     if ( hmc5883l_get_id() != 0x34 )
+    {
         return( -1 );
+    }
     
     hmc5883l_set_output_rate( HMC5883_OUTPUT_RATE_75 );
-    hmc5883l_set_averaged_samples( HMC5883_AVERAGED_SAMPLES_8 );
-    hmc5883l_set_magnetic_gain( HMC5883l_MAGGAIN_1_3 );
+    hmc5883l_set_averaged_samples( HMC5883_AVERAGED_SAMPLES_2 );
+    hmc5883l_set_magnetic_gain( HMC5883l_MAGGAIN_0_88 );
     hmc5883l_set_continious_operating_mode();
+    
+    g_offset_x = offset_x;
+    g_offset_y = offset_y;
     
     memset( &raw_magnetic, 0, sizeof( raw_magnetic ) );
     
     init_flag = 1;
+    
+    delay_ms( 20 );
+    
+    int16_t sum_angles = 0;
+    int i = 0;
+    for ( i = 0; i < INIT_CALIBRATION_SAMPLES; i++ )
+    {
+        sum_angles += hmc5883l_get_yaw_angle();
+    }
+    int16_t angle_offset_deg = sum_angles/INIT_CALIBRATION_SAMPLES;
+    float angle_offset_rad = (float)angle_offset_deg*DEGREES_TO_RADIANS;
+    sin_angle_offset_rad = sin( angle_offset_rad )*MATH_MULTIPLYER;
+    cos_angle_offset_rad = cos( angle_offset_rad )*MATH_MULTIPLYER;
+    
     return( 0 );
 }
 
@@ -90,7 +114,9 @@ void send_UART_magnetic_raw_data ( void )
 int8_t hmc5883l_receive_mag_raw_data ( void )
 {
     if ( !init_flag )
+    {
         return( -1 );
+    }
     
     if ( i2c_read_bytes_eeprom( HMC5883_ADDRESS, HMC5883_REGISTER_MAG_OUT_X_H_M, (uint8_t *)(&raw_magnetic), 6 ) != 0 )
     {
@@ -99,17 +125,54 @@ int8_t hmc5883l_receive_mag_raw_data ( void )
     
     SWAP (raw_magnetic.reg.x_mag_h, raw_magnetic.reg.x_mag_l);
     SWAP (raw_magnetic.reg.y_mag_h, raw_magnetic.reg.y_mag_l);
-    SWAP (raw_magnetic.reg.z_mag_h, raw_magnetic.reg.z_mag_l);
+//    SWAP (raw_magnetic.reg.z_mag_h, raw_magnetic.reg.z_mag_l);
+    
+    raw_magnetic.value.x_magnet -= g_offset_x;
+    raw_magnetic.value.y_magnet -= g_offset_y;
+    // Inversed for correct direction of axis Z
+    raw_magnetic.value.y_magnet *= -1;
     
     return( 0 );
 }
 
-void hmc5883l_get_scaled_mag_data ( magnetic_data_t *out_mag_data )
+
+int16_t hmc5883l_get_yaw_angle ( void )
 {
-    mag_raw_data_t tmp_count_mag_data;
-    memcpy( &tmp_count_mag_data, &raw_magnetic, sizeof( tmp_count_mag_data ) );
+    if ( !init_flag )
+    {
+        return( -1 );
+    }
     
-    out_mag_data->x_magnet = tmp_count_mag_data.value.x_magnet * _hmc5883l_mGauss_LSb / GAIN_MULTIPLYER;
-    out_mag_data->y_magnet = tmp_count_mag_data.value.y_magnet * _hmc5883l_mGauss_LSb / GAIN_MULTIPLYER;
-    out_mag_data->z_magnet = tmp_count_mag_data.value.z_magnet * _hmc5883l_mGauss_LSb / GAIN_MULTIPLYER;
+    hmc5883l_receive_mag_raw_data();
+    
+    // Don`t multiply on gain because we need relation
+    int16_t turned_x = (raw_magnetic.value.x_magnet * cos_angle_offset_rad + 
+                        raw_magnetic.value.y_magnet * sin_angle_offset_rad)/MATH_MULTIPLYER,
+            turned_y = (raw_magnetic.value.y_magnet * cos_angle_offset_rad - 
+                        raw_magnetic.value.x_magnet * sin_angle_offset_rad)/MATH_MULTIPLYER;
+    
+    return( atan2_fp( turned_y, turned_x ) );
+}
+
+void hmc5883l_make_calibration ( uint32_t calibration_times )
+{
+    int16_t x_mag_max = INT16_MIN,
+            x_mag_min = INT16_MAX,
+            y_mag_max = INT16_MIN,
+            y_mag_min = INT16_MAX;
+    
+    while ( calibration_times-- )
+    {
+        hmc5883l_receive_mag_raw_data();
+        x_mag_max = max( x_mag_max, raw_magnetic.value.x_magnet );
+        x_mag_min = min( x_mag_min, raw_magnetic.value.x_magnet );
+        y_mag_max = max( y_mag_max, raw_magnetic.value.y_magnet );
+        y_mag_min = min( y_mag_min, raw_magnetic.value.y_magnet );
+        delay_ms( 50 );
+    }
+    
+    UART_write_string( "Offse values: x = %d, y = %d\n", 
+                        x_mag_max - (x_mag_max-x_mag_min)/2, 
+                        y_mag_max - (y_mag_max-y_mag_min)/2 );
+    while ( 1 );
 }
