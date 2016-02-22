@@ -10,19 +10,19 @@
 #include <string.h>
 #include <xc.h>
 
-#define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN=0; }
-#define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL=0xffff; }
-// Next macrop works just with board dsPIC33FJ256MC710
-#define SWITCH_TO_32MHZ         _FOSCSEL(FNOSC_PRI & IESO_OFF); \
-                                _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD); \
-                                _FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
+#define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN = 0; }
+#define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL = 0x1fff; }
+// Next macro works just with board dsPIC33FJ256MC710 with quartz
+#define SWITCH_TO_32MHZ         _FOSCSEL( FNOSC_PRI & IESO_OFF ); \
+                                _FOSC( POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD ); \
+                                _FWDT( FWDTEN_OFF );              // Watchdog Timer Enabled/disabled by user software
 
 #define FOSC        32000000ULL
 #define FCY         (FOSC/2)
 
 /*** ADC.c ***/
 
-void ADC_init();
+int ADC_init ( uint8_t channel );
 int16_t ADC_read( void );
 
 /*** UART.c ***/

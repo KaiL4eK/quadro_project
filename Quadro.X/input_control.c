@@ -53,7 +53,7 @@ init_watch_dog_timer()
 }
 
 /* Whatch dog timer overflow */
-void __attribute__( (__interrupt__, auto_psv) ) _T3Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
 {
     // Processing losing signal from transmitter
     LOSS_LIGHT = LOSS_LIGHT_LOST;
@@ -155,7 +155,7 @@ void send_UART_calibration_data( void )
                      );
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _T1Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()
 {
     elapsed_seconds++;
     _T1IF = 0;
@@ -239,7 +239,7 @@ clean_IC1_buffer()
         trash = IC1BUF;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _IC1Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _IC1Interrupt()
 {
     uint16_t    pulse_fall = 0,
                 pulse_rise = 0;
@@ -284,7 +284,7 @@ clean_IC2_buffer()
         trash = IC2BUF;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _IC2Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _IC2Interrupt()
 {
     uint16_t    pulse_fall = 0,
                 pulse_rise = 0;
@@ -329,7 +329,7 @@ clean_IC3_buffer()
         trash = IC3BUF;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _IC3Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _IC3Interrupt()
 {
     uint16_t    pulse_fall = 0,
                 pulse_rise = 0;
@@ -374,7 +374,7 @@ clean_IC4_buffer()
         trash = IC4BUF;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _IC4Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _IC4Interrupt()
 {
     uint16_t    pulse_fall = 0,
                 pulse_rise = 0;
@@ -418,7 +418,7 @@ clean_IC5_buffer()
         trash = IC5BUF;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _IC5Interrupt()
 {
     uint16_t    pulse_fall = 0,
                 pulse_rise = 0;

@@ -373,7 +373,7 @@ inline void bmp180_rcv_filtered_data ( void )
     bmp180_altitude = ((tmp_altitude*BMP180_EXP_FILTER_PART) + (bmp180_altitude/1000.0*(1.0-BMP180_EXP_FILTER_PART))) * TEMP_MULTIPLYER;
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
+void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
     timer_start();
     bmp180_rcv_filtered_data();
