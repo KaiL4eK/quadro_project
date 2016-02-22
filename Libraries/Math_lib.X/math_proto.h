@@ -3,8 +3,6 @@
 
 #define MATH_LIB_
 
-#include <xc.h> // include processor files - each processor file is guarded.  
-
 int16_t atan2_fp ( int16_t y_fp, int16_t x_fp );
 
 #endif	/* MATH_PROTO_H_ */
