@@ -1,4 +1,6 @@
-#include "flash.h"
+#include <stdlib.h>
+// For flash storage
+#include <libpic30.h>
 #include "per_proto.h"
 
 #define FILE_NUM_OFFSET   0

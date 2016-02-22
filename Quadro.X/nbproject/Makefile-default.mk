@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c
+SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/LCD.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/LCD.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d ${OBJECTDIR}/error.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o
+OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
 
 # Source Files
-SOURCEFILES=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c
+SOURCEFILES=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
 
 
 CFLAGS=
@@ -152,6 +152,13 @@ ${OBJECTDIR}/file_io.o: file_io.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/file_io.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/error.o.d 
+	@${RM} ${OBJECTDIR}/error.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/qmain.o: qmain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
@@ -222,6 +229,13 @@ ${OBJECTDIR}/file_io.o: file_io.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/file_io.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/file_io.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/error.o.d 
+	@${RM} ${OBJECTDIR}/error.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

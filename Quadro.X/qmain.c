@@ -396,7 +396,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T5Interrupt()
     process_saving_data();
 #endif /* SD_CARD */
     
-    time_elapsed_us = timer_stop()/TIMER_US_TICK;
+    time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
     UART_write_string( "%d\n", time_elapsed_us );
     _T5IF = 0;
 }

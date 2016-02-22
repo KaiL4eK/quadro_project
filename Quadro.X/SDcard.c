@@ -1,5 +1,6 @@
 #include "SDcard.h"
 #include "per_proto.h"
+#include "error_.h"
 
 uint8_t     SDHC_flag = 0, 
             card_type = 0;

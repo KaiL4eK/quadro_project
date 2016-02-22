@@ -1,5 +1,6 @@
-#include "twi.h"
 #include "per_proto.h"
+
+/* I2C1 pins: SDA - RG3; SCL - RG2; */
 
 inline void i2c_idle( void )
 {

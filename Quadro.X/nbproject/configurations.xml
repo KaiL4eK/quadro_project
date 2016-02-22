@@ -17,6 +17,7 @@
       <itemPath>file_io.h</itemPath>
       <itemPath>SDcard.h</itemPath>
       <itemPath>math_proto.h</itemPath>
+      <itemPath>error_.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -35,6 +36,7 @@
       <itemPath>FAT32.c</itemPath>
       <itemPath>SDcard.c</itemPath>
       <itemPath>file_io.c</itemPath>
+      <itemPath>error.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

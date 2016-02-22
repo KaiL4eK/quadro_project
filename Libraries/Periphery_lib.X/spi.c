@@ -1,4 +1,3 @@
-#include "spi.h"
 #include "per_proto.h"
 
 #define CS_TRIS _TRISA0

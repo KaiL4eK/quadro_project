@@ -1,6 +1,7 @@
 #include "FAT32.h"
 #include "SDcard.h"
 #include "per_proto.h"
+#include "error_.h"
 
 //************* external variables *************
 Sector_t    first_data_sector,

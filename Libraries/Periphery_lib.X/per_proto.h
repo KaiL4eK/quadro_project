@@ -2,6 +2,12 @@
 #define	PERIPHERY_PROTO_H_
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <math.h>
+#include <string.h>
 #include <xc.h>
 
 #define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN=0; }
@@ -65,14 +71,17 @@ void delay_ms( uint16_t mseconds );
 void delay_us( uint16_t useconds );
 #endif
 
+/** Timer module **/
+
+typedef uint32_t TimerTicks32_t;
+typedef uint16_t TimerTicks16_t;
+
+// timer_start, timer_restart, timer_stop - divider = 1
 void timer_start();
 uint32_t timer_restart();
 uint32_t timer_stop();
-
-/** Timer module **/
-
-#define TIMER_MS_TICK (FCY/1000)
-#define TIMER_US_TICK (FCY/1000000)
+uint32_t convert_ticks_to_us ( TimerTicks32_t timer_ticks, uint8_t timer_divider );
+uint32_t convert_ticks_to_ms ( TimerTicks32_t timer_ticks, uint8_t timer_divider );
 
 #define TIMER_DIV_1   0b00
 #define TIMER_DIV_8   0b01
@@ -95,15 +104,6 @@ uint32_t timer_stop();
 #define IC_INT_MODE_2ND_CE    0b01
 #define IC_INT_MODE_3RD_CE    0b10
 #define IC_INT_MODE_4TH_CE    0b11
-
-/*** error.c ***/
-
-#define ERR_LIGHT           _LATA4
-#define ERR_LIGHT_NO_ERR    1
-#define ERR_LIGHT_ERR       0
-#define INIT_ERR_L  { _TRISA4 = 0; ERR_LIGHT = ERR_LIGHT_NO_ERR; }
-
-void error_process ( void );
 
 /*** flash.c ***/
 

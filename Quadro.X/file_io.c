@@ -1,6 +1,7 @@
 #include "file_io.h"
 #include "FAT32.h"
 #include "per_proto.h"
+#include "error_.h"
 
 #define PROCESSING_LIGHT    _LATA5
 #define PROCESSING_TRIS     _TRISA5

@@ -9,6 +9,8 @@
 #include <string.h>
 #include <xc.h>
 
+#include "error_.h"
+
 #define CONTROL_BYTE    0xff
 
 #define FREQ_CONTROL_SYSTEM   400L

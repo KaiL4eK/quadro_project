@@ -46,7 +46,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt()
     {
         if ( !stop_flag )
         {
-            uint32_t half_round_time = IC5BUF*timer_divider/TIMER_US_TICK; // last is timer scale coeff
+            uint32_t half_round_time = convert_ticks_to_us( IC5BUF, timer_divider ); // last is timer scale coeff
             round_speed = 30000000L/half_round_time;
         }
         else

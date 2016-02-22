@@ -1,4 +1,4 @@
-#include "ADC.h"
+#include "per_proto.h"
 
 /********************************/
 /*              ADC             */
