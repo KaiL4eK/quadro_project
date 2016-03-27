@@ -28,13 +28,13 @@ int main ( void ) {
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
     
-    ADC_init();
-    init_hx711();
+    ADC_init( 5 );
+//    init_hx711();
     init_UART1( 57600 );
     UART_write_string("UART initialized\r\n");
-    motors_init();
-    tacho_init();
-    init_control_system_interrupt();
+//    motors_init();
+//    tacho_init();
+//    init_control_system_interrupt();
     
 //    if ( init_sin_table( 1000, 1000, 1000 ) != 0 )
     if ( init_square( 0, 8000, 2000 ) != 0 )
@@ -45,10 +45,17 @@ int main ( void ) {
     
     while ( 1 ) 
     {
-//        UART_write_string( "T:%d\n\r", ADC_read() );
-        tenzo_data = read_calibrated_tenzo_data();
-        current_data = ADC_read();
-        process_UART_input_command2( UART_get_last_received_command() );
+        int i = 0;
+        uint32_t sumTenzo = 0;
+        for ( i = 0; i < 10; i++ )
+        {
+            sumTenzo += ADC_read();
+        }
+        UART_write_string( "T:%ld\n\r", sumTenzo/10 );
+        delay_ms(200);
+//        tenzo_data = read_calibrated_tenzo_data();
+//        current_data = ADC_read();
+//        process_UART_input_command2( UART_get_last_received_command() );
     }
     
     return( 0 );
