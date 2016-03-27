@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
+SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/LCD.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d ${OBJECTDIR}/error.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d ${OBJECTDIR}/error.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/LCD.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
+OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
 
 # Source Files
-SOURCEFILES=qmain.c motor_control.c input_control.c LCD.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
+SOURCEFILES=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
 
 
 CFLAGS=
@@ -86,77 +86,70 @@ ${OBJECTDIR}/qmain.o: qmain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/qmain.o.d 
 	@${RM} ${OBJECTDIR}/qmain.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  qmain.c  -o ${OBJECTDIR}/qmain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/qmain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  qmain.c  -o ${OBJECTDIR}/qmain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/qmain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/qmain.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/motor_control.o: motor_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/motor_control.o.d 
 	@${RM} ${OBJECTDIR}/motor_control.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/motor_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/input_control.o: input_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/input_control.o.d 
 	@${RM} ${OBJECTDIR}/input_control.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  input_control.c  -o ${OBJECTDIR}/input_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  input_control.c  -o ${OBJECTDIR}/input_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/input_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
-${OBJECTDIR}/LCD.o: LCD.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/LCD.o.d 
-	@${RM} ${OBJECTDIR}/LCD.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/LCD.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/LCD.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/bmp180.o: bmp180.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/bmp180.o.d 
 	@${RM} ${OBJECTDIR}/bmp180.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  bmp180.c  -o ${OBJECTDIR}/bmp180.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/bmp180.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  bmp180.c  -o ${OBJECTDIR}/bmp180.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/bmp180.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/bmp180.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/hmc5883l.o: hmc5883l.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/hmc5883l.o.d 
 	@${RM} ${OBJECTDIR}/hmc5883l.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  hmc5883l.c  -o ${OBJECTDIR}/hmc5883l.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hmc5883l.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hmc5883l.c  -o ${OBJECTDIR}/hmc5883l.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hmc5883l.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/hmc5883l.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/mpu6050.o: mpu6050.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/FAT32.o: FAT32.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/FAT32.o.d 
 	@${RM} ${OBJECTDIR}/FAT32.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  FAT32.c  -o ${OBJECTDIR}/FAT32.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FAT32.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  FAT32.c  -o ${OBJECTDIR}/FAT32.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FAT32.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/FAT32.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/SDcard.o: SDcard.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/SDcard.o.d 
 	@${RM} ${OBJECTDIR}/SDcard.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  SDcard.c  -o ${OBJECTDIR}/SDcard.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/SDcard.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  SDcard.c  -o ${OBJECTDIR}/SDcard.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/SDcard.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/SDcard.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/file_io.o: file_io.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/file_io.o.d 
 	@${RM} ${OBJECTDIR}/file_io.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/file_io.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/error.o.d 
 	@${RM} ${OBJECTDIR}/error.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
@@ -164,77 +157,70 @@ ${OBJECTDIR}/qmain.o: qmain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/qmain.o.d 
 	@${RM} ${OBJECTDIR}/qmain.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  qmain.c  -o ${OBJECTDIR}/qmain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/qmain.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  qmain.c  -o ${OBJECTDIR}/qmain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/qmain.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/qmain.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/motor_control.o: motor_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/motor_control.o.d 
 	@${RM} ${OBJECTDIR}/motor_control.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/motor_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/input_control.o: input_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/input_control.o.d 
 	@${RM} ${OBJECTDIR}/input_control.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  input_control.c  -o ${OBJECTDIR}/input_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_control.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  input_control.c  -o ${OBJECTDIR}/input_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_control.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/input_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
-${OBJECTDIR}/LCD.o: LCD.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}" 
-	@${RM} ${OBJECTDIR}/LCD.o.d 
-	@${RM} ${OBJECTDIR}/LCD.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  LCD.c  -o ${OBJECTDIR}/LCD.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/LCD.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/LCD.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/bmp180.o: bmp180.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/bmp180.o.d 
 	@${RM} ${OBJECTDIR}/bmp180.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  bmp180.c  -o ${OBJECTDIR}/bmp180.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/bmp180.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  bmp180.c  -o ${OBJECTDIR}/bmp180.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/bmp180.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/bmp180.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/hmc5883l.o: hmc5883l.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/hmc5883l.o.d 
 	@${RM} ${OBJECTDIR}/hmc5883l.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  hmc5883l.c  -o ${OBJECTDIR}/hmc5883l.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hmc5883l.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hmc5883l.c  -o ${OBJECTDIR}/hmc5883l.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hmc5883l.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/hmc5883l.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/mpu6050.o: mpu6050.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/FAT32.o: FAT32.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/FAT32.o.d 
 	@${RM} ${OBJECTDIR}/FAT32.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  FAT32.c  -o ${OBJECTDIR}/FAT32.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FAT32.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  FAT32.c  -o ${OBJECTDIR}/FAT32.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FAT32.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/FAT32.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/SDcard.o: SDcard.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/SDcard.o.d 
 	@${RM} ${OBJECTDIR}/SDcard.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  SDcard.c  -o ${OBJECTDIR}/SDcard.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/SDcard.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  SDcard.c  -o ${OBJECTDIR}/SDcard.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/SDcard.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/SDcard.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/file_io.o: file_io.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/file_io.o.d 
 	@${RM} ${OBJECTDIR}/file_io.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  file_io.c  -o ${OBJECTDIR}/file_io.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/file_io.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/file_io.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/error.o.d 
 	@${RM} ${OBJECTDIR}/error.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"        -g -omf=elf -fast-math   -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
@@ -256,12 +242,12 @@ endif
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/debug/Math_lib.X.a  
 	@${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/debug/Math_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1  -omf=elf -fast-math    -mreserve=data@0x800:0x822   -Wl,,--defsym=__MPLAB_BUILD=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PICKIT2=1,$(MP_LINKER_FILE_OPTION),--heap=512,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem$(MP_EXTRA_LD_POST) 
+	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/debug/Math_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1  -omf=elf -fast-math -no-legacy-libc   -mreserve=data@0x800:0x822   -Wl,,--defsym=__MPLAB_BUILD=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PICKIT2=1,$(MP_LINKER_FILE_OPTION),--heap=512,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem,--memorysummary,dist/${CND_CONF}/${IMAGE_TYPE}/memoryfile.xml$(MP_EXTRA_LD_POST) 
 	
 else
 dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/production/Math_lib.X.a 
 	@${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/production/Math_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -omf=elf -fast-math   -Wl,,--defsym=__MPLAB_BUILD=1,$(MP_LINKER_FILE_OPTION),--heap=512,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem$(MP_EXTRA_LD_POST) 
+	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a ../Libraries/Math_lib.X/dist/default/production/Math_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -omf=elf -fast-math -no-legacy-libc  -Wl,,--defsym=__MPLAB_BUILD=1,$(MP_LINKER_FILE_OPTION),--heap=512,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem,--memorysummary,dist/${CND_CONF}/${IMAGE_TYPE}/memoryfile.xml$(MP_EXTRA_LD_POST) 
 	${MP_CC_DIR}/xc16-bin2hex dist/${CND_CONF}/${IMAGE_TYPE}/Quadro.X.${IMAGE_TYPE}.${DEBUGGABLE_SUFFIX} -a  -omf=elf  
 	
 endif

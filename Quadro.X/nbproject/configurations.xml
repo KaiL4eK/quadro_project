@@ -7,7 +7,6 @@
       <itemPath>core.h</itemPath>
       <itemPath>motor_control.h</itemPath>
       <itemPath>input_control.h</itemPath>
-      <itemPath>LCD.h</itemPath>
       <itemPath>HMC5883L.h</itemPath>
       <itemPath>MPU6050.h</itemPath>
       <itemPath>MPU6050_regs.h</itemPath>
@@ -29,7 +28,6 @@
       <itemPath>qmain.c</itemPath>
       <itemPath>motor_control.c</itemPath>
       <itemPath>input_control.c</itemPath>
-      <itemPath>LCD.c</itemPath>
       <itemPath>bmp180.c</itemPath>
       <itemPath>hmc5883l.c</itemPath>
       <itemPath>mpu6050.c</itemPath>
@@ -60,7 +58,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit2PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.24</languageToolchainVersion>
+        <languageToolchainVersion>1.26</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
