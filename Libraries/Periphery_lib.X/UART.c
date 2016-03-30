@@ -10,11 +10,11 @@ void UART_write_byte( uint8_t elem );
 
 char UART_buffer[BUFFER_MAX_SIZE];
 
-void init_UART1( uint32_t UART_br )
+void init_UART1( UART_speed_t UART_br )
 {
 	U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
 	U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
-	U1BRG = (FCY/(UART_br*16))-1;
+	U1BRG = UART_br;
     _U1RXIE = 1;
     _U1RXIF = 0;
     

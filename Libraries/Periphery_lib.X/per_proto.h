@@ -27,7 +27,16 @@ int16_t ADC_read( void );
 
 /*** UART.c ***/
 
-void init_UART1( uint32_t UART_br );
+typedef enum
+{
+    UART_115200 = 8,
+    UART_57600 = 16,
+    UART_38400 = 25,
+    UART_19200 = 51,
+    UART_9600 = 103
+}UART_speed_t;
+
+void init_UART1( UART_speed_t UART_br );
 void UART_write_words( uint16_t *arr, uint8_t count );
 void UART_write_string( const char *fstring, ... );
 void UART_write_byte( uint8_t elem );
