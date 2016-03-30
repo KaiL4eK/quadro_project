@@ -45,7 +45,7 @@ int main(void)
     
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    init_UART1( 57600 );
+    init_UART1( UART_115200 );
     UART_write_string( "/------------------------/\n" );
     UART_write_string( "UART initialized\n" );
 #ifdef SD_CARD
