@@ -28,9 +28,10 @@ int main ( void ) {
     OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
     
-    ADC_init( 5 );
+//    ADC_init( 5 );
 //    init_hx711();
-    init_UART1( 57600 );
+    spi_init();
+    init_UART1( UART_115200 );
     UART_write_string("UART initialized\r\n");
 //    motors_init();
 //    tacho_init();
@@ -43,16 +44,36 @@ int main ( void ) {
         while(1);
     }
     
+    _TRISE6 = 1;
+    
+//    uint16_t res = spi_write( 0b00100000 );
+//    UART_write_string("1 byte sent %d\n", res );
+//    res = spi_write( 0b00001010 );
+//    UART_write_string("2 byte sent %d\n", res );
+//    res = spi_write( 0b00010000 );
+//    UART_write_string("3 byte sent %d\n", res );
+//    res = spi_write( 0b01000000 );
+//    UART_write_string("4 byte sent %d\n", res );
+    
+//    uint8_t res = spi_write( 0b01001000 );
+//    UART_write_string( "Test: %d\n", res );
+    
+//    while ( _RE6 ) { Nop(); };
+    
+    
+    
+    UART_write_string( "AD7705 initialized and calibrate\n" );
+    
     while ( 1 ) 
     {
-        int i = 0;
-        uint32_t sumTenzo = 0;
-        for ( i = 0; i < 10; i++ )
-        {
-            sumTenzo += ADC_read();
-        }
-        UART_write_string( "T:%ld\n\r", sumTenzo/10 );
-        delay_ms(200);
+        spi_write( 0xFF );
+    spi_write( 0xFF );
+    spi_write( 0xFF );
+    spi_write( 0xFF );
+        spi_write( 0b00011000 );
+        uint8_t res = spi_read();
+        UART_write_string( "Data res: %d\n", res );
+        delay_ms( 1000 );
 //        tenzo_data = read_calibrated_tenzo_data();
 //        current_data = ADC_read();
 //        process_UART_input_command2( UART_get_last_received_command() );
