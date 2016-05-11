@@ -71,7 +71,7 @@ void ic_find_control();
 void send_UART_calibration_data( void );
 void send_UART_control_raw_data( void );
 void send_UART_control_values( void );
-int8_t get_direction_values( Control_values_t *out_dir_vals );
+int8_t get_control_values( Control_values_t *out_dir_vals );
 
 #endif	/* INPUT_CONTROL_H_ */
 

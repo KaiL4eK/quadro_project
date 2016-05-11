@@ -9,9 +9,9 @@
 #include "math_proto.h"
 
 //#define SD_CARD
-#define TEST_MOTOR4
+//#define TEST_MOTOR4
 #define NO_CONTROL
-
+#define PROGRAM_INPUT
 SWITCH_TO_32MHZ
 
 void control_system_timer_init( void )
@@ -52,13 +52,13 @@ int main(void)
     flash_read();
     file_num = flash_get( FILE_NUM );
     file_num = file_num < 0 ? 0 : file_num;
-#endif /* SD_CARD */
     UART_write_string( "Flash successfully read\n" );
+#endif /* SD_CARD */
     motors_init();
     UART_write_string( "Motors initialized\n" );
+#ifndef PROGRAM_INPUT
     init_input_control();
-    UART_write_string( "IC initialized\n" );    
-#ifndef NO_CONTROL
+    UART_write_string( "IC initialized\n" );
     ic_find_control();
     UART_write_string( "IC found\n" );
 #endif /* NO_CONTROL */
@@ -78,6 +78,9 @@ int main(void)
         error_process();
     }
     UART_write_string( "MPU6050 initialized\n" );
+    
+//    mpu6050_calibration();
+    
     if ( bmp180_init( BMP085_ULTRAHIGHRES ) != 0 )
     {
         UART_write_string("Failed BMP init\n");
@@ -98,6 +101,8 @@ int main(void)
     UART_write_string( "Let`s begin!\n" );
     ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
+//    mpu6050_calibration();
+    
     while( 1 )
     {   
         file_process_tasks();
@@ -106,6 +111,7 @@ int main(void)
 }
 
 static uint16_t prop_k = 30, integr_k = 10000, differ_k= 3;
+bool start_motors = false;
 
 static void process_UART_input_command( uint8_t input )
 {
@@ -113,6 +119,9 @@ static void process_UART_input_command( uint8_t input )
     {
         case 0:
             return;
+        case ' ':
+            start_motors = true;
+            break;
         case 'q':
             prop_k++;
             break;
@@ -132,7 +141,7 @@ static void process_UART_input_command( uint8_t input )
             differ_k--;
             break;
     }
-    UART_write_string( "Coeffs: %d, %d, %d\n", 
+    UART_write_string( "P%d,D%d,I%d\n\r", 
             prop_k, integr_k, differ_k );
 }
 
@@ -167,12 +176,13 @@ static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
 static Angles_t             current_angles = { 0, 0, 0 };
 static uint16_t             time_elapsed_us = 0;
+static bool                 motors_armed = false;
 
 // p = p0*exp(-0.0341593/(t+273)*h)
 // h = ln(p0/p) * (t+273)/0.0341593
 
 #define GYR_COEF            131L // = 65535/2/250
-#define ANGLES_COEFF        1000L
+#define ANGLES_COEFF        1000L   // each float is represented as integer *1000 (3 decimals after point)
 #define SENS_TIME           2500L/1000000
 
 static void process_counts( void )
@@ -212,8 +222,47 @@ static void process_counts( void )
                             control_values.pitch > (-1*START_ANGLES) )
 
 #define MAX_CONTROL_ANGLE   45L
-#define STOP_LIMIT          1000L
-#define INPUT_REG_LIMIT     1000L
+#define STOP_LIMIT          1000L   // 2.5 sec - low thrust limit
+#define INPUT_REG_LIMIT     5000L
+
+static int64_t  integrPitch = 0,
+                integrRoll = 0;
+static int32_t  prevPitch = 0,
+                prevRoll = 0;
+       
+static int16_t  input_control_pitch = 0,
+                stop_counter = 0;
+
+inline int16_t process_controller_pitch( int32_t error )
+{
+    int32_t diff = error - prevPitch;
+    integrPitch += error;
+
+    int32_t regul = (error/prop_k + integrPitch/integr_k + diff*differ_k);
+    regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
+            regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
+                                            regul;
+
+    prevPitch = error;
+
+    return( regul );
+}
+
+inline int16_t process_controller_roll( int32_t error )
+{
+    int32_t diff = error - prevRoll;
+    integrRoll += error;
+
+    int32_t regul = (error/prop_k + integrRoll/integr_k + diff*differ_k);
+    regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
+            regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
+                                            regul;
+
+    prevRoll = error;
+
+    return( regul );
+}
+
 
 inline void process_control_system ( void )
 {
@@ -241,69 +290,72 @@ inline void process_control_system ( void )
     {
         set_motor4_power( test_throttle );
     }
-    
-    
 #else
-    static bool     start_stop_flag = false,
-                    motors_armed = false;
-    static int64_t  integr = 0; 
-    static int32_t  diff = 0,
-                    prev_pitch = 0, 
-                    pitch_error = 0,
-                    regul = 0;
-
-    static int16_t  input_control_pitch = 0,
-                    stop_counter = 0;
-    
+#ifndef PROGRAM_INPUT   
+    static bool     start_stop_flag = false;
     bool sticks_in_start_position = START_STOP_COND;   
-    
+
     if ( sticks_in_start_position != start_stop_flag )
-    {
+    {   // If go from some position to corners (power on position) or from corners to some position
         start_stop_flag = sticks_in_start_position;
         if ( sticks_in_start_position )
-        {
+        {   // If now in corner position
+#else
+    process_UART_input_command( UART_get_last_received_command() );
+    if ( start_motors )
+    {
+#endif
             if ( motors_armed )
-            {
+            {   // If motors were armed - turn them off
                 set_motors_stopped();
             }
             else
-            {
-                integr = 0;
-                set_motors_started( MOTOR_4 );
+            {   // If not armed - turn on and zero integral part of controller
+                integrPitch = integrRoll = 0;
+                set_motors_started( MOTORS_ALL);
             }
             motors_armed = !motors_armed;
+#ifndef PROGRAM_INPUT
         }
+#else
+        start_motors = false;
+#endif
     }
-
+        
     // Each angle presents as integer 30.25 = 30250
     // control pitch [-1000 --- 1000]
 
     if ( motors_armed )
     {
+        control_values.throttle = 5000;
+#ifndef PROGRAM_INPUT
         if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
-            input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
+#endif // PROGRAM_INPUT
+//            input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
 
-            pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);            
-            diff = pitch_error - prev_pitch;
-            integr += pitch_error;
-
-            process_UART_input_command( UART_get_last_received_command() );
-
-            regul = (pitch_error/prop_k + integr/integr_k + diff*differ_k);
-            regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
-                    regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
-                                                    regul;
+//            pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);
             
-            prev_pitch = pitch_error;
 
-            set_motor1_power( control_values.throttle*2 + regul);
-            set_motor2_power( control_values.throttle*2 + regul);
-
-            set_motor3_power( control_values.throttle*2 - regul);
-            set_motor4_power( control_values.throttle*2 - regul);
+            set_motor1_power( control_values.throttle + 
+                                process_controller_pitch( -current_angles.pitch ) -
+                                process_controller_roll( -current_angles.roll )
+                            );
+            set_motor2_power( control_values.throttle + 
+                                process_controller_pitch( -current_angles.pitch ) +
+                                process_controller_roll( -current_angles.roll )
+                            );
+            set_motor3_power( control_values.throttle - 
+                                process_controller_pitch( -current_angles.pitch ) +
+                                process_controller_roll( -current_angles.roll )
+                            );
+            set_motor4_power( control_values.throttle - 
+                                process_controller_pitch( -current_angles.pitch ) -
+                                process_controller_roll( -current_angles.roll )
+                            );
 
             stop_counter = 0;
+#ifndef PROGRAM_INPUT
         }
         else
         {
@@ -313,8 +365,15 @@ inline void process_control_system ( void )
                 set_motors_stopped();
             }
         }
+#endif // PROGRAM_INPUT
     }
+
 #endif /* TEST_MOTOR4 */
+}
+    
+inline void process_sending_UART_data( void )
+{
+    
 }
 
 #ifdef SD_CARD
@@ -375,7 +434,7 @@ inline void bmp180_rcv_filtered_data ( void )
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
-    timer_start();
+//    timer_start();
     bmp180_rcv_filtered_data();
     
     mpu6050_receive_gyro_accel_raw_data();
@@ -383,7 +442,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     int16_t angle_deg = hmc5883l_get_yaw_angle();
     
-    get_direction_values( &control_values );
+    get_control_values( &control_values );
     
     process_counts();
     
@@ -392,11 +451,13 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 //    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
     
     process_control_system();
+    process_sending_UART_data();
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
     
-    time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
-    UART_write_string( "%d\n", time_elapsed_us );
+//    time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
+//    UART_write_string( "%s, %ld, %ld\n\r", 
+//            motors_armed ? "Armed" : "Disarmed", current_angles.pitch, current_angles.roll );
     _T5IF = 0;
 }

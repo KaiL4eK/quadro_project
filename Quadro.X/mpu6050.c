@@ -16,13 +16,13 @@ int mpu6050_init ( void )
     mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     
-    mpu6050_setXAccelOffset(-3905);
-    mpu6050_setYAccelOffset(333);
-    mpu6050_setZAccelOffset(1721);
+    mpu6050_setXAccelOffset(-3874);
+    mpu6050_setYAccelOffset(351);
+    mpu6050_setZAccelOffset(1693);
     
-    mpu6050_setXGyroOffset(114);
-    mpu6050_setYGyroOffset(-12);
-    mpu6050_setZGyroOffset(-26);
+    mpu6050_setXGyroOffset(116);
+    mpu6050_setYGyroOffset(-14);
+    mpu6050_setZGyroOffset(-31);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
@@ -54,7 +54,7 @@ int8_t mpu6050_receive_gyro_accel_raw_data ( void )
 
 void send_UART_mpu6050_data ( void )
 {
-    UART_write_string( "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n",
+    UART_write_string( "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n\r",
                 raw_gyr_acc.value.x_gyro, 
                 raw_gyr_acc.value.y_gyro, 
                 raw_gyr_acc.value.z_gyro,
@@ -191,7 +191,7 @@ uint16_t acel_deadzone=8;     //Acelerometer error allowed, make it lower to get
 uint16_t giro_deadzone=1;     //Giro error allowed, make it lower to get more precision, but sketch may not converge  (default:1)
 
 int32_t mean_ax,mean_ay,mean_az,mean_gx,mean_gy,mean_gz,state=0;
-int16_t ax_offset,ay_offset,az_offset,gx_offset,gy_offset,gz_offset;
+int32_t ax_offset,ay_offset,az_offset,gx_offset,gy_offset,gz_offset;
 
 static void mean_sensors ( void )
 {
@@ -272,7 +272,7 @@ void mpu6050_calibration ( void )
         } 
     }
     mean_sensors();
-    UART_write_string( "\nFINISHED!\n" );
+    UART_write_string( "\nFINISHED!\n\r" );
     UART_write_string( "Sensor readings with offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz );
     UART_write_string( "Your offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset );
     UART_write_string( "\nData is printed as: acelX acelY acelZ giroX giroY giroZ\n" );

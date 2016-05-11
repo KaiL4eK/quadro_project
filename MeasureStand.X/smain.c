@@ -61,15 +61,19 @@ int main ( void ) {
 //    while ( _RE6 ) { Nop(); };
     
     
-    
+    spi_write( 0xFF );
+    spi_write( 0xFF );
+    spi_write( 0xFF );
+    spi_write( 0xFF );
     UART_write_string( "AD7705 initialized and calibrate\n" );
     
     while ( 1 ) 
     {
-        spi_write( 0xFF );
-    spi_write( 0xFF );
-    spi_write( 0xFF );
-    spi_write( 0xFF );
+        
+
+//        spi_write( 0b00100000 );
+//        spi_write( 0b00001000 );
+    
         spi_write( 0b00011000 );
         uint8_t res = spi_read();
         UART_write_string( "Data res: %d\n", res );

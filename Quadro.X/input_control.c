@@ -164,7 +164,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()
 /********************************/
 /*  CHANNELS PARAMETERS OUTPUT  */
 /********************************/
-int8_t get_direction_values( Control_values_t *out_dir_vals )
+int8_t get_control_values( Control_values_t *out_dir_vals )
 {
     int16_t res = 0;
     Control_t tmp_count_cntrl_raw;
