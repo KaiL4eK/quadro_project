@@ -15,8 +15,8 @@ void init_UART1( UART_speed_t UART_br )
 	U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
 	U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
 	U1BRG = UART_br;
-    _U1RXIE = 1;
-    _U1RXIF = 0;
+//    _U1RXIE = 1;          // Enable Rx interrupt
+//    _U1RXIF = 0;
     
 	U1MODEbits.UARTEN = 1;	// And turn the peripheral on
 	U1STAbits.UTXEN = 1;
@@ -30,6 +30,17 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
     input_command = U1RXREG;
     _U1RXIF = 0;
+}
+
+int UART_receive_byte( uint8_t *received_byte )
+{
+    if ( U1STAbits.URXDA )
+    {
+        *received_byte = U1RXREG;
+//        UART_write_byte( *received_byte );
+        return( 0 );
+    }
+    return( -1 );
 }
 
 uint8_t UART_get_last_received_command()

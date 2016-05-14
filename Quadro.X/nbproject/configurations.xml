@@ -35,6 +35,7 @@
       <itemPath>SDcard.c</itemPath>
       <itemPath>file_io.c</itemPath>
       <itemPath>error.c</itemPath>
+      <itemPath>command_processor.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

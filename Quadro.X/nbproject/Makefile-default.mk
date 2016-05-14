@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
+SOURCEFILES_QUOTED_IF_SPACED=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c command_processor.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d ${OBJECTDIR}/error.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o ${OBJECTDIR}/command_processor.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/qmain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/input_control.o.d ${OBJECTDIR}/bmp180.o.d ${OBJECTDIR}/hmc5883l.o.d ${OBJECTDIR}/mpu6050.o.d ${OBJECTDIR}/FAT32.o.d ${OBJECTDIR}/SDcard.o.d ${OBJECTDIR}/file_io.o.d ${OBJECTDIR}/error.o.d ${OBJECTDIR}/command_processor.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o
+OBJECTFILES=${OBJECTDIR}/qmain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/input_control.o ${OBJECTDIR}/bmp180.o ${OBJECTDIR}/hmc5883l.o ${OBJECTDIR}/mpu6050.o ${OBJECTDIR}/FAT32.o ${OBJECTDIR}/SDcard.o ${OBJECTDIR}/file_io.o ${OBJECTDIR}/error.o ${OBJECTDIR}/command_processor.o
 
 # Source Files
-SOURCEFILES=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c
+SOURCEFILES=qmain.c motor_control.c input_control.c bmp180.c hmc5883l.c mpu6050.c FAT32.c SDcard.c file_io.c error.c command_processor.c
 
 
 CFLAGS=
@@ -152,6 +152,13 @@ ${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/command_processor.o: command_processor.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/command_processor.o.d 
+	@${RM} ${OBJECTDIR}/command_processor.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/command_processor.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/qmain.o: qmain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
@@ -222,6 +229,13 @@ ${OBJECTDIR}/error.o: error.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/error.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  error.c  -o ${OBJECTDIR}/error.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/error.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/error.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/command_processor.o: command_processor.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/command_processor.o.d 
+	@${RM} ${OBJECTDIR}/command_processor.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/command_processor.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

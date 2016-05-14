@@ -27,5 +27,16 @@ typedef struct
             gyr_delta_z;
 }Angles_t;
 
+typedef enum {
+    
+    NO_COMMAND,
+    CONNECT,
+    DATA_START,
+    DATA_STOP
+    
+}UART_commands_e;
+
+UART_commands_e receive_command ( void );
+
 #endif	/* Q_CORE_H_ */
 

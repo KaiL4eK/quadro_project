@@ -10,9 +10,47 @@
 
 //#define SD_CARD
 //#define TEST_MOTOR4
-#define NO_CONTROL
 #define PROGRAM_INPUT
 SWITCH_TO_32MHZ
+
+// FBS
+//#pragma config BWRP = WRPROTECT_OFF     // Boot Segment Write Protect (Boot Segment may be written)
+//#pragma config BSS = NO_FLASH           // Boot Segment Program Flash Code Protection (No Boot program Flash segment)
+//#pragma config RBS = NO_RAM             // Boot Segment RAM Protection (No Boot RAM)
+//
+//// FSS
+//#pragma config SWRP = WRPROTECT_OFF     // Secure Segment Program Write Protect (Secure Segment may be written)
+//#pragma config SSS = NO_FLASH           // Secure Segment Program Flash Code Protection (No Secure Segment)
+//#pragma config RSS = NO_RAM             // Secure Segment Data RAM Protection (No Secure RAM)
+//
+//// FGS
+//#pragma config GWRP = OFF               // General Code Segment Write Protect (User program memory is not write-protected)
+//#pragma config GSS = OFF                // General Segment Code Protection (User program memory is not code-protected)
+//
+//// FOSCSEL
+//#pragma config FNOSC = PRI              // Oscillator Mode (Primary Oscillator (XT, HS, EC))
+//#pragma config IESO = OFF               // Two-speed Oscillator Start-Up Enable (Start up with user-selected oscillator)
+//
+//// FOSC
+//#pragma config POSCMD = HS              // Primary Oscillator Source (HS Oscillator Mode)
+//#pragma config OSCIOFNC = OFF           // OSC2 Pin Function (OSC2 pin has clock out function)
+//#pragma config FCKSM = CSECMD           // Clock Switching and Monitor (Clock switching is enabled, Fail-Safe Clock Monitor is disabled)
+//
+//// FWDT
+//#pragma config WDTPOST = PS32768        // Watchdog Timer Postscaler (1:32,768)
+//#pragma config WDTPRE = PR128           // WDT Prescaler (1:128)
+//#pragma config WINDIS = OFF             // Watchdog Timer Window (Watchdog Timer in Non-Window mode)
+//#pragma config FWDTEN = OFF             // Watchdog Timer Enable (Watchdog timer enabled/disabled by user software)
+//
+//// FPOR
+//#pragma config FPWRT = PWR128           // POR Timer Value (128ms)
+//#pragma config LPOL = ON                // Low-side PWM Output Polarity (Active High)
+//#pragma config HPOL = ON                // Motor Control PWM High Side Polarity bit (PWM module high side output pins have active-high output polarity)
+//#pragma config PWMPIN = ON              // Motor Control PWM Module Pin Mode bit (PWM module pins controlled by PORT register at device Reset)
+
+// FICD
+#pragma config ICS = PGD3               // Comm Channel Select (Communicate on PGC1/EMUC1 and PGD1/EMUD1)
+//#pragma config JTAGEN = OFF             // JTAG Port Enable (JTAG is Disabled)
 
 void control_system_timer_init( void )
 {
@@ -61,7 +99,7 @@ int main(void)
     UART_write_string( "IC initialized\n" );
     ic_find_control();
     UART_write_string( "IC found\n" );
-#endif /* NO_CONTROL */
+#endif // PROGRAM_INPUT
 //    ic_make_calibration();
 //    UART_write_string("IC calibrated\n");
 #ifdef SD_CARD
@@ -267,7 +305,7 @@ inline int16_t process_controller_roll( int32_t error )
 inline void process_control_system ( void )
 {
 #ifdef TEST_MOTOR4
-#ifndef NO_CONTROL
+#ifndef PROGRAM_INPUT
     static uint8_t power_flag = TWO_POS_SWITCH_OFF;
     if ( power_flag != control_values.two_pos_switch )
     {
@@ -282,7 +320,7 @@ inline void process_control_system ( void )
             set_motors_stopped();
         }
     }
-#endif /* NO_CONTROL */
+#endif // PROGRAM_INPUT
     
 //    send_UART_control_values();
     process_UART_input_command2( UART_get_last_received_command() );
@@ -371,9 +409,46 @@ inline void process_control_system ( void )
 #endif /* TEST_MOTOR4 */
 }
     
+bool dataSend = false;
+uint32_t timeMoments = 0;
+uint32_t timeStep10 = 25;
+    
 inline void process_sending_UART_data( void )
 {
+    switch ( receive_command() )
+    {
+        case NO_COMMAND:
+            break;
+        case CONNECT:
+            UART_write_string( "ok!" );
+            break;
+        case DATA_START:
+            UART_write_string( "ok!" );
+            timeMoments = 0;
+            dataSend = true;
+            break;
+        case DATA_STOP:
+            UART_write_string( "ok!" );
+            dataSend = false;
+            break;
+    }
     
+    
+    
+    if ( dataSend )
+    {
+        uint16_t sendBuffer[6];
+        sendBuffer[0] = current_angles.roll >> 16;
+        sendBuffer[1] = current_angles.roll & 0xffff;
+        sendBuffer[2] = current_angles.pitch >> 16;
+        sendBuffer[3] = current_angles.pitch & 0xffff;
+        sendBuffer[4] = timeMoments >> 16;
+        sendBuffer[5] = timeMoments & 0xffff;
+        
+        UART_write_words( sendBuffer, 6 );
+        
+        timeMoments += timeStep10;
+    }
 }
 
 #ifdef SD_CARD
@@ -450,7 +525,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
 //    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
     
-    process_control_system();
+//    process_control_system();
     process_sending_UART_data();
 #ifdef SD_CARD
     process_saving_data();

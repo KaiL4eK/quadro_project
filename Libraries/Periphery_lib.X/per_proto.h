@@ -40,6 +40,7 @@ void init_UART1( UART_speed_t UART_br );
 void UART_write_words( uint16_t *arr, uint8_t count );
 void UART_write_string( const char *fstring, ... );
 void UART_write_byte( uint8_t elem );
+int UART_receive_byte( uint8_t *received_byte );
 uint8_t UART_get_last_received_command();
 
 /*** twi.c ***/
