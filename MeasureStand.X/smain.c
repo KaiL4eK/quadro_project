@@ -5,12 +5,12 @@
 #include <math.h>
 #include <string.h>
 #include <xc.h>
-#include "per_proto.h"
 #include "motor_control.h"
 #include "input_signal.h"
 #include "hx711.h"
 #include "tachometer.h"
 #include "core.h"
+#include "ad7705.h"
 
 _FOSCSEL(FNOSC_PRI & IESO_OFF);
 _FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
@@ -30,13 +30,24 @@ int main ( void ) {
     
 //    ADC_init( 5 );
 //    init_hx711();
-    spi_init();
+    spi_init(); // SPI: SDO - RG8
+//                      SDI - RG7
+//                      SCK - RG6
+//                      CS  - RA0
     init_UART1( UART_115200 );
     UART_write_string("UART initialized\r\n");
 //    motors_init();
 //    tacho_init();
 //    init_control_system_interrupt();
-    
+    int res = 0;
+    while ( ( res = ad7705_init() ) < 0 )   // bad way =(
+    {
+        UART_write_string( "AD7705 initialization failed, %d\n", res );
+        delay_ms( 5000 );
+//        while ( 1 );
+    }
+    UART_write_string( "AD7705 initialized and calibrate\n" );
+//    spi_set_speed( FREQ_16000K );
 //    if ( init_sin_table( 1000, 1000, 1000 ) != 0 )
     if ( init_square( 0, 8000, 2000 ) != 0 )
     {
@@ -44,39 +55,20 @@ int main ( void ) {
         while(1);
     }
     
-    _TRISE6 = 1;
+//    _TRISE6 = 1;
     
-//    uint16_t res = spi_write( 0b00100000 );
-//    UART_write_string("1 byte sent %d\n", res );
-//    res = spi_write( 0b00001010 );
-//    UART_write_string("2 byte sent %d\n", res );
-//    res = spi_write( 0b00010000 );
-//    UART_write_string("3 byte sent %d\n", res );
-//    res = spi_write( 0b01000000 );
-//    UART_write_string("4 byte sent %d\n", res );
-    
-//    uint8_t res = spi_write( 0b01001000 );
-//    UART_write_string( "Test: %d\n", res );
-    
-//    while ( _RE6 ) { Nop(); };
-    
-    
-    spi_write( 0xFF );
-    spi_write( 0xFF );
-    spi_write( 0xFF );
-    spi_write( 0xFF );
-    UART_write_string( "AD7705 initialized and calibrate\n" );
-    
-    while ( 1 ) 
+    while ( 1 )
     {
+        uint32_t ad_result0 = ad7705_read_register( COMMUNICATION );
+        UART_write_string( "Communication: 0x%lx\n", ad_result0 );
+        uint32_t ad_result1 = ad7705_read_register( CLOCK );
+        UART_write_string( "Clock: 0x%lx\n", ad_result1 );
+        uint32_t ad_result2 = ad7705_read_register( SETUP );
+        UART_write_string( "Setup: 0x%lx\n", ad_result2 );
         
-
-//        spi_write( 0b00100000 );
-//        spi_write( 0b00001000 );
-    
-        spi_write( 0b00011000 );
-        uint8_t res = spi_read();
-        UART_write_string( "Data res: %d\n", res );
+        uint32_t data_res = ad7705_read_register( DATA );
+        UART_write_string( "Data: %ld\n", data_res );
+        
         delay_ms( 1000 );
 //        tenzo_data = read_calibrated_tenzo_data();
 //        current_data = ADC_read();

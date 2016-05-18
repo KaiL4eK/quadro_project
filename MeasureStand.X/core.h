@@ -2,6 +2,7 @@
 #define	CORE_H_
 
 #include <xc.h>
+#include "per_proto.h"
 
 #define FOSC        32000000ULL
 #define FCY         (FOSC/2)

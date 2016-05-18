@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "hx711.h"
-#include "per_proto.h"
+#include "core.h"
 
 int32_t tare_value = 0;
 

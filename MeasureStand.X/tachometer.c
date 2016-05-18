@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "tachometer.h"
-#include "per_proto.h"
+#include "core.h"
 
 uint32_t    timer_divider = 0;
 int         stop_flag = 1,

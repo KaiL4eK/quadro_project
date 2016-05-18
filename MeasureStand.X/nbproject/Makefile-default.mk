@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=smain.c motor_control.c hx711.c tachometer.c input_signal.c
+SOURCEFILES_QUOTED_IF_SPACED=smain.c motor_control.c hx711.c tachometer.c input_signal.c ad7705.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o ${OBJECTDIR}/tachometer.o ${OBJECTDIR}/input_signal.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/smain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/hx711.o.d ${OBJECTDIR}/tachometer.o.d ${OBJECTDIR}/input_signal.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o ${OBJECTDIR}/tachometer.o ${OBJECTDIR}/input_signal.o ${OBJECTDIR}/ad7705.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/smain.o.d ${OBJECTDIR}/motor_control.o.d ${OBJECTDIR}/hx711.o.d ${OBJECTDIR}/tachometer.o.d ${OBJECTDIR}/input_signal.o.d ${OBJECTDIR}/ad7705.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o ${OBJECTDIR}/tachometer.o ${OBJECTDIR}/input_signal.o
+OBJECTFILES=${OBJECTDIR}/smain.o ${OBJECTDIR}/motor_control.o ${OBJECTDIR}/hx711.o ${OBJECTDIR}/tachometer.o ${OBJECTDIR}/input_signal.o ${OBJECTDIR}/ad7705.o
 
 # Source Files
-SOURCEFILES=smain.c motor_control.c hx711.c tachometer.c input_signal.c
+SOURCEFILES=smain.c motor_control.c hx711.c tachometer.c input_signal.c ad7705.c
 
 
 CFLAGS=
@@ -86,36 +86,43 @@ ${OBJECTDIR}/smain.o: smain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/smain.o.d 
 	@${RM} ${OBJECTDIR}/smain.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  smain.c  -o ${OBJECTDIR}/smain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/smain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	${MP_CC} $(MP_EXTRA_CC_PRE)  smain.c  -o ${OBJECTDIR}/smain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/smain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/smain.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/motor_control.o: motor_control.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/motor_control.o.d 
 	@${RM} ${OBJECTDIR}/motor_control.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	${MP_CC} $(MP_EXTRA_CC_PRE)  motor_control.c  -o ${OBJECTDIR}/motor_control.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/motor_control.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/motor_control.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/hx711.o: hx711.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/hx711.o.d 
 	@${RM} ${OBJECTDIR}/hx711.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  hx711.c  -o ${OBJECTDIR}/hx711.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hx711.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hx711.c  -o ${OBJECTDIR}/hx711.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hx711.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/hx711.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/tachometer.o: tachometer.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/tachometer.o.d 
 	@${RM} ${OBJECTDIR}/tachometer.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  tachometer.c  -o ${OBJECTDIR}/tachometer.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/tachometer.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	${MP_CC} $(MP_EXTRA_CC_PRE)  tachometer.c  -o ${OBJECTDIR}/tachometer.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/tachometer.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/tachometer.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/input_signal.o: input_signal.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/input_signal.o.d 
 	@${RM} ${OBJECTDIR}/input_signal.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  input_signal.c  -o ${OBJECTDIR}/input_signal.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_signal.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	${MP_CC} $(MP_EXTRA_CC_PRE)  input_signal.c  -o ${OBJECTDIR}/input_signal.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_signal.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/input_signal.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/ad7705.o: ad7705.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/ad7705.o.d 
+	@${RM} ${OBJECTDIR}/ad7705.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ad7705.c  -o ${OBJECTDIR}/ad7705.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ad7705.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	@${FIXDEPS} "${OBJECTDIR}/ad7705.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
 ${OBJECTDIR}/smain.o: smain.c  nbproject/Makefile-${CND_CONF}.mk
@@ -153,6 +160,13 @@ ${OBJECTDIR}/input_signal.o: input_signal.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  input_signal.c  -o ${OBJECTDIR}/input_signal.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/input_signal.o.d"        -g -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
 	@${FIXDEPS} "${OBJECTDIR}/input_signal.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/ad7705.o: ad7705.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/ad7705.o.d 
+	@${RM} ${OBJECTDIR}/ad7705.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ad7705.c  -o ${OBJECTDIR}/ad7705.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ad7705.o.d"        -g -omf=elf   -O0 -msmart-io=1 -Wall -msfr-warn=off   -std=c99
+	@${FIXDEPS} "${OBJECTDIR}/ad7705.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 endif
 
 # ------------------------------------------------------------------------------------
@@ -172,7 +186,7 @@ endif
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
 dist/${CND_CONF}/${IMAGE_TYPE}/MeasureStand.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a  
 	@${MKDIR} dist/${CND_CONF}/${IMAGE_TYPE} 
-	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/MeasureStand.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1  -omf=elf    -mreserve=data@0x800:0x822   -Wl,,--defsym=__MPLAB_BUILD=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PICKIT2=1,$(MP_LINKER_FILE_OPTION),--heap=4096,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem$(MP_EXTRA_LD_POST) 
+	${MP_CC} $(MP_EXTRA_LD_PRE)  -o dist/${CND_CONF}/${IMAGE_TYPE}/MeasureStand.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}  ${OBJECTFILES_QUOTED_IF_SPACED}    ../Libraries/Periphery_lib.X/dist/default/debug/Periphery_lib.X.a  -mcpu=$(MP_PROCESSOR_OPTION)        -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf    -mreserve=data@0x800:0x81F -mreserve=data@0x820:0x821 -mreserve=data@0x822:0x823 -mreserve=data@0x824:0x825 -mreserve=data@0x826:0x84F   -Wl,,--defsym=__MPLAB_BUILD=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1,$(MP_LINKER_FILE_OPTION),--heap=4096,--stack=16,--check-sections,--data-init,--pack-data,--handles,--isr,--no-gc-sections,--fill-upper=0,--stackguard=16,--no-force-link,--smart-io,-Map="${DISTDIR}/${PROJECTNAME}.${IMAGE_TYPE}.map",--report-mem$(MP_EXTRA_LD_POST) 
 	
 else
 dist/${CND_CONF}/${IMAGE_TYPE}/MeasureStand.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}: ${OBJECTFILES}  nbproject/Makefile-${CND_CONF}.mk  ../Libraries/Periphery_lib.X/dist/default/production/Periphery_lib.X.a 

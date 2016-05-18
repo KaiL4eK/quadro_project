@@ -29,7 +29,7 @@ void spi_init( void )
                                 // 00 = Primary prescale 64:1
     SPI2CON1bits.SPRE = 0b000;  // 111 = Secondary prescale 1:1
                                 // 110 = Secondary prescale 2:1
-                                // •
+                                // ...
                                 // 000 = Secondary prescale 8:1
     SPI2STATbits.SPIEN = 1;     // Enable SPI2 module
 }
