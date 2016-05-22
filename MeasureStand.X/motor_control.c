@@ -5,7 +5,8 @@
 /*              PWM             */
 /********************************/
 
-#define PWM_PERIOD      ((FCY/SYS_FREQ/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767 | 32 MHz = 9999
+#define PWM_FREQ        400L
+#define PWM_PERIOD      ((FCY/PWM_FREQ/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767 | 32 MHz = 9999
 #define PWM_USEC(x)     ((FCY/1000000L)*(x)/PWM_PRESCALE - 1)
 
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2

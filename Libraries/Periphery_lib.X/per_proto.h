@@ -10,12 +10,7 @@
 #include <string.h>
 #include <xc.h>
 
-#define OFF_WATCH_DOG_TIMER     { RCONbits.SWDTEN = 0; }
 #define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL = 0x1fff; }
-// Next macro works just with board dsPIC33FJ256MC710 with quartz
-#define SWITCH_TO_32MHZ         _FOSCSEL( FNOSC_PRI & IESO_OFF ); \
-                                _FOSC( POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD ); \
-                                _FWDT( FWDTEN_OFF );              // Watchdog Timer Enabled/disabled by user software
 
 #define FOSC        32000000ULL
 #define FCY         (FOSC/2)
@@ -29,11 +24,12 @@ int16_t ADC_read( void );
 
 typedef enum
 {
-    UART_115200 = 8,
-    UART_57600 = 16,
-    UART_38400 = 25,
-    UART_19200 = 51,
-    UART_9600 = 103
+    UART_460800 = 8,
+    UART_230400 = 16,
+    UART_115200 = 34,        
+    UART_57600 = 68,
+    UART_38400 = 103,
+    UART_19200 = 207        
 }UART_speed_t;
 
 void init_UART1( UART_speed_t UART_br );
@@ -56,17 +52,29 @@ uint8_t i2c_read_byte_eeprom(uint8_t slave_addr, uint8_t eeprom_addr);
 
 typedef enum
 {
-    FREQ_16000K,
-    FREQ_4000K,
-    FREQ_1000K,
-    FREQ_125K        
-}SPI_speed_t;
+    SPI_PRIM_64 = 0b00,
+    SPI_PRIM_16 = 0b01,
+    SPI_PRIM_4 = 0b10,
+    SPI_PRIM_1 = 0b11
+}SPI_primPrescale_t;
+
+typedef enum
+{
+    SPI_SEC_8 = 0b000,
+    SPI_SEC_7 = 0b001,
+    SPI_SEC_6 = 0b010,
+    SPI_SEC_5 = 0b011,
+    SPI_SEC_4 = 0b100,
+    SPI_SEC_3 = 0b101,
+    SPI_SEC_2 = 0b110,
+    SPI_SEC_1 = 0b111
+}SPI_secondPrescale_t;
 
 void spi_init( void );
 uint8_t spi_write( uint8_t data );
 uint8_t spi_read( void );
 void spi_cs_set( uint8_t bit );
-void spi_set_speed( SPI_speed_t speed );
+void spi_set_speed( SPI_primPrescale_t primary, SPI_secondPrescale_t secondary );
 
 /*** timing.c ***/
 

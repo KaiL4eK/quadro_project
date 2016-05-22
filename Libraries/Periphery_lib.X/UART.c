@@ -15,6 +15,7 @@ void init_UART1( UART_speed_t UART_br )
 	U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
 	U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
 	U1BRG = UART_br;
+    U1MODEbits.BRGH = 1;
 //    _U1RXIE = 1;          // Enable Rx interrupt
 //    _U1RXIF = 0;
     

@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include "tachometer.h"
 #include "core.h"
 
 uint32_t    timer_divider = 0;

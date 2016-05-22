@@ -1,14 +1,11 @@
-#include "input_signal.h"
-#include "motor_control.h"
-#include "math.h"
 #include "core.h"
-
-#define M_PI 3.141592653589793f
 
 uint16_t    *tableSignal = NULL;
 uint16_t    curPoint = 0,
             numPoints = 0,
             curSignalZeroLevel = 0;
+
+#define M_PI    acos(-1.0)
 
 int init_sinus ( uint16_t halfAmpl, uint16_t period_time_ms, uint16_t offset )
 {
@@ -18,7 +15,7 @@ int init_sinus ( uint16_t halfAmpl, uint16_t period_time_ms, uint16_t offset )
         tableSignal = NULL;
     }
         
-    numPoints = SYS_FREQ*period_time_ms/1000L;
+    numPoints = 400L*period_time_ms/1000L;
     if ( numPoints < 4 || offset < halfAmpl )
     {
         return( -1 );
@@ -48,7 +45,7 @@ int init_square ( uint16_t lowLevel, uint16_t highLevel, uint16_t halfTime )
         tableSignal = NULL;
     }
     
-    numPoints = SYS_FREQ*(2L*halfTime)/1000L;
+    numPoints = 400L*(2L*halfTime)/1000L;
     if ( numPoints < 4 || lowLevel > highLevel )
     {
         return( -1 );

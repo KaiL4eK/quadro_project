@@ -13,8 +13,6 @@
 
 #define NUM_DATA_TARE 20
 
-
-
 int init_hx711 ( void );
 int32_t read_tenzo_data ( void );
 int32_t read_tared_tenzo_data ( void );

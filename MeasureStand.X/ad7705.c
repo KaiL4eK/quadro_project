@@ -9,12 +9,12 @@
 
 Communication_reg_t comm_reg;
 
-void ad7705_wait_for_data_ready ( void )
-{
-    do {        
-        comm_reg.val = ad7705_read_register( COMMUNICATION );
-    } while ( comm_reg.bits.nDRDY );
-}
+//void ad7705_wait_for_data_ready ( void )
+//{
+//    do {        
+//        comm_reg.val = ad7705_read_register( COMMUNICATION );
+//    } while ( comm_reg.bits.nDRDY );
+//}
 
 static int ad7705_turnOn ( void )
 {
@@ -42,22 +42,18 @@ int ad7705_init ( void )
     
     if ( ad7705_read_register( SETUP ) != SETUP_INITIAL_VAL )
         res = -1;
-    
     else if ( ad7705_read_register( CLOCK ) != CLOCK_INITIAL_VAL )
         res = -2;
-    
     else if ( ad7705_read_register( GAIN ) != GAIN_INITIAL_VAL )
         res = -3;
-    
     else if ( ad7705_read_register( OFFSET ) != OFFSET_INITIAL_VAL )
         res = -4;
-    
     else if ( ad7705_read_register( TEST ) != TEST_INITIAL_VAL )    // The major check!
         res = -5;
-//    else
+    else
     {   // Normal initialization
-        ad7705_init_setup_register();
         ad7705_init_clock_register();
+        ad7705_init_setup_register();
     }
     
     spi_cs_set( 1 );
@@ -76,7 +72,7 @@ uint32_t ad7705_read_register ( AD7705_reg register_addr )
     comm_reg.bits.CH = CHANNEL_1;
     comm_reg.bits.nDRDY = 0;
     spi_write( comm_reg.val );
-    UART_write_string( "Write byte: 0x%x to communication reg\n", comm_reg.val );
+//    UART_write_string( "Write byte: 0x%x to communication reg\n", comm_reg.val );
     
     switch ( register_addr )
     {
@@ -116,10 +112,9 @@ int ad7705_write_register ( AD7705_reg register_addr, uint8_t value )
     comm_reg.bits.CH = CHANNEL_1;
     comm_reg.bits.nDRDY = 0;
     spi_write( comm_reg.val );
-    UART_write_string( "Write byte: 0x%x to %d\n", value, register_addr );
-    
+//    UART_write_string( "Write byte: 0x%x to communication reg\n", comm_reg.val );
     spi_write( value );
-    
+//    UART_write_string( "Write byte: 0x%x\n", value );
     spi_cs_set( 1 );
     return( 0 );
 }
@@ -127,12 +122,14 @@ int ad7705_write_register ( AD7705_reg register_addr, uint8_t value )
 int ad7705_init_clock_register ( void )
 {
     Clock_reg_t clock_reg;
-    clock_reg.val = CLOCK_INITIAL_VAL;
+    clock_reg.val = 0;
+    clock_reg.bits.FS = 0b11;   // 200 Hz
     clock_reg.bits.CLK = 0;
     clock_reg.bits.CLKDIV = 1;
-    clock_reg.bits.FS = 0b00;
+    clock_reg.bits.CLKDIS = 0;
+    clock_reg.bits.ZERO = 0b000;
 
-    UART_write_string( "Clock\n" );
+//    UART_write_string( "Clock\t" );
     ad7705_write_register( CLOCK, clock_reg.val );
     
     return( 0 );
@@ -141,7 +138,7 @@ int ad7705_init_clock_register ( void )
 int ad7705_init_setup_register ( void )
 {
     Setup_reg_t setup_reg;
-    setup_reg.val = SETUP_INITIAL_VAL;
+    setup_reg.val = 0;
     
     // Gain
     // 0b000    1
@@ -153,13 +150,13 @@ int ad7705_init_setup_register ( void )
     // 0b110    64
     // 0b111    128
     
-    setup_reg.bits.G = 0b001;   // Gain = 1
-    setup_reg.bits.MD = 0b00;   // Normal mode
+    setup_reg.bits.G = 0b000;   // Gain = 1
+    setup_reg.bits.MD = 0b01;   // Self-calibration mode
     setup_reg.bits.nBU = 1;
     setup_reg.bits.BUF = 0;
-    setup_reg.bits.FSYNC = 1;
+    setup_reg.bits.FSYNC = 0;   // Must be zero!
 
-    UART_write_string( "Setup\n" );
+//    UART_write_string( "Setup\t" );
     ad7705_write_register( SETUP, setup_reg.val );
     
     return( 0 );

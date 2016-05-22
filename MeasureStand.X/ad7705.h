@@ -99,6 +99,7 @@ int ad7705_init ( void );
 uint32_t ad7705_read_register ( AD7705_reg register_addr );
 int ad7705_write_register ( AD7705_reg register_addr, uint8_t value );
 int ad7705_init_clock_register ( void );
+int ad7705_init_setup_register ( void );
 
 #endif	/* AD7705_H_ */
 

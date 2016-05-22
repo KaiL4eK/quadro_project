@@ -1,22 +1,9 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <xc.h>
-#include "motor_control.h"
-#include "input_signal.h"
-#include "hx711.h"
-#include "tachometer.h"
 #include "core.h"
+#include "motor_control.h"
+#include "hx711.h"
 #include "ad7705.h"
 
-_FOSCSEL(FNOSC_PRI & IESO_OFF);
-_FOSC(POSCMD_HS & OSCIOFNC_OFF & FCKSM_CSECMD);
-_FWDT(FWDTEN_OFF);              // Watchdog Timer Enabled/disabled by user software
-
-long long fcy() { return( FCY ); }
+#include "pragmas.h"
 
 void init_control_system_interrupt ( void );
 static void process_UART_input_command2 ( uint8_t input );
@@ -25,7 +12,6 @@ int16_t tenzo_data = 0,
         current_data = 0;
 
 int main ( void ) {
-    OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
     
 //    ADC_init( 5 );
@@ -34,42 +20,45 @@ int main ( void ) {
 //                      SDI - RG7
 //                      SCK - RG6
 //                      CS  - RA0
-    init_UART1( UART_115200 );
+    init_UART1( UART_460800 );
     UART_write_string("UART initialized\r\n");
 //    motors_init();
 //    tacho_init();
 //    init_control_system_interrupt();
     int res = 0;
-    while ( ( res = ad7705_init() ) < 0 )   // bad way =(
+    if ( ( res = ad7705_init() ) < 0 )
     {
         UART_write_string( "AD7705 initialization failed, %d\n", res );
-        delay_ms( 5000 );
-//        while ( 1 );
+        while ( 1 );
     }
+    spi_set_speed( SPI_PRIM_1, SPI_SEC_2 );
     UART_write_string( "AD7705 initialized and calibrate\n" );
-//    spi_set_speed( FREQ_16000K );
 //    if ( init_sin_table( 1000, 1000, 1000 ) != 0 )
-    if ( init_square( 0, 8000, 2000 ) != 0 )
-    {
-        UART_write_string( "Init signal table failed\n" );
-        while(1);
-    }
+//    if ( init_square( 0, 8000, 2000 ) != 0 )
+//    {
+//        UART_write_string( "Init signal table failed\n" );
+//        while(1);
+//    }
     
 //    _TRISE6 = 1;
-    
+//    uint32_t ad_result1 = ad7705_read_register( CLOCK );
+//    uint32_t ad_result2 = ad7705_read_register( SETUP );
+//    UART_write_string( "Clock: 0x%lx\nSetup: 0x%lx\n", ad_result1, ad_result2 );
+        
     while ( 1 )
     {
-        uint32_t ad_result0 = ad7705_read_register( COMMUNICATION );
-        UART_write_string( "Communication: 0x%lx\n", ad_result0 );
-        uint32_t ad_result1 = ad7705_read_register( CLOCK );
-        UART_write_string( "Clock: 0x%lx\n", ad_result1 );
-        uint32_t ad_result2 = ad7705_read_register( SETUP );
-        UART_write_string( "Setup: 0x%lx\n", ad_result2 );
+//        uint32_t ad_result0 = ad7705_read_register( COMMUNICATION );
+//        UART_write_string( "Communication: 0x%lx\n", ad_result0 );
+
+        if ( !nDRDY_PIN )
+        {
+            uint32_t data_res = ad7705_read_register( DATA );
+            UART_write_string( "Data: %ld\n", data_res );
+        }
+        else
+            UART_write_string( "DRDY is high\n" );
         
-        uint32_t data_res = ad7705_read_register( DATA );
-        UART_write_string( "Data: %ld\n", data_res );
-        
-        delay_ms( 1000 );
+        delay_ms( 500 );
 //        tenzo_data = read_calibrated_tenzo_data();
 //        current_data = ADC_read();
 //        process_UART_input_command2( UART_get_last_received_command() );
@@ -78,11 +67,13 @@ int main ( void ) {
     return( 0 );
 }
 
+#define INTERRUPT_FREQ 400L
+
 void init_control_system_interrupt( void )
 {
     T4CONbits.TON = 0;
     T4CONbits.TCKPS = TIMER_DIV_1;
-    PR4 = ( ( FCY/SYS_FREQ ) & 0xffff );
+    PR4 = ( ( FCY/INTERRUPT_FREQ ) & 0xffff );
     _T4IP = 3; // 1 - lowest prio
     _T4IE = 1;
     _T4IF = 0;

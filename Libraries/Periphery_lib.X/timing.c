@@ -1,4 +1,5 @@
 #include "per_proto.h"
+#include <libpic30.h>
 
 void setup_PLL_oscillator( void )
 {
@@ -22,30 +23,34 @@ void setup_PLL_oscillator( void )
 
 void delay_ms( uint16_t mseconds )
 {
-    T6CONbits.TON = 0;  // Disable timer
-    T6CONbits.T32 = 1;  // 32-bit timer
-    T6CONbits.TCKPS = TIMER_DIV_1; // Prescale bits 1:1
-    TMR7HLD = 0;
-    TMR6 = 0;
-    T6CONbits.TON = 1;  // Enable timer
-    while( (TMR6 | ((uint32_t)TMR7HLD) << 16) < (mseconds*TIMER_MS_TICK) );
-    TMR7HLD = 0;
-    TMR6 = 0;
-    T6CONbits.TON = 0;
+    __delay_ms( mseconds );
+    
+//    T6CONbits.TON = 0;  // Disable timer
+//    T6CONbits.T32 = 1;  // 32-bit timer
+//    T6CONbits.TCKPS = TIMER_DIV_1; // Prescale bits 1:1
+//    TMR7HLD = 0;
+//    TMR6 = 0;
+//    T6CONbits.TON = 1;  // Enable timer
+//    while( (TMR6 | ((uint32_t)TMR7HLD) << 16) < (mseconds*TIMER_MS_TICK) );
+//    TMR7HLD = 0;
+//    TMR6 = 0;
+//    T6CONbits.TON = 0;
 }
 
 void delay_us( uint16_t useconds )
 {
-    T6CONbits.TON = 0;  // Disable timer
-    T6CONbits.T32 = 1;  // 32-bit timer
-    T6CONbits.TCKPS = TIMER_DIV_1; // Prescale bits 1:1
-    TMR7HLD = 0;
-    TMR6 = 0;
-    T6CONbits.TON = 1;  // Enable timer
-    while( (TMR6 | ((uint32_t)TMR7HLD) << 16) < (useconds*TIMER_US_TICK) );
-    TMR7HLD = 0;
-    TMR6 = 0;
-    T6CONbits.TON = 0;
+    __delay_us( useconds );
+    
+//    T6CONbits.TON = 0;  // Disable timer
+//    T6CONbits.T32 = 1;  // 32-bit timer
+//    T6CONbits.TCKPS = TIMER_DIV_1; // Prescale bits 1:1
+//    TMR7HLD = 0;
+//    TMR6 = 0;
+//    T6CONbits.TON = 1;  // Enable timer
+//    while( (TMR6 | ((uint32_t)TMR7HLD) << 16) < (useconds*TIMER_US_TICK) );
+//    TMR7HLD = 0;
+//    TMR6 = 0;
+//    T6CONbits.TON = 0;
 }
 
 void timer_start()

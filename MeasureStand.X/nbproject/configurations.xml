@@ -7,10 +7,9 @@
       <itemPath>motor_control.h</itemPath>
       <itemPath>hx711.h</itemPath>
       <itemPath>core.h</itemPath>
-      <itemPath>tachometer.h</itemPath>
-      <itemPath>input_signal.h</itemPath>
       <itemPath>per_proto.h</itemPath>
       <itemPath>ad7705.h</itemPath>
+      <itemPath>pragmas.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -42,7 +41,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.24</languageToolchainVersion>
+        <languageToolchainVersion>1.25</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
@@ -116,7 +115,7 @@
         <property key="oXC16gcc-sfr-warn" value="false"/>
         <property key="oXC16gcc-smar-io-lvl" value="1"/>
         <property key="oXC16gcc-smart-io-fmt" value=""/>
-        <property key="optimization-level" value="0"/>
+        <property key="optimization-level" value="1"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
         <property key="preprocessor-macros" value=""/>
