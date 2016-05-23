@@ -55,10 +55,10 @@ int main ( void ) {
             uint32_t data_res = ad7705_read_register( DATA );
             UART_write_string( "Data: %ld\n", data_res );
         }
-        else
-            UART_write_string( "DRDY is high\n" );
+//        else
+//            UART_write_string( "DRDY is high\n" );
         
-        delay_ms( 500 );
+        delay_ms( 100 );
 //        tenzo_data = read_calibrated_tenzo_data();
 //        current_data = ADC_read();
 //        process_UART_input_command2( UART_get_last_received_command() );

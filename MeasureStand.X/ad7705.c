@@ -54,6 +54,7 @@ int ad7705_init ( void )
     {   // Normal initialization
         ad7705_init_clock_register();
         ad7705_init_setup_register();
+        while ( nDRDY_PIN ) { Nop(); }
     }
     
     spi_cs_set( 1 );
@@ -123,7 +124,7 @@ int ad7705_init_clock_register ( void )
 {
     Clock_reg_t clock_reg;
     clock_reg.val = 0;
-    clock_reg.bits.FS = 0b11;   // 200 Hz
+    clock_reg.bits.FS = 0b00;   // 20 Hz
     clock_reg.bits.CLK = 0;
     clock_reg.bits.CLKDIV = 1;
     clock_reg.bits.CLKDIS = 0;
@@ -150,7 +151,7 @@ int ad7705_init_setup_register ( void )
     // 0b110    64
     // 0b111    128
     
-    setup_reg.bits.G = 0b000;   // Gain = 1
+    setup_reg.bits.G = 0b111;   // Gain = 128
     setup_reg.bits.MD = 0b01;   // Self-calibration mode
     setup_reg.bits.nBU = 1;
     setup_reg.bits.BUF = 0;
