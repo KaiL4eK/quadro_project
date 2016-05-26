@@ -36,10 +36,10 @@ void spi_init( void )
 
 void spi_set_speed( SPI_primPrescale_t primary, SPI_secondPrescale_t secondary )
 {
-    SPI2STATbits.SPIEN = 0;     // Disable SPI2 module
-    
     if ( primary == SPI_PRIM_1 && secondary == SPI_SEC_1 )
         return;
+        
+    SPI2STATbits.SPIEN = 0;     // Disable SPI2 module
     
     SPI2CON1bits.PPRE = primary;
     SPI2CON1bits.SPRE = secondary;
