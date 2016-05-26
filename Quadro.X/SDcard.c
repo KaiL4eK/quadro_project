@@ -43,24 +43,13 @@ uint8_t SD_send_cmd ( SD_command_t command, uint32_t argument )
             break;
     }
     
-    // Here we received first correct response and can get other response bytes
-    
-//    if ( command == READ_OCR )
-//    {
-//        fdebug( "OCR_R1", response );
-//    }
-    
     if ( response == 0 && command == READ_OCR )
     {
         uint8_t ocr_resp = 0;
         SDHC_flag = (((ocr_resp = spi_read()) & 0x40) == 0x40) ? 1 : 0;
-//        fdebug( "OCR_R[1]", ocr_resp );
         ocr_resp = spi_read();
-//        fdebug( "OCR_R[2]", ocr_resp );
         ocr_resp = spi_read();
-//        fdebug( "OCR_R[3]", ocr_resp );
         ocr_resp = spi_read();
-//        fdebug( "OCR_R[4]", ocr_resp );
     }
     
     spi_cs_set( 1 );
@@ -82,7 +71,7 @@ int init_SDcard ( void )
          spi_read();
     spi_cs_set( 0 );
     
-    spi_set_speed( FREQ_125K );
+    spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
     
     while ( (response = SD_send_cmd( GO_IDLE_STATE, 0 )) != IN_IDLE_STATE ) // 0
         if ( retry++ == UINT8_MAX )
@@ -103,9 +92,7 @@ int init_SDcard ( void )
     do
     {
         response = SD_send_cmd( APP_CMD, 0 );   // 55
-//fdebug( "APP_CMD_R", response );
         response = SD_send_cmd( SD_SEND_OP_COND, 1UL << 30 );   // 41 setting HCS bit
-//fdebug( "SD_SEND_OP_COND_R", response );
         if ( retry++ == UINT8_MAX )
         {
             return( TIMEOUT_ERROR_INIT_2 );
@@ -163,7 +150,6 @@ int SD_read_sector ( uint32_t start_block, uint8_t *buffer )
     
     spi_cs_set( 0 );
     
-//    timer_start();
     retry = 0;
     while ( (response = spi_read()) != 0xfe )
         if ( retry++ == UINT8_MAX )
@@ -181,9 +167,6 @@ int SD_read_sector ( uint32_t start_block, uint8_t *buffer )
     spi_read();
     
     spi_read();
-    
-//    uint32_t time_elapsed = timer_stop()/16;
-//    idebug("SDR", time_elapsed);
     
     spi_cs_set( 1 );
     return( NO_ERROR );    
@@ -204,8 +187,6 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
         
     spi_cs_set( 0 );
     
-//    timer_start();
-
     spi_write( 0xfe );
     
     for ( i = 0; i < 512; i++ )
@@ -235,8 +216,6 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
     while ( !(response = spi_read()) );
     spi_cs_set( 1 );
     
-//    uint32_t time_elapsed = timer_stop()/16;
-//    idebug("SDW", time_elapsed);
     return( NO_ERROR );
 }
 

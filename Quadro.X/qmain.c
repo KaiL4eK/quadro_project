@@ -8,49 +8,11 @@
 #include "file_io.h"
 #include "math_proto.h"
 
+#include "pragmas.h"
+
 //#define SD_CARD
-//#define TEST_MOTOR4
 #define PROGRAM_INPUT
-SWITCH_TO_32MHZ
-
-// FBS
-//#pragma config BWRP = WRPROTECT_OFF     // Boot Segment Write Protect (Boot Segment may be written)
-//#pragma config BSS = NO_FLASH           // Boot Segment Program Flash Code Protection (No Boot program Flash segment)
-//#pragma config RBS = NO_RAM             // Boot Segment RAM Protection (No Boot RAM)
-//
-//// FSS
-//#pragma config SWRP = WRPROTECT_OFF     // Secure Segment Program Write Protect (Secure Segment may be written)
-//#pragma config SSS = NO_FLASH           // Secure Segment Program Flash Code Protection (No Secure Segment)
-//#pragma config RSS = NO_RAM             // Secure Segment Data RAM Protection (No Secure RAM)
-//
-//// FGS
-//#pragma config GWRP = OFF               // General Code Segment Write Protect (User program memory is not write-protected)
-//#pragma config GSS = OFF                // General Segment Code Protection (User program memory is not code-protected)
-//
-//// FOSCSEL
-//#pragma config FNOSC = PRI              // Oscillator Mode (Primary Oscillator (XT, HS, EC))
-//#pragma config IESO = OFF               // Two-speed Oscillator Start-Up Enable (Start up with user-selected oscillator)
-//
-//// FOSC
-//#pragma config POSCMD = HS              // Primary Oscillator Source (HS Oscillator Mode)
-//#pragma config OSCIOFNC = OFF           // OSC2 Pin Function (OSC2 pin has clock out function)
-//#pragma config FCKSM = CSECMD           // Clock Switching and Monitor (Clock switching is enabled, Fail-Safe Clock Monitor is disabled)
-//
-//// FWDT
-//#pragma config WDTPOST = PS32768        // Watchdog Timer Postscaler (1:32,768)
-//#pragma config WDTPRE = PR128           // WDT Prescaler (1:128)
-//#pragma config WINDIS = OFF             // Watchdog Timer Window (Watchdog Timer in Non-Window mode)
-//#pragma config FWDTEN = OFF             // Watchdog Timer Enable (Watchdog timer enabled/disabled by user software)
-//
-//// FPOR
-//#pragma config FPWRT = PWR128           // POR Timer Value (128ms)
-//#pragma config LPOL = ON                // Low-side PWM Output Polarity (Active High)
-//#pragma config HPOL = ON                // Motor Control PWM High Side Polarity bit (PWM module high side output pins have active-high output polarity)
-//#pragma config PWMPIN = ON              // Motor Control PWM Module Pin Mode bit (PWM module pins controlled by PORT register at device Reset)
-
-// FICD
-#pragma config ICS = PGD3               // Comm Channel Select (Communicate on PGC1/EMUC1 and PGD1/EMUD1)
-//#pragma config JTAGEN = OFF             // JTAG Port Enable (JTAG is Disabled)
+#define PID_tuning
 
 void control_system_timer_init( void )
 {
@@ -69,23 +31,24 @@ static int file_num = 0;
 #endif /* SD_CARD */
 
 static float        bmp180_initial_altitude = 0.0;
-static uint32_t     //bmp180_initial_press = 0,
-                    bmp180_press = 0,
+static uint32_t     bmp180_press = 0,
                     bmp180_temp = 0;    // Temperature is multiplied by TEMP_MULTIPLYER
 static int32_t      bmp180_altitude = 0;
 
 int main(void) 
 {
-    OFF_WATCH_DOG_TIMER;
     OFF_ALL_ANALOG_INPUTS;
-    
-//    setup_PLL_oscillator();
-    
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     init_UART1( UART_115200 );
     UART_write_string( "/------------------------/\n" );
-    UART_write_string( "UART initialized\n" );
+#ifdef PID_tuning
+    UART_set_receive_mode( UARTr_interrupt );
+    UART_write_string( "UART initialized to interrupt mode\n" );
+#else
+    UART_set_receive_mode( UARTr_polling );
+    UART_write_string( "UART initialized to polling mode\n" );
+#endif
 #ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
@@ -95,7 +58,7 @@ int main(void)
     motors_init();
     UART_write_string( "Motors initialized\n" );
 #ifndef PROGRAM_INPUT
-    init_input_control();
+    ic_init();
     UART_write_string( "IC initialized\n" );
     ic_find_control();
     UART_write_string( "IC found\n" );
@@ -117,8 +80,6 @@ int main(void)
     }
     UART_write_string( "MPU6050 initialized\n" );
     
-//    mpu6050_calibration();
-    
     if ( bmp180_init( BMP085_ULTRAHIGHRES ) != 0 )
     {
         UART_write_string("Failed BMP init\n");
@@ -126,9 +87,7 @@ int main(void)
     }
     UART_write_string( "BMP180 initialized\n" );
     bmp180_calibrate( &bmp180_press );
-//    bmp180_initial_press = bmp180_press;
     bmp180_initial_altitude = bmp180_get_altitude( bmp180_press, 101325 );
-//    UART_write_string( "BMP180 calibrated: %ld\n", bmp180_initial_press );
     if ( hmc5883l_init( -48, -440 ) != 0 )
     {
         UART_write_string("Failed HMC init\n");
@@ -138,7 +97,6 @@ int main(void)
     control_system_timer_init();
     UART_write_string( "Let`s begin!\n" );
     ERR_LIGHT = ERR_LIGHT_NO_ERR;
-    
 //    mpu6050_calibration();
     
     while( 1 )
@@ -183,37 +141,9 @@ static void process_UART_input_command( uint8_t input )
             prop_k, integr_k, differ_k );
 }
 
-#ifdef TEST_MOTOR4
-uint16_t    test_throttle = 0;
-#define THROTTLE_STEP   (INPUT_POWER_MAX/20)
-static void process_UART_input_command2( uint8_t input )
-{
-    switch ( input )
-    {
-        case 'q':
-            test_throttle = test_throttle >= INPUT_POWER_MAX ? INPUT_POWER_MAX : (test_throttle + THROTTLE_STEP);
-            break;
-        case 'a':
-            test_throttle = test_throttle == THROTTLE_MIN ? THROTTLE_MIN : (test_throttle - THROTTLE_STEP);
-            break;
-        case 'w':
-            set_motors_started( MOTOR_4 );
-            test_throttle = 0;
-            break;
-        case 's':
-            set_motors_stopped();
-            break;
-        default:
-            return;
-    }
-    UART_write_string( "P: %d\n", test_throttle );
-}
-#endif /* TEST_MOTOR4 */
-
 static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
 static Angles_t             current_angles = { 0, 0, 0 };
-static uint16_t             time_elapsed_us = 0;
 static bool                 motors_armed = false;
 
 // p = p0*exp(-0.0341593/(t+273)*h)
@@ -261,15 +191,14 @@ static void process_counts( void )
 
 #define MAX_CONTROL_ANGLE   45L
 #define STOP_LIMIT          1000L   // 2.5 sec - low thrust limit
-#define INPUT_REG_LIMIT     5000L
+#define REGULATION_LIMIT    5000L
 
 static int64_t  integrPitch = 0,
                 integrRoll = 0;
 static int32_t  prevPitch = 0,
                 prevRoll = 0;
        
-static int16_t  input_control_pitch = 0,
-                stop_counter = 0;
+static int16_t  stop_counter = 0;
 
 inline int16_t process_controller_pitch( int32_t error )
 {
@@ -277,8 +206,8 @@ inline int16_t process_controller_pitch( int32_t error )
     integrPitch += error;
 
     int32_t regul = (error/prop_k + integrPitch/integr_k + diff*differ_k);
-    regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
-            regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
+    regul = regul > REGULATION_LIMIT ?       REGULATION_LIMIT :
+            regul < (-REGULATION_LIMIT) ?    (-REGULATION_LIMIT) :
                                             regul;
 
     prevPitch = error;
@@ -292,8 +221,8 @@ inline int16_t process_controller_roll( int32_t error )
     integrRoll += error;
 
     int32_t regul = (error/prop_k + integrRoll/integr_k + diff*differ_k);
-    regul = regul > INPUT_REG_LIMIT ?       INPUT_REG_LIMIT :
-            regul < (-INPUT_REG_LIMIT) ?    (-INPUT_REG_LIMIT) :
+    regul = regul > REGULATION_LIMIT ?       REGULATION_LIMIT :
+            regul < (-REGULATION_LIMIT) ?    (-REGULATION_LIMIT) :
                                             regul;
 
     prevRoll = error;
@@ -304,31 +233,6 @@ inline int16_t process_controller_roll( int32_t error )
 
 inline void process_control_system ( void )
 {
-#ifdef TEST_MOTOR4
-#ifndef PROGRAM_INPUT
-    static uint8_t power_flag = TWO_POS_SWITCH_OFF;
-    if ( power_flag != control_values.two_pos_switch )
-    {
-        power_flag = control_values.two_pos_switch;
-        if ( power_flag )
-        {
-            set_motors_started( MOTOR_4 );
-            test_throttle = 0;
-        }
-        else
-        {
-            set_motors_stopped();
-        }
-    }
-#endif // PROGRAM_INPUT
-    
-//    send_UART_control_values();
-    process_UART_input_command2( UART_get_last_received_command() );
-//    if ( INPUT_POWER_MAX > THROTTLE_MAX )
-    {
-        set_motor4_power( test_throttle );
-    }
-#else
 #ifndef PROGRAM_INPUT   
     static bool     start_stop_flag = false;
     bool sticks_in_start_position = START_STOP_COND;   
@@ -339,7 +243,9 @@ inline void process_control_system ( void )
         if ( sticks_in_start_position )
         {   // If now in corner position
 #else
+#ifdef PID_tuning
     process_UART_input_command( UART_get_last_received_command() );
+#endif
     if ( start_motors )
     {
 #endif
@@ -370,11 +276,6 @@ inline void process_control_system ( void )
         if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
 #endif // PROGRAM_INPUT
-//            input_control_pitch = control_values.pitch;// > 500 ? 1000 : control_values.pitch < -500 ? -1000 : 0;
-
-//            pitch_error = (input_control_pitch*MAX_CONTROL_ANGLE - current_angles.pitch);
-            
-
             set_motor1_power( control_values.throttle + 
                                 process_controller_pitch( -current_angles.pitch ) -
                                 process_controller_roll( -current_angles.roll )
@@ -405,8 +306,6 @@ inline void process_control_system ( void )
         }
 #endif // PROGRAM_INPUT
     }
-
-#endif /* TEST_MOTOR4 */
 }
     
 bool dataSend = false;
@@ -432,8 +331,6 @@ inline void process_sending_UART_data( void )
             dataSend = false;
             break;
     }
-    
-    
     
     if ( dataSend )
     {
@@ -507,6 +404,8 @@ inline void bmp180_rcv_filtered_data ( void )
     bmp180_altitude = ((tmp_altitude*BMP180_EXP_FILTER_PART) + (bmp180_altitude/1000.0*(1.0-BMP180_EXP_FILTER_PART))) * TEMP_MULTIPLYER;
 }
 
+//static uint16_t time_elapsed_us = 0;
+
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
 //    timer_start();
@@ -515,18 +414,17 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
     
-    int16_t angle_deg = hmc5883l_get_yaw_angle();
+//    int16_t angle_deg = hmc5883l_get_yaw_angle();
     
     get_control_values( &control_values );
-    
     process_counts();
     
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
-    
 //    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
-    
-//    process_control_system();
+    process_control_system();
+#ifndef PID_tuning
     process_sending_UART_data();
+#endif
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */

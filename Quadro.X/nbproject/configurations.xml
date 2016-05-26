@@ -17,6 +17,7 @@
       <itemPath>SDcard.h</itemPath>
       <itemPath>math_proto.h</itemPath>
       <itemPath>error_.h</itemPath>
+      <itemPath>pragmas.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"

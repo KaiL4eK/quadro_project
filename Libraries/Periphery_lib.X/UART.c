@@ -5,10 +5,14 @@
 /********************************/
 
 #define BUFFER_MAX_SIZE 512
+static char send_buffer[BUFFER_MAX_SIZE];
+static uint8_t receive_mode = 0;
 
-void UART_write_byte( uint8_t elem );
-
-char UART_buffer[BUFFER_MAX_SIZE];
+void UART_write_byte( uint8_t elem )
+{
+    while( U1STAbits.UTXBF ) Nop();
+    U1TXREG = elem;
+}
 
 void init_UART1( UART_speed_t UART_br )
 {
@@ -16,13 +20,26 @@ void init_UART1( UART_speed_t UART_br )
 	U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
 	U1BRG = UART_br;
     U1MODEbits.BRGH = 1;
-//    _U1RXIE = 1;          // Enable Rx interrupt
-//    _U1RXIF = 0;
     
 	U1MODEbits.UARTEN = 1;	// And turn the peripheral on
 	U1STAbits.UTXEN = 1;
 //    _U1TXIE = 1;          //Enable TX interrupt 
 //    _U1TXIF = 0;
+}
+
+void UART_set_receive_mode ( UART_receiveMode_t mode )
+{
+    receive_mode = mode;
+    switch ( receive_mode )
+    {
+        case UARTr_interrupt:
+            _U1RXIE = 1;          // Enable Rx interrupt
+            break;
+        case UARTr_polling:
+            _U1RXIE = 0;
+            break;
+    }
+    _U1RXIF = 0;
 }
 
 uint8_t input_command = 0;
@@ -35,10 +52,10 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 
 int UART_receive_byte( uint8_t *received_byte )
 {
-    if ( U1STAbits.URXDA )
+    if ( receive_mode == UARTr_polling && U1STAbits.URXDA )
     {
         *received_byte = U1RXREG;
-//        UART_write_byte( *received_byte );
+//        UART_write_byte( *received_byte );    // echo mode
         return( 0 );
     }
     return( -1 );
@@ -51,12 +68,6 @@ uint8_t UART_get_last_received_command()
     uint8_t last_rcv = input_command;
     input_command = 0;
     return( last_rcv );
-}
-
-void UART_write_byte( uint8_t elem )
-{
-    while( U1STAbits.UTXBF ) Nop();
-    U1TXREG = elem;
 }
 
 #define HIGH( x ) (((x) >> 8) & 0xff)
@@ -78,11 +89,11 @@ void UART_write_string( const char *fstring, ... )
     va_list str_args;
     
     va_start( str_args, fstring );
-    vsprintf( UART_buffer, fstring, str_args );
+    vsprintf( send_buffer, fstring, str_args );
     va_end( str_args );
     
-    while( UART_buffer[iter] != '\0' )
+    while( send_buffer[iter] != '\0' )
     {
-        UART_write_byte( UART_buffer[iter++] );
+        UART_write_byte( send_buffer[iter++] );
     }
 }

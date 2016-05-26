@@ -39,13 +39,13 @@ static Task_t       *tasks_list = NULL,
 
 int init_sd_file_io ( void )
 {
-    spi_set_speed( FREQ_125K );
+    spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
     if ( init_FAT32() < 0 )
     {
         UART_write_string( "FAT32 not found!\n" );
         error_process();
     }
-    spi_set_speed( FREQ_16000K );
+    spi_set_speed( SPI_PRIM_1, SPI_SEC_8 );
     PROCESSING_TRIS = 0;
     PROCESSING_LIGHT = 1;
     init_flag = 1;

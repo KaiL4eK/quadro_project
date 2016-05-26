@@ -65,7 +65,7 @@ typedef struct
     uint8_t     two_pos_switch;
 }Control_values_t;
 
-void init_input_control();
+void ic_init();
 void ic_make_calibration();
 void ic_find_control();
 void send_UART_calibration_data( void );

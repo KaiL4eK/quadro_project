@@ -61,7 +61,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
     _T3IF = 0;
 }
 
-void init_input_control()
+void ic_init()
 {
     T2CONbits.TON = 0;
     T2CONbits.TCKPS = TIMER_DIV_1;
