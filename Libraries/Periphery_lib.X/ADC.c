@@ -2,7 +2,7 @@
 
 int ADC_init ( uint8_t channel )
 {
-    if ( channel > 32 )
+    if ( channel > 31 )
     {
         return( -1 );
     }
@@ -10,7 +10,7 @@ int ADC_init ( uint8_t channel )
     AD1CON1bits.ADON = 0;
     if ( channel > 15 )
     {
-        AD1PCFGL &= ~(1 << (channel-16)); // Analog mode pin setup
+        AD1PCFGH &= ~(1 << (channel-16)); // Analog mode pin setup
     }
     else
     {
