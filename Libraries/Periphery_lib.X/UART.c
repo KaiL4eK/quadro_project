@@ -4,86 +4,177 @@
 /*              UART            */
 /********************************/
 
+typedef struct
+{
+    UART_receiveMode_t  receive_mode;
+    uint8_t             initialized;
+    
+}UART_module_FD;
+
+UART_module_FD  uart1 = { .initialized = 0, .receive_mode = 0 },
+                uart2 = { .initialized = 0, .receive_mode = 0 };
+
 #define BUFFER_MAX_SIZE 512
 static char send_buffer[BUFFER_MAX_SIZE];
-static uint8_t receive_mode = 0;
 
-void UART_write_byte( uint8_t elem )
+void UART_init( UART_moduleNum_t module, UART_speed_t UART_br )
 {
-    while( U1STAbits.UTXBF ) Nop();
-    U1TXREG = elem;
-}
-
-void init_UART1( UART_speed_t UART_br )
-{
-	U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
-	U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
-	U1BRG = UART_br;
-    U1MODEbits.BRGH = 1;
-    
-	U1MODEbits.UARTEN = 1;	// And turn the peripheral on
-	U1STAbits.UTXEN = 1;
-//    _U1TXIE = 1;          //Enable TX interrupt 
-//    _U1TXIF = 0;
-}
-
-void UART_set_receive_mode ( UART_receiveMode_t mode )
-{
-    receive_mode = mode;
-    switch ( receive_mode )
+    if ( module & UARTm1 )
     {
-        case UARTr_interrupt:
-            _U1RXIE = 1;          // Enable Rx interrupt
-            break;
-        case UARTr_polling:
-            _U1RXIE = 0;
-            break;
+        U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
+        U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
+        U1BRG = UART_br;
+        U1MODEbits.BRGH = 1;
+
+        U1MODEbits.UARTEN = 1;	// And turn the peripheral on
+        U1STAbits.UTXEN = 1;
+
+        uart1.initialized = 1;
     }
-    _U1RXIF = 0;
+    
+    if ( module & UARTm2 )
+    {
+        U2MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
+        U2MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
+        U2BRG = UART_br;
+        U2MODEbits.BRGH = 1;
+
+        U2MODEbits.UARTEN = 1;	// And turn the peripheral on
+        U2STAbits.UTXEN = 1;
+
+        uart2.initialized = 1;
+    }
 }
 
-uint8_t input_command = 0;
+void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode )
+{
+    if ( module & UARTm1 )
+    {
+        uart1.receive_mode = mode;
+        switch ( mode )
+        {
+            case UARTr_interrupt:
+                _U1RXIE = 1;          // Enable Rx interrupt
+                break;
+            case UARTr_polling:
+                _U1RXIE = 0;
+                break;
+        }
+        _U1RXIF = 0;
+    }
+    
+    if ( module & UARTm2 )
+    {
+        uart2.receive_mode = mode;
+        switch ( mode )
+        {
+            case UARTr_interrupt:
+                _U2RXIE = 1;          // Enable Rx interrupt
+                break;
+            case UARTr_polling:
+                _U2RXIE = 0;
+                break;
+        }
+        _U2RXIF = 0;
+    }
+}
+
+/**
+ * Polling API
+ */
+
+int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 )
+{
+    if ( (module & UARTm1) && 
+            uart1.receive_mode == UARTr_polling && 
+            received_byte1 != NULL && 
+            U1STAbits.URXDA )
+    {
+        *received_byte1 = U1RXREG;
+    }
+
+    if ( (module & UARTm2) && 
+            uart1.receive_mode == UARTr_polling && 
+            received_byte2 != NULL && 
+            U2STAbits.URXDA )
+    {
+        *received_byte2 = U2RXREG;
+    }
+    return( 0 );
+}
+
+/**
+ * Interrupt API
+ */
+
+uint8_t input_byte1 = 0,
+        input_byte2 = 0;
 
 void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
-    input_command = U1RXREG;
+    input_byte1 = U1RXREG;
     _U1RXIF = 0;
 }
 
-int UART_receive_byte( uint8_t *received_byte )
+void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 {
-    if ( receive_mode == UARTr_polling && U1STAbits.URXDA )
-    {
-        *received_byte = U1RXREG;
-//        UART_write_byte( *received_byte );    // echo mode
-        return( 0 );
-    }
-    return( -1 );
+    input_byte2 = U2RXREG;
+    _U2RXIF = 0;
 }
 
-uint8_t UART_get_last_received_command()
+int UART_get_last_received_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 )   
 {
-    if ( input_command == 0 )
-        return( 0 );
-    uint8_t last_rcv = input_command;
-    input_command = 0;
-    return( last_rcv );
+    if ( (module & UARTm1) && 
+            uart1.receive_mode == UARTr_interrupt && 
+            received_byte1 != NULL )
+    {
+        *received_byte1 = input_byte1;
+        input_byte1 = 0;
+    }
+    
+    if ( (module & UARTm2) && 
+            uart2.receive_mode == UARTr_interrupt && 
+            received_byte2 != NULL )
+    {
+        *received_byte2 = input_byte2;
+        input_byte2 = 0;
+    }
+    return( 0 );
+}
+
+/**
+ * Writing API
+ */
+
+void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
+{
+    if ( module & UARTm1 )
+    {
+        while( U1STAbits.UTXBF ) Nop();
+        U1TXREG = elem;
+    }
+    
+    if ( module & UARTm2 )
+    {
+        while( U2STAbits.UTXBF ) Nop();
+        U2TXREG = elem;
+    }
 }
 
 #define HIGH( x ) (((x) >> 8) & 0xff)
 #define LOW( x ) ((x) & 0xff)
 
-void UART_write_words( uint16_t *arr, uint8_t count )
+void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count )
 {
     uint8_t iter = 0;
     for ( iter = 0; iter < count; iter++ )
     {
-        UART_write_byte( HIGH( arr[iter] ) );
-        UART_write_byte( LOW( arr[iter] ) );
+        UART_write_byte( module, HIGH( arr[iter] ) );
+        UART_write_byte( module, LOW( arr[iter] ) );
     }
 }
 
-void UART_write_string( const char *fstring, ... )
+void UART_write_string( UART_moduleNum_t module, const char *fstring, ... )
 {
     int iter = 0;
     va_list str_args;
@@ -94,6 +185,6 @@ void UART_write_string( const char *fstring, ... )
     
     while( send_buffer[iter] != '\0' )
     {
-        UART_write_byte( send_buffer[iter++] );
+        UART_write_byte( module, send_buffer[iter++] );
     }
 }

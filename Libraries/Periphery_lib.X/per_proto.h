@@ -38,13 +38,19 @@ typedef enum
     UARTr_polling = 2
 }UART_receiveMode_t;
 
-void init_UART1( UART_speed_t UART_br );
-void UART_write_words( uint16_t *arr, uint8_t count );
-void UART_write_string( const char *fstring, ... );
-void UART_write_byte( uint8_t elem );
-int UART_receive_byte( uint8_t *received_byte );
-uint8_t UART_get_last_received_command();
-void UART_set_receive_mode ( UART_receiveMode_t mode );
+typedef enum
+{
+    UARTm1 = 1 << 0,
+    UARTm2 = 1 << 1
+}UART_moduleNum_t;
+
+void UART_init( UART_moduleNum_t module, UART_speed_t UART_br );
+void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
+void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
+void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
+int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
+int UART_get_last_received_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
+void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode );
 
 /*** twi.c ***/
 
