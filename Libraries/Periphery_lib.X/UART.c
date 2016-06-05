@@ -85,22 +85,25 @@ void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode )
 
 int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 )
 {
+    int result = -1;
     if ( (module & UARTm1) && 
             uart1.receive_mode == UARTr_polling && 
             received_byte1 != NULL && 
             U1STAbits.URXDA )
     {
         *received_byte1 = U1RXREG;
+        result = 0;
     }
 
     if ( (module & UARTm2) && 
-            uart1.receive_mode == UARTr_polling && 
+            uart2.receive_mode == UARTr_polling && 
             received_byte2 != NULL && 
             U2STAbits.URXDA )
     {
         *received_byte2 = U2RXREG;
+        result = 0;
     }
-    return( 0 );
+    return( result );
 }
 
 /**
