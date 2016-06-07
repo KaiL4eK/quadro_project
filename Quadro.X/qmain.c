@@ -106,7 +106,8 @@ int main(void)
     return( 0 );
 }
 
-static uint16_t prop_k = 30, integr_k = 10000, differ_k= 3;
+static uint16_t prop_r = 30, integr_r = 10000, differ_r = 70,
+                prop_p = 20, integr_p = 6250, differ_p = 40;
 bool start_motors = false;
 
 static void process_UART_input_command( uint8_t input )
@@ -115,29 +116,47 @@ static void process_UART_input_command( uint8_t input )
     {
         case 0:
             return;
-        case 'c':
+        case 'b':
             start_motors = true;
             break;
         case 'q':
-            prop_k++;
+            prop_r++;
             break;
         case 'w':
-            prop_k--;
+            prop_r--;
             break;
         case 'a':
-            integr_k+=10;
+            integr_r+=10;
             break;
         case 's':
-            integr_k-=10;
+            integr_r-=10;
             break;
         case 'z':
-            differ_k++;
+            differ_r++;
             break;
         case 'x':
-            differ_k--;
+            differ_r--;
+            break;
+        case 'e':
+            prop_p++;
+            break;
+        case 'r':
+            prop_p--;
+            break;
+        case 'd':
+            integr_p+=10;
+            break;
+        case 'f':
+            integr_p-=10;
+            break;
+        case 'c':
+            differ_p++;
+            break;
+        case 'v':
+            differ_p--;
             break;
     }
-    UART_write_string( UARTm1, "P%d,D%d,I%d\n\r", prop_k, integr_k, differ_k );
+    UART_write_string( UARTm1, "P%d,D%d,I%d;P%d,D%d,I%d\n", prop_r, integr_r, differ_r, prop_p, integr_p, differ_p );
 }
 
 static Control_values_t     control_values;
@@ -160,7 +179,7 @@ static void process_counts( void )
     int32_t acc_x = c_d->value.x_accel == 0 ? 1 : c_d->value.x_accel,
             acc_y = c_d->value.y_accel == 0 ? 1 : c_d->value.y_accel,
             acc_z = c_d->value.z_accel;
-    
+#undef MATH_LIB_
     current_angles.acc_x = 
 #ifdef MATH_LIB_
                 atan2_fp(acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * ANGLES_COEFF,
@@ -190,7 +209,7 @@ static void process_counts( void )
 
 #define MAX_CONTROL_ANGLE   45L
 #define STOP_LIMIT          1000L   // 2.5 sec - low thrust limit
-#define REGULATION_LIMIT    5000L
+#define REGULATION_LIMIT    10000L
 
 static int64_t  integrPitch = 0,
                 integrRoll = 0;
@@ -202,9 +221,9 @@ static int16_t  stop_counter = 0;
 inline int16_t process_controller_pitch( int32_t error )
 {
     int32_t diff = error - prevPitch;
-    integrPitch += error;
+    integrPitch += error/10;    // Tricky way <<<
 
-    int32_t regul = (error/prop_k + integrPitch/integr_k + diff*differ_k);
+    int32_t regul = (error/prop_p + integrPitch/integr_p + diff*differ_p);
     regul = regul > REGULATION_LIMIT ?       REGULATION_LIMIT :
             regul < (-REGULATION_LIMIT) ?    (-REGULATION_LIMIT) :
                                             regul;
@@ -217,9 +236,9 @@ inline int16_t process_controller_pitch( int32_t error )
 inline int16_t process_controller_roll( int32_t error )
 {
     int32_t diff = error - prevRoll;
-    integrRoll += error;
+    integrRoll += error/10;     // Tricky way <<<
 
-    int32_t regul = (error/prop_k + integrRoll/integr_k + diff*differ_k);
+    int32_t regul = (error/prop_r + integrRoll/integr_r + diff*differ_r);
     regul = regul > REGULATION_LIMIT ?       REGULATION_LIMIT :
             regul < (-REGULATION_LIMIT) ?    (-REGULATION_LIMIT) :
                                             regul;
@@ -258,11 +277,13 @@ inline void process_control_system ( void )
             if ( motors_armed )
             {   // If motors were armed - turn them off
                 set_motors_stopped();
+                UART_write_string( UARTm1, "Motors stopped\n" );
             }
             else
             {   // If not armed - turn on and zero integral part of controller
                 integrPitch = integrRoll = 0;
                 set_motors_started( MOTORS_ALL);
+                UART_write_string( UARTm1, "All motors started\n" );
             }
             motors_armed = !motors_armed;
 #ifndef PROGRAM_INPUT
@@ -277,26 +298,26 @@ inline void process_control_system ( void )
 
     if ( motors_armed )
     {
-        control_values.throttle = 5000;
+        control_values.throttle = 0;
 #ifndef PROGRAM_INPUT
         if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
 #endif // PROGRAM_INPUT
-            set_motor1_power( control_values.throttle + 
-                                process_controller_pitch( -current_angles.pitch ) -
-                                process_controller_roll( -current_angles.roll )
+            set_motor1_power( control_values.throttle
+//                                + process_controller_pitch( -current_angles.pitch )
+                                - process_controller_roll( -current_angles.roll )
                             );
-            set_motor2_power( control_values.throttle + 
-                                process_controller_pitch( -current_angles.pitch ) +
-                                process_controller_roll( -current_angles.roll )
+            set_motor2_power( control_values.throttle
+//                                + process_controller_pitch( -current_angles.pitch )
+                                + process_controller_roll( -current_angles.roll )
                             );
-            set_motor3_power( control_values.throttle - 
-                                process_controller_pitch( -current_angles.pitch ) +
-                                process_controller_roll( -current_angles.roll )
+            set_motor3_power( control_values.throttle
+//                                - process_controller_pitch( -current_angles.pitch )
+                                + process_controller_roll( -current_angles.roll )
                             );
-            set_motor4_power( control_values.throttle - 
-                                process_controller_pitch( -current_angles.pitch ) -
-                                process_controller_roll( -current_angles.roll )
+            set_motor4_power( control_values.throttle
+//                                - process_controller_pitch( -current_angles.pitch )
+                                - process_controller_roll( -current_angles.roll )
                             );
 
             stop_counter = 0;
