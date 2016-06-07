@@ -11,7 +11,7 @@ int cmdB_iter = 0;
 UART_commands_e receive_command ( void )
 {
     UART_commands_e command = NO_COMMAND;
-    while ( UART_receive_byte( &commandBuffer[cmdB_iter] ) == 0 )
+    while ( UART_receive_byte( UARTm1, &commandBuffer[cmdB_iter], NULL ) == 0 )
     {
         if ( ++cmdB_iter == CMD_LENGTH )
         {

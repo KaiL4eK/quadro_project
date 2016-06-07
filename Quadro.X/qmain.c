@@ -40,62 +40,62 @@ int main(void)
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    init_UART1( UART_115200 );
-    UART_write_string( "/------------------------/\n" );
+    UART_init( UARTm1, UART_115200 );
+    UART_write_string( UARTm1, "/------------------------/\n" );
 #ifdef PID_tuning
-    UART_set_receive_mode( UARTr_interrupt );
-    UART_write_string( "UART initialized to interrupt mode\n" );
+    UART_set_receive_mode( UARTm1, UARTr_interrupt );
+    UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
 #else
-    UART_set_receive_mode( UARTr_polling );
-    UART_write_string( "UART initialized to polling mode\n" );
+    UART_set_receive_mode( UARTm1, UARTr_polling );
+    UART_write_string( UARTm1, "UART initialized to polling mode\n" );
 #endif
 #ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
     file_num = file_num < 0 ? 0 : file_num;
-    UART_write_string( "Flash successfully read\n" );
+    UART_write_string( UARTm1, "Flash successfully read\n" );
 #endif /* SD_CARD */
     motors_init();
-    UART_write_string( "Motors initialized\n" );
+    UART_write_string( UARTm1, "Motors initialized\n" );
 #ifndef PROGRAM_INPUT
     ic_init();
-    UART_write_string( "IC initialized\n" );
+    UART_write_string( UARTm1, "IC initialized\n" );
     ic_find_control();
-    UART_write_string( "IC found\n" );
+    UART_write_string( UARTm1, "IC found\n" );
 #endif // PROGRAM_INPUT
 //    ic_make_calibration();
 //    UART_write_string("IC calibrated\n");
 #ifdef SD_CARD
     spi_init();
-    UART_write_string( "SPI initialized\n" );
+    UART_write_string( UARTm1, "SPI initialized\n" );
     init_sd_file_io();
-    UART_write_string( "SD initialized\n" );
+    UART_write_string( UARTm1, "SD initialized\n" );
 #endif /* SD_CARD */
     i2c_init( 400000 );
-    UART_write_string( "I2C initialized\n" );
+    UART_write_string( UARTm1, "I2C initialized\n" );
     if ( mpu6050_init() != 0 )
     {
-        UART_write_string("Failed MPU init\n");
+        UART_write_string( UARTm1, "Failed MPU init\n" );
         error_process();
     }
-    UART_write_string( "MPU6050 initialized\n" );
+    UART_write_string( UARTm1, "MPU6050 initialized\n" );
     
     if ( bmp180_init( BMP085_ULTRAHIGHRES ) != 0 )
     {
-        UART_write_string("Failed BMP init\n");
+        UART_write_string( UARTm1, "Failed BMP init\n" );
         error_process();
     }
-    UART_write_string( "BMP180 initialized\n" );
+    UART_write_string( UARTm1, "BMP180 initialized\n" );
     bmp180_calibrate( &bmp180_press );
     bmp180_initial_altitude = bmp180_get_altitude( bmp180_press, 101325 );
     if ( hmc5883l_init( -48, -440 ) != 0 )
     {
-        UART_write_string("Failed HMC init\n");
+        UART_write_string( UARTm1, "Failed HMC init\n");
         error_process();
     }
-    UART_write_string( "HMC5883L initialized\n" );
+    UART_write_string( UARTm1, "HMC5883L initialized\n" );
     control_system_timer_init();
-    UART_write_string( "Let`s begin!\n" );
+    UART_write_string( UARTm1, "Let`s begin!\n" );
     ERR_LIGHT = ERR_LIGHT_NO_ERR;
 //    mpu6050_calibration();
     
@@ -115,7 +115,7 @@ static void process_UART_input_command( uint8_t input )
     {
         case 0:
             return;
-        case ' ':
+        case 'c':
             start_motors = true;
             break;
         case 'q':
@@ -137,8 +137,7 @@ static void process_UART_input_command( uint8_t input )
             differ_k--;
             break;
     }
-    UART_write_string( "P%d,D%d,I%d\n\r", 
-            prop_k, integr_k, differ_k );
+    UART_write_string( UARTm1, "P%d,D%d,I%d\n\r", prop_k, integr_k, differ_k );
 }
 
 static Control_values_t     control_values;
@@ -230,6 +229,12 @@ inline int16_t process_controller_roll( int32_t error )
     return( regul );
 }
 
+uint8_t receivedByte = 0;
+void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
+{
+    receivedByte = U1RXREG;
+    _U1RXIF = 0;
+}
 
 inline void process_control_system ( void )
 {
@@ -244,7 +249,8 @@ inline void process_control_system ( void )
         {   // If now in corner position
 #else
 #ifdef PID_tuning
-    process_UART_input_command( UART_get_last_received_command() );
+    process_UART_input_command( receivedByte );
+    receivedByte = 0;
 #endif
     if ( start_motors )
     {
@@ -319,15 +325,15 @@ inline void process_sending_UART_data( void )
         case NO_COMMAND:
             break;
         case CONNECT:
-            UART_write_string( "ok!" );
+            UART_write_string( UARTm1, "ok!" );
             break;
         case DATA_START:
-            UART_write_string( "ok!" );
+            UART_write_string( UARTm1, "ok!" );
             timeMoments = 0;
             dataSend = true;
             break;
         case DATA_STOP:
-            UART_write_string( "ok!" );
+            UART_write_string( UARTm1, "ok!" );
             dataSend = false;
             break;
     }
@@ -342,7 +348,7 @@ inline void process_sending_UART_data( void )
         sendBuffer[4] = timeMoments >> 16;
         sendBuffer[5] = timeMoments & 0xffff;
         
-        UART_write_words( sendBuffer, 6 );
+        UART_write_words( UARTm1, sendBuffer, 6 );
         
         timeMoments += timeStep10;
     }
@@ -420,7 +426,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     process_counts();
     
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
-//    UART_write_string( "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
+//    UART_write_string( UARTm1, "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
     process_control_system();
 #ifndef PID_tuning
     process_sending_UART_data();
@@ -430,7 +436,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif /* SD_CARD */
     
 //    time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
-//    UART_write_string( "%s, %ld, %ld\n\r", 
+//    UART_write_string( UARTm1, "%s, %ld, %ld\n\r", 
 //            motors_armed ? "Armed" : "Disarmed", current_angles.pitch, current_angles.roll );
     _T5IF = 0;
 }

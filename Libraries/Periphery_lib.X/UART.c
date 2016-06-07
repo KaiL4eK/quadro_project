@@ -110,40 +110,40 @@ int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t
  * Interrupt API
  */
 
-uint8_t input_byte1 = 0,
-        input_byte2 = 0;
-
-void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
-{
-    input_byte1 = U1RXREG;
-    _U1RXIF = 0;
-}
-
-void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
-{
-    input_byte2 = U2RXREG;
-    _U2RXIF = 0;
-}
-
-int UART_get_last_received_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 )   
-{
-    if ( (module & UARTm1) && 
-            uart1.receive_mode == UARTr_interrupt && 
-            received_byte1 != NULL )
-    {
-        *received_byte1 = input_byte1;
-        input_byte1 = 0;
-    }
-    
-    if ( (module & UARTm2) && 
-            uart2.receive_mode == UARTr_interrupt && 
-            received_byte2 != NULL )
-    {
-        *received_byte2 = input_byte2;
-        input_byte2 = 0;
-    }
-    return( 0 );
-}
+//uint8_t input_byte1 = 0,
+//        input_byte2 = 0;
+//
+//void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
+//{
+//    input_byte1 = U1RXREG;
+//    _U1RXIF = 0;
+//}
+//
+//void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
+//{
+//    input_byte2 = U2RXREG;
+//    _U2RXIF = 0;
+//}
+//
+//int UART_get_last_received_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 )   
+//{
+//    if ( (module & UARTm1) && 
+//            uart1.receive_mode == UARTr_interrupt && 
+//            received_byte1 != NULL )
+//    {
+//        *received_byte1 = input_byte1;
+//        input_byte1 = 0;
+//    }
+//    
+//    if ( (module & UARTm2) && 
+//            uart2.receive_mode == UARTr_interrupt && 
+//            received_byte2 != NULL )
+//    {
+//        *received_byte2 = input_byte2;
+//        input_byte2 = 0;
+//    }
+//    return( 0 );
+//}
 
 /**
  * Writing API

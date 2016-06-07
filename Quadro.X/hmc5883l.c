@@ -105,7 +105,7 @@ void hmc5883l_set_averaged_samples ( Hmc5883l_avrg_samples_t avrgd_smpls )
 
 void send_UART_magnetic_raw_data ( void )
 {
-    UART_write_string( "#M:%05d,%05d,%05d\n",
+    UART_write_string( UARTm1, "#M:%05d,%05d,%05d\n",
                     raw_magnetic.value.x_magnet, raw_magnetic.value.y_magnet, raw_magnetic.value.z_magnet );
 }
 
@@ -171,7 +171,7 @@ void hmc5883l_make_calibration ( uint32_t calibration_times )
         delay_ms( 50 );
     }
     
-    UART_write_string( "Offse values: x = %d, y = %d\n", 
+    UART_write_string( UARTm1, "Offse values: x = %d, y = %d\n", 
                         x_mag_max - (x_mag_max-x_mag_min)/2, 
                         y_mag_max - (y_mag_max-y_mag_min)/2 );
     while ( 1 );

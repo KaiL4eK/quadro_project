@@ -148,7 +148,7 @@ void ic_make_calibration()
 
 void send_UART_calibration_data( void )
 {
-    UART_write_string( "\n\rMin:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMax:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
+    UART_write_string( UARTm1, "\n\rMin:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMax:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
                         clbr_control_raw.channel_1.min, clbr_control_raw.channel_2.min, clbr_control_raw.channel_3.min, clbr_control_raw.channel_4.min, clbr_control_raw.channel_5.min,
                         clbr_control_raw.channel_1.max, clbr_control_raw.channel_2.max, clbr_control_raw.channel_3.max, clbr_control_raw.channel_4.max, clbr_control_raw.channel_5.max,
                         clbr_control_raw.channel_1.mid, clbr_control_raw.channel_2.mid, clbr_control_raw.channel_3.mid, clbr_control_raw.channel_4.mid, clbr_control_raw.channel_5.mid
@@ -205,13 +205,13 @@ int8_t get_control_values( Control_values_t *out_dir_vals )
 
 void send_UART_control_values( void )
 {
-    UART_write_string( "In: %04d, %04d, %04d, %04d, %01d\n", 
+    UART_write_string( UARTm1, "In: %04d, %04d, %04d, %04d, %01d\n", 
             dir_values.throttle, dir_values.rudder, dir_values.roll, dir_values.pitch, dir_values.two_pos_switch );
 }
 
 void send_UART_control_raw_data( void )
 {
-    UART_write_string( "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
+    UART_write_string( UARTm1, "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
             control_raw.channel_3, control_raw.channel_4, control_raw.channel_1, control_raw.channel_2, control_raw.channel_5 );
 }
 /********************************/

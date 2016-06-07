@@ -51,9 +51,9 @@ int init_FAT32 ( void )
         int err_state = 0;
         if ( (err_state = init_SDcard()) < 0 )
         {
-            UART_write_string( "SD card initialization failed\n" );
-            UART_write_string( (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found\n" : 
-                                err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2\n" : "Unknown error\n") );
+            UART_write_string( UARTm1, "SD card initialization failed\n" );
+            UART_write_string( UARTm1, (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found\n" : 
+                                        err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2\n" : "Unknown error\n") );
             error_process();
         }
     }
@@ -127,7 +127,7 @@ UART_write_string( "/-----------------------------------------------------/\n" )
 
     return( 0 );
 }
-
+#ifdef QDEBUG
 void show_content_of_FAT( uint16_t entries_amount )
 {
     uint8_t     i = 0;
@@ -142,7 +142,7 @@ void show_content_of_FAT( uint16_t entries_amount )
     }  
     UART_write_string("/-------------------------/\n");
 }
-
+#endif
 inline void read_FAT_sector_with_cluster ( Cluster_t current_cluster )
 {
     FAT_sector_number = current_cluster / (bytes_per_sector/4);
@@ -245,12 +245,12 @@ static int find_empty_dir_entry ( void )
 
         if ( (dir_cluster = get_next_cluster_FAT( dir_cluster )) > 0x0ffffff6 )
         {
-            UART_write_string( "Found end of root dir cluster\n" );
+            UART_write_string( UARTm1, "Found end of root dir cluster\n" );
             return( -1 );
         }
         if ( dir_cluster == 0 ) 
         {
-            UART_write_string( "Error in getting cluster\n" );  
+            UART_write_string( UARTm1, "Error in getting cluster\n" );  
             return( -1 );
         }
     }
@@ -581,9 +581,9 @@ inline void displayMemory ( uint8_t flag, uint32_t memory )
     }
     if(flag == HIGH)
         memoryString[13] = 'K';
-    UART_write_string( (char *)memoryString );
+    UART_write_string( UARTm1, (char *)memoryString );
 }
-
+#ifdef QDEBUG
 int get_file_list_root( void )
 {
     Cluster_t   cluster = root_cluster;
@@ -593,11 +593,11 @@ int get_file_list_root( void )
     uint8_t     j,
                 buffer[512];
     struct dir_entry_Structure *dir;
-    UART_write_string( "\nFile List:\n" );
+    UART_write_string( UARTm1, "\nFile List:\n" );
     while ( 1 )
     {
         first_cluster_sector = get_first_sector_of_cluster( cluster );
-        UART_write_string( "Reading sector to find entry: %ld\n", first_cluster_sector );
+        UART_write_string( UARTm1, "Reading sector to find entry: %ld\n", first_cluster_sector );
         for ( sector = 0; sector < sector_per_cluster; sector++ )
         {
             SD_read_sector( first_cluster_sector + sector, buffer );            
@@ -607,22 +607,22 @@ int get_file_list_root( void )
 
                 if ( dir->name[0] == EMPTY ) //indicates end of the file list of the directory
                 {
-                    UART_write_string("No directory entries else\n");
+                    UART_write_string( UARTm1, "No directory entries else\n" );
                     return( NULL );   
                 }
                 if ( (dir->name[0] != DELETED) && (dir->attrib != ATTR_LONG_NAME) )
                 {
-                    UART_write_string("   ");
+                    UART_write_string( UARTm1, "   " );
                     for ( j = 0; j < 11; j++ )
                     {
                         if ( j == 8 ) 
-                            UART_write_byte( ' ' );
+                            UART_write_byte( UARTm1, ' ' );
                         UART_write_byte( dir->name[j] );
                     }
-                    UART_write_string( "   " );
+                    UART_write_string( UARTm1, "   " );
                     if ( (dir->attrib != ATTR_DIRECTORY) && (dir->attrib != ATTR_VOLUME_ID) )
                     {
-                        UART_write_string( "FILE   \n" );
+                        UART_write_string( UARTm1, "FILE   \n" );
                         displayMemory( LOW, dir->fileSize );
                     }
                     else
@@ -630,18 +630,18 @@ int get_file_list_root( void )
                         UART_write_string( (dir->attrib == ATTR_DIRECTORY) ? "DIR" : "ROOT" );
                     }
                     Cluster_t current_dE_cluster = (uint32_t)dir->firstClusterHI << 16 | dir->firstClusterLO;
-                    UART_write_string( "Cluster: 0x%08x\n", current_dE_cluster );
-                    UART_write_string( "Attributes: 0x%08x\n", dir->attrib );
+                    UART_write_string( UARTm1, "Cluster: 0x%08x\n", current_dE_cluster );
+                    UART_write_string( UARTm1, "Attributes: 0x%08x\n", dir->attrib );
                 }
                 else
                 {
                     if ( dir->attrib == ATTR_LONG_NAME )
                     {
-                        UART_write_string( "Bad attribute - long name\n" );
+                        UART_write_string( UARTm1, "Bad attribute - long name\n" );
                     }
                     else
                     {
-                        UART_write_string( "Dir entry is deleted\n" );
+                        UART_write_string( UARTm1, "Dir entry is deleted\n" );
                     }
                 }
             }
@@ -655,9 +655,10 @@ int get_file_list_root( void )
         }
         if ( cluster == 0 ) 
         {
-            UART_write_string( "Error in getting cluster\n" );  
+            UART_write_string( UARTm1, "Error in getting cluster\n" );  
             return( NULL );
         }
     }
     return( NULL );
 }
+#endif

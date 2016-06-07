@@ -42,7 +42,7 @@ int init_sd_file_io ( void )
     spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
     if ( init_FAT32() < 0 )
     {
-        UART_write_string( "FAT32 not found!\n" );
+        UART_write_string( UARTm1, "FAT32 not found!\n" );
         error_process();
     }
     spi_set_speed( SPI_PRIM_1, SPI_SEC_8 );
@@ -160,7 +160,7 @@ int file_open ( char *in_filename )
     
     if ( convert_filename( filename ) < 0 )
     {
-        UART_write_string( "Incorrect filename - file_open()\n" );
+        UART_write_string( UARTm1, "Incorrect filename - file_open()\n" );
         return( -1 );
     }
     
@@ -177,7 +177,7 @@ inline void set_next_buffer( void )
     current_buffer = current_buffer == BUFFERS_AMOUNT ? 0 : current_buffer;
     while ( busy_buffers[current_buffer] )
     {
-        UART_write_string( "Buffers overlay\n" );
+        UART_write_string( UARTm1, "Buffers overlay\n" );
         if ( out_counter++ == 255 )
             error_process();
     }

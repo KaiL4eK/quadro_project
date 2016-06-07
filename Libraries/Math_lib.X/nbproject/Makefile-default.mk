@@ -38,6 +38,12 @@ DEBUGGABLE_SUFFIX=a
 FINAL_IMAGE=dist/${CND_CONF}/${IMAGE_TYPE}/Math_lib.X.${OUTPUT_SUFFIX}
 endif
 
+ifeq ($(COMPARE_BUILD), true)
+COMPARISON_BUILD=-mafrlcsj
+else
+COMPARISON_BUILD=
+endif
+
 # Object Directory
 OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 
@@ -86,7 +92,7 @@ ${OBJECTDIR}/atan2_fx.o: atan2_fx.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/atan2_fx.o.d 
 	@${RM} ${OBJECTDIR}/atan2_fx.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  atan2_fx.c  -o ${OBJECTDIR}/atan2_fx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/atan2_fx.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  atan2_fx.c  -o ${OBJECTDIR}/atan2_fx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/atan2_fx.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PICKIT2=1    -omf=elf -fast-math -no-legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/atan2_fx.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
@@ -94,7 +100,7 @@ ${OBJECTDIR}/atan2_fx.o: atan2_fx.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/atan2_fx.o.d 
 	@${RM} ${OBJECTDIR}/atan2_fx.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  atan2_fx.c  -o ${OBJECTDIR}/atan2_fx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/atan2_fx.o.d"        -g -omf=elf -fast-math -no-legacy-libc  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  atan2_fx.c  -o ${OBJECTDIR}/atan2_fx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/atan2_fx.o.d"        -g -omf=elf -fast-math -no-legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/atan2_fx.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif

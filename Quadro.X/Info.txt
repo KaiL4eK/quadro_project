@@ -1,10 +1,5 @@
 Timers:
- - 1-Time measurement while calibrating
- - 2-Input capture
- - 3-Watchdog timer of input control
- - 6,7-Delays
- - 8,9-Time measurement
- - 4,5-Sensors frequency settings
+<Need to update>
 
 Current project working on external 32 MHz!!
 When starting changing this must be fixed timers times!

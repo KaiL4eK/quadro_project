@@ -54,7 +54,7 @@ int8_t mpu6050_receive_gyro_accel_raw_data ( void )
 
 void send_UART_mpu6050_data ( void )
 {
-    UART_write_string( "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n\r",
+    UART_write_string( UARTm1, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n\r",
                 raw_gyr_acc.value.x_gyro, 
                 raw_gyr_acc.value.y_gyro, 
                 raw_gyr_acc.value.z_gyro,
@@ -227,9 +227,9 @@ void mpu6050_calibration ( void )
     mpu6050_setXGyroOffset(0);
     mpu6050_setYGyroOffset(0);
     mpu6050_setZGyroOffset(0);
-    UART_write_string( "\nReading sensors for first time...\n" );
+    UART_write_string( UARTm1, "\nReading sensors for first time...\n" );
     mean_sensors();
-    UART_write_string( "\nCalculating offsets...\n" );
+    UART_write_string( UARTm1, "\nCalculating offsets...\n" );
     {
         ax_offset=-mean_ax/8;
         ay_offset=-mean_ay/8;
@@ -272,9 +272,9 @@ void mpu6050_calibration ( void )
         } 
     }
     mean_sensors();
-    UART_write_string( "\nFINISHED!\n\r" );
-    UART_write_string( "Sensor readings with offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz );
-    UART_write_string( "Your offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset );
-    UART_write_string( "\nData is printed as: acelX acelY acelZ giroX giroY giroZ\n" );
+    UART_write_string( UARTm1, "\nFINISHED!\n\r" );
+    UART_write_string( UARTm1, "Sensor readings with offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz );
+    UART_write_string( UARTm1, "Your offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset );
+    UART_write_string( UARTm1, "\nData is printed as: acelX acelY acelZ giroX giroY giroZ\n" );
     while (1);   
 }
