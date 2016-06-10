@@ -1,29 +1,69 @@
 #include "core.h"
-#include "per_proto.h"
-#include <string.h>
 
+#define CMD_BUFFER_LENGTH 128
 
-#define CMD_LENGTH 3
+const   uint8_t cmdConnect = ~(1 << 1);
 
-char commandBuffer[CMD_LENGTH];
-int cmdB_iter = 0;
+int     cmdBInt_index = 0;
 
-UART_commands_e receive_command ( void )
+uint8_t     *commandBuffer = NULL,
+            *replaceBuffer = NULL;
+
+void cmdProcessor_init ( void )
+{
+    commandBuffer = calloc( 1, CMD_BUFFER_LENGTH );
+    replaceBuffer = calloc( 1, CMD_BUFFER_LENGTH );
+}
+
+void replace_buffers ( int offset )
+{
+    memcpy( replaceBuffer, commandBuffer + offset, CMD_BUFFER_LENGTH - offset );
+    cmdBInt_index -= offset;
+    
+    uint8_t *tmpPointer = replaceBuffer;
+    replaceBuffer = commandBuffer;
+    commandBuffer = tmpPointer;
+}
+
+UART_commands_e receive_command ( uint8_t *receivedByte )
 {
     UART_commands_e command = NO_COMMAND;
-    while ( UART_receive_byte( UARTm1, &commandBuffer[cmdB_iter], NULL ) == 0 )
+    if ( cmdBInt_index >= 2 )
     {
-        if ( ++cmdB_iter == CMD_LENGTH )
+        switch ( commandBuffer[0] )
         {
-            cmdB_iter = 0;
-            if ( !strcmp( "con", commandBuffer ) )
-                command = CONNECT;
-            else if ( !strcmp( "dst", commandBuffer ) )
-                command = DATA_START;
-            else if ( !strcmp( "psd", commandBuffer ) )
-                command = DATA_STOP;
-            break;
+            case '*':   // Command
+                if ( (uint8_t)commandBuffer[1] == 127 )
+                    command = CONNECT;
+                else
+                    command = UNKNOWN_COMMAND; 
+                
+                replace_buffers( 2 );
+                break;
+            default:
+                replace_buffers( 1 );
         }
     }
     return( command );
+}
+
+void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
+{
+    _U1RXIF = 0;
+}
+
+void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
+{
+    while ( U2STAbits.URXDA )
+    {
+        commandBuffer[cmdBInt_index++] = U2RXREG;
+//        UART_write_string( UARTm1, "%c %d\n", commandBuffer[cmdBInt_index-1], cmdBInt_index );
+        if ( cmdBInt_index == CMD_BUFFER_LENGTH )
+        {
+            // Error overflow
+            while( 1 );
+        }
+    }
+        
+    _U2RXIF = 0;
 }

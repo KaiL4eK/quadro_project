@@ -12,7 +12,7 @@
 
 //#define SD_CARD
 #define PROGRAM_INPUT
-#define PID_tuning
+//#define PID_tuning
 
 void control_system_timer_init( void )
 {
@@ -41,14 +41,10 @@ int main(void)
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UARTm1, UART_115200 );
+    UART_init( UARTm2, UART_460800 );
+    UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt );
     UART_write_string( UARTm1, "/------------------------/\n" );
-#ifdef PID_tuning
-    UART_set_receive_mode( UARTm1, UARTr_interrupt );
     UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
-#else
-    UART_set_receive_mode( UARTm1, UARTr_polling );
-    UART_write_string( UARTm1, "UART initialized to polling mode\n" );
-#endif
 #ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
@@ -110,6 +106,7 @@ static uint16_t prop_r = 30, integr_r = 10000, differ_r = 70,
                 prop_p = 20, integr_p = 6250, differ_p = 40;
 bool start_motors = false;
 
+#ifdef PID_tuning
 static void process_UART_input_command( uint8_t input )
 {
     switch ( input )
@@ -158,7 +155,7 @@ static void process_UART_input_command( uint8_t input )
     }
     UART_write_string( UARTm1, "P%d,D%d,I%d;P%d,D%d,I%d\n", prop_r, integr_r, differ_r, prop_p, integr_p, differ_p );
 }
-
+#endif
 static Control_values_t     control_values;
 static gyro_accel_data_t    curr_data_accel_gyro;
 static Angles_t             current_angles = { 0, 0, 0 };
@@ -248,12 +245,14 @@ inline int16_t process_controller_roll( int32_t error )
     return( regul );
 }
 
+#ifdef PID_tuning
 uint8_t receivedByte = 0;
 void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
     receivedByte = U1RXREG;
     _U1RXIF = 0;
 }
+#endif
 
 inline void process_control_system ( void )
 {
@@ -336,8 +335,8 @@ inline void process_control_system ( void )
 }
     
 bool dataSend = false;
-uint32_t timeMoments = 0;
-uint32_t timeStep10 = 25;
+uint16_t timeMoments = 0;
+//uint32_t timeStep10 = 25;
     
 inline void process_sending_UART_data( void )
 {
@@ -346,32 +345,31 @@ inline void process_sending_UART_data( void )
         case NO_COMMAND:
             break;
         case CONNECT:
-            UART_write_string( UARTm1, "ok!" );
+//            UART_write_string( UARTm1, "ok!" );
             break;
         case DATA_START:
-            UART_write_string( UARTm1, "ok!" );
+//            UART_write_string( UARTm1, "ok!" );
             timeMoments = 0;
             dataSend = true;
             break;
         case DATA_STOP:
-            UART_write_string( UARTm1, "ok!" );
+//            UART_write_string( UARTm1, "ok!" );
             dataSend = false;
             break;
     }
     
     if ( dataSend )
     {
-        uint16_t sendBuffer[6];
-        sendBuffer[0] = current_angles.roll >> 16;
-        sendBuffer[1] = current_angles.roll & 0xffff;
-        sendBuffer[2] = current_angles.pitch >> 16;
-        sendBuffer[3] = current_angles.pitch & 0xffff;
-        sendBuffer[4] = timeMoments >> 16;
-        sendBuffer[5] = timeMoments & 0xffff;
+        uint16_t sendBuffer[3];
+        // angle * 250
+        sendBuffer[0] = current_angles.roll >> 2;     // -22500 - 22500
+        sendBuffer[1] = current_angles.pitch >> 2;    // -22500 - 22500
+        sendBuffer[2] = timeMoments;
         
-        UART_write_words( UARTm1, sendBuffer, 6 );
+        UART_write_byte( UARTm2, '$' ); // Data sign
+        UART_write_words( UARTm2, sendBuffer, 4 );
         
-        timeMoments += timeStep10;
+        timeMoments++;
     }
 }
 

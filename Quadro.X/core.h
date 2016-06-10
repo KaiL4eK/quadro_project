@@ -30,13 +30,12 @@ typedef struct
 typedef enum {
     
     NO_COMMAND,
+    UNKNOWN_COMMAND,
     CONNECT,
     DATA_START,
     DATA_STOP
     
 }UART_commands_e;
-
-UART_commands_e receive_command ( void );
 
 #endif	/* Q_CORE_H_ */
 
