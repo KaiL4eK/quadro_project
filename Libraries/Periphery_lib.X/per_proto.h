@@ -57,7 +57,7 @@ typedef enum
             
 }Interrupt_priority_lvl_t;
 
-void UART_init( UART_moduleNum_t module, UART_speed_t UART_br );
+void UART_init( UART_moduleNum_t module, UART_speed_t UART_br, bool highSpeed );
 void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
@@ -177,15 +177,16 @@ typedef enum {
 #define DATA_FRAME_SIZE         7
 #define RESPONSE_FRAME_SIZE     2
 
-#define CMD_PREFIX              '*'
-#define CMD_CONNECT_CODE        127
-#define CMD_DATA_START_CODE     126
-#define CMD_DATA_STOP_CODE      125
+#define COMMAND_PREFIX          '*'
+#define CMD_CONNECT_CODE        'c'
+#define CMD_DATA_START_CODE     's'
+#define CMD_DATA_STOP_CODE      'p'
 
 #define DATA_PREFIX             '$'
 #define RESPONSE_PREFIX         '#'
-#define RESP_NOERROR            120
-#define RESP_NOCONNECT          119
+#define RESP_NOERROR            '0'
+#define RESP_NOCONNECT          '1'
+#define RESP_ENDDATA            '2'
 
 #define CMD_PROC_BUFFER_LENGTH  64
 

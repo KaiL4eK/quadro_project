@@ -17,8 +17,8 @@ int main ( void )
     OFF_ALL_ANALOG_INPUTS;
     // UARTm1 - USB
     // UARTm2 - dsPIC on Quadro
-    UART_init( UARTm1, UART_115200 );
-    UART_init( UARTm2, UART_115200 );
+    UART_init( UARTm1, UART_460800, true );
+    UART_init( UARTm2, UART_19200, false );
     UART_write_string( UARTm1, "UART initialized\n" );
     
     cmdProcessor_init();
@@ -67,9 +67,7 @@ int main ( void )
         {
             case CONNECT:
                 cmdProcessor_write_cmd_resp( UARTm2, 
-                        CMD_PREFIX, CMD_CONNECT_CODE );
-                cmdProcessor_write_cmd_resp( UARTm2, 
-                        CMD_PREFIX, CMD_DATA_STOP_CODE );
+                        COMMAND_PREFIX, CMD_CONNECT_CODE );
                 if ( cmdProcessor_U2_waitResponse() < 0 )
                     cmdProcessor_write_cmd_resp( UARTm1, 
                             RESPONSE_PREFIX, RESP_NOCONNECT );
@@ -79,34 +77,47 @@ int main ( void )
                 break;
             case DATA_START:
                 sendData = true;
+                cmdProcessor_cleanBuffer( UARTm2 );
                 cmdProcessor_write_cmd_resp( UARTm2, 
-                        CMD_PREFIX, CMD_DATA_START_CODE );
+                        COMMAND_PREFIX, CMD_DATA_START_CODE );
                 cmdProcessor_write_cmd_resp( UARTm1, 
                         RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case DATA_STOP:
                 sendData = false;
                 cmdProcessor_write_cmd_resp( UARTm2, 
-                        CMD_PREFIX, CMD_DATA_STOP_CODE );
+                        COMMAND_PREFIX, CMD_DATA_STOP_CODE );
                 cmdProcessor_write_cmd_resp( UARTm1, 
                         RESPONSE_PREFIX, RESP_NOERROR );
-                cmdProcessor_cleanBuffer( UARTm2 );
                 break;
             case UNKNOWN_COMMAND:
-                cmdProcessor_write_cmd_resp( UARTm1,
+                cmdProcessor_write_cmd_resp( UARTm1, 
                         RESPONSE_PREFIX, RESP_NOCONNECT );
                 break;
             default:
                 break;
         }
         
-        if ( sendData && cmdProcessor_U2_rcvData( quadroData ) == 0 )
+        if ( sendData )
         {
+            int res = 0;
+            while ( (res = cmdProcessor_U2_rcvData( quadroData )) < 0 )
+            { Nop(); }
+            if ( res == 1 )
+            {
+                cmdProcessor_write_cmd_resp( UARTm1, 
+                        RESPONSE_PREFIX, RESP_ENDDATA );
+                sendData = false;
+            }
             // encoder: 90 degree = 1000 points
+            encoderRoll = (quadroData[0]*4.0 + 5 * 1000)/90.0;
+            encoderPitch = (quadroData[1]*4.0 + 5 * 1000)/90.0;
+            
             quadroData[3] = (encoderRoll * 90) >> 2;  // angle * 250
             quadroData[4] = (encoderPitch * 90) >> 2;
             UART_write_byte( UARTm1, DATA_PREFIX );
-            UART_write_words( UARTm1, quadroData, 3 );
+            UART_write_words( UARTm1, quadroData, 5 );
+//            UART_write_string( UARTm1, "sent\n" );
         }
 //        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
 //        delay_ms( 100 );

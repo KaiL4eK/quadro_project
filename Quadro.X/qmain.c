@@ -14,6 +14,7 @@
 #define PROGRAM_INPUT
 //#define PID_tuning
 #define TEST_WO_MODULES
+//#define MEASURE_INT_TIME
 
 void control_system_timer_init( void )
 {
@@ -41,8 +42,8 @@ int main(void)
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    UART_init( UARTm1, UART_115200 );
-    UART_init( UARTm2, UART_115200 );
+    UART_init( UARTm1, UART_460800, true );
+    UART_init( UARTm2, UART_19200, false );
     cmdProcessor_init();
     UART_write_string( UARTm1, "/------------------------/\n" );
     UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
@@ -340,7 +341,8 @@ inline void process_control_system ( void )
 bool dataSend = false;
 uint16_t timeMoments = 0;
 //uint32_t timeStep10 = 25;
-    
+uint8_t counterSend = 0;
+
 inline void process_sending_UART_data( void )
 {
     switch ( receive_command() )
@@ -348,34 +350,45 @@ inline void process_sending_UART_data( void )
         case NO_COMMAND:
             break;
         case CONNECT:
-            UART_write_string( UARTm1, "Received connect cmd\n" );
+            UART_write_string( UARTm1, "Connect\n" );
             cmdProcessor_write_cmd_resp( UARTm2, 
                     RESPONSE_PREFIX, RESP_NOERROR );
+            dataSend = false;
             break;
         case DATA_START:
-            UART_write_string( UARTm1, "Received data start cmd\n" );
+            UART_write_string( UARTm1, "DStart\n" );
             timeMoments = 0;
+            counterSend = 0;
             dataSend = true;
             break;
         case DATA_STOP:
-            UART_write_string( UARTm1, "Received data stop cmd\n" );
+            UART_write_string( UARTm1, "DStop\n" );
             dataSend = false;
             break;
     }
     
-    if ( dataSend )
+    if ( dataSend && ++counterSend == 10 )
     {
-        current_angles.roll = current_angles.pitch = 0;
+        current_angles.roll = current_angles.pitch = 45*ANGLES_COEFF*sin(timeMoments/10.0);
         uint16_t sendBuffer[3];
         // angle * 250
         sendBuffer[0] = current_angles.roll >> 2;     // -22500 - 22500
         sendBuffer[1] = current_angles.pitch >> 2;    // -22500 - 22500
         sendBuffer[2] = timeMoments;
         
-        UART_write_byte( UARTm2, '$' ); // Data sign
+        UART_write_byte( UARTm2, DATA_PREFIX );
         UART_write_words( UARTm2, sendBuffer, 3 );
+        UART_write_string( UARTm1, ">>%d\n", timeMoments );
         
         timeMoments++;
+        if ( timeMoments == UINT16_MAX )
+        {
+            cmdProcessor_write_cmd_resp( UARTm2, 
+                    RESPONSE_PREFIX, RESP_ENDDATA );
+            UART_write_string( UARTm1, "DStop1\n" );
+            dataSend = false;
+        }
+        counterSend = 0;
     }
 }
 
@@ -435,11 +448,13 @@ inline void bmp180_rcv_filtered_data ( void )
     bmp180_altitude = ((tmp_altitude*BMP180_EXP_FILTER_PART) + (bmp180_altitude/1000.0*(1.0-BMP180_EXP_FILTER_PART))) * TEMP_MULTIPLYER;
 }
 
-//static uint16_t time_elapsed_us = 0;
+
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
-//    timer_start();
+#ifdef MEASURE_INT_TIME
+    timer_start();
+#endif
 #ifndef TEST_WO_MODULES
     bmp180_rcv_filtered_data();
     
@@ -461,8 +476,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
-    
-//    time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
+#ifdef MEASURE_INT_TIME
+    uint16_t time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );
+#endif
 //    UART_write_string( UARTm1, "%s, %ld, %ld\n\r", 
 //            motors_armed ? "Armed" : "Disarmed", current_angles.pitch, current_angles.roll );
     _T5IF = 0;

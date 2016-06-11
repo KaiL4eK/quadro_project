@@ -17,15 +17,22 @@ UART_module_FD  uart1 = { .initialized = 0, .receive_mode = 0 },
 #define BUFFER_MAX_SIZE 512
 static char send_buffer[BUFFER_MAX_SIZE];
 
-void UART_init( UART_moduleNum_t module, UART_speed_t UART_br )
+void UART_init( UART_moduleNum_t module, UART_speed_t UART_br, bool highSpeed )
 {
     if ( module & UARTm1 )
     {
         U1MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
         U1MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
-        U1BRG = UART_br;
-        U1MODEbits.BRGH = 1;
-
+        if ( highSpeed )
+        {
+            U1BRG = UART_br;
+            U1MODEbits.BRGH = 1;
+        }
+        else
+        {
+            U1BRG = UART_br/4;
+            U1MODEbits.BRGH = 0;
+        }
         U1MODEbits.UARTEN = 1;	// And turn the peripheral on
         U1STAbits.UTXEN = 1;
 
@@ -36,9 +43,16 @@ void UART_init( UART_moduleNum_t module, UART_speed_t UART_br )
     {
         U2MODEbits.UARTEN = 0;	// Bit15 TX, RX DISABLED, ENABLE at end of func
         U2MODEbits.UEN = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
-        U2BRG = UART_br;
-        U2MODEbits.BRGH = 1;
-
+        if ( highSpeed )
+        {
+            U2BRG = UART_br;
+            U2MODEbits.BRGH = 1;
+        }
+        else
+        {
+            U2BRG = UART_br/4;
+            U2MODEbits.BRGH = 0;
+        }
         U2MODEbits.UARTEN = 1;	// And turn the peripheral on
         U2STAbits.UTXEN = 1;
 
