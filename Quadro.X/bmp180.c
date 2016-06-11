@@ -1,5 +1,5 @@
 #include "BMP180.h"
-#include "per_proto.h"
+#include "core.h"
 
 static uint8_t      buffer[3],
                     measure_mode = 0,

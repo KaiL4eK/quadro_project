@@ -44,13 +44,25 @@ typedef enum
     UARTm2 = 1 << 1
 }UART_moduleNum_t;
 
+typedef enum
+{
+    INT_PRIO_OFF = 0,
+    INT_PRIO_LOWEST = 1,
+    INT_PRIO_LOW = 2,
+    INT_PRIO_MID_LOW = 3,
+    INT_PRIO_MID = 4,
+    INT_PRIO_MID_HIGH = 5,
+    INT_PRIO_HIGH = 6,
+    INT_PRIO_HIGHEST = 7
+            
+}Interrupt_priority_lvl_t;
+
 void UART_init( UART_moduleNum_t module, UART_speed_t UART_br );
 void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
 int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
-//int UART_get_last_received_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
-void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode );
+void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority );
 
 /*** twi.c ***/
 
@@ -148,6 +160,34 @@ int flash_flush ( void );
 int flash_read ( void );
 int flash_set ( FlashData_t data_type, int data );
 int flash_get ( FlashData_t data_type );
+
+/*** command_processor.c (not in lib) ***/
+
+typedef enum {
+    
+    NO_COMMAND,
+    UNKNOWN_COMMAND,
+    CONNECT,
+    DATA_START,
+    DATA_STOP
+    
+}UART_commands_e;
+
+#define COMMAND_FRAME_SIZE      2    // bytes
+#define DATA_FRAME_SIZE         7
+#define RESPONSE_FRAME_SIZE     2
+
+#define CMD_PREFIX              '*'
+#define CMD_CONNECT_CODE        127
+#define CMD_DATA_START_CODE     126
+#define CMD_DATA_STOP_CODE      125
+
+#define DATA_PREFIX             '$'
+#define RESPONSE_PREFIX         '#'
+#define RESP_NOERROR            120
+#define RESP_NOCONNECT          119
+
+#define CMD_PROC_BUFFER_LENGTH  64
 
 #endif	/* PERIPHERY_PROTO_H_ */
 

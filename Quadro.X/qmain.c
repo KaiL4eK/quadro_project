@@ -4,7 +4,7 @@
 #include "HMC5883L.h"
 #include "input_control.h"
 #include "motor_control.h"
-#include "per_proto.h"
+
 #include "file_io.h"
 #include "math_proto.h"
 
@@ -13,6 +13,7 @@
 //#define SD_CARD
 #define PROGRAM_INPUT
 //#define PID_tuning
+#define TEST_WO_MODULES
 
 void control_system_timer_init( void )
 {
@@ -41,10 +42,11 @@ int main(void)
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UARTm1, UART_115200 );
-    UART_init( UARTm2, UART_460800 );
-    UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt );
+    UART_init( UARTm2, UART_115200 );
+    cmdProcessor_init();
     UART_write_string( UARTm1, "/------------------------/\n" );
     UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
+#ifndef TEST_WO_MODULES 
 #ifdef SD_CARD
     flash_read();
     file_num = flash_get( FILE_NUM );
@@ -90,6 +92,7 @@ int main(void)
         error_process();
     }
     UART_write_string( UARTm1, "HMC5883L initialized\n" );
+#endif // TEST_WO_MODULES
     control_system_timer_init();
     UART_write_string( UARTm1, "Let`s begin!\n" );
     ERR_LIGHT = ERR_LIGHT_NO_ERR;
@@ -345,21 +348,24 @@ inline void process_sending_UART_data( void )
         case NO_COMMAND:
             break;
         case CONNECT:
-//            UART_write_string( UARTm1, "ok!" );
+            UART_write_string( UARTm1, "Received connect cmd\n" );
+            cmdProcessor_write_cmd_resp( UARTm2, 
+                    RESPONSE_PREFIX, RESP_NOERROR );
             break;
         case DATA_START:
-//            UART_write_string( UARTm1, "ok!" );
+            UART_write_string( UARTm1, "Received data start cmd\n" );
             timeMoments = 0;
             dataSend = true;
             break;
         case DATA_STOP:
-//            UART_write_string( UARTm1, "ok!" );
+            UART_write_string( UARTm1, "Received data stop cmd\n" );
             dataSend = false;
             break;
     }
     
     if ( dataSend )
     {
+        current_angles.roll = current_angles.pitch = 0;
         uint16_t sendBuffer[3];
         // angle * 250
         sendBuffer[0] = current_angles.roll >> 2;     // -22500 - 22500
@@ -367,7 +373,7 @@ inline void process_sending_UART_data( void )
         sendBuffer[2] = timeMoments;
         
         UART_write_byte( UARTm2, '$' ); // Data sign
-        UART_write_words( UARTm2, sendBuffer, 4 );
+        UART_write_words( UARTm2, sendBuffer, 3 );
         
         timeMoments++;
     }
@@ -434,6 +440,7 @@ inline void bmp180_rcv_filtered_data ( void )
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
 //    timer_start();
+#ifndef TEST_WO_MODULES
     bmp180_rcv_filtered_data();
     
     mpu6050_receive_gyro_accel_raw_data();
@@ -443,10 +450,11 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     get_control_values( &control_values );
     process_counts();
-    
+
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
 //    UART_write_string( UARTm1, "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
     process_control_system();
+#endif // TEST_WO_MODULES
 #ifndef PID_tuning
     process_sending_UART_data();
 #endif

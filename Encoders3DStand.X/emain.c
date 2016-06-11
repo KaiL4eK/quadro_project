@@ -18,12 +18,11 @@ int main ( void )
     // UARTm1 - USB
     // UARTm2 - dsPIC on Quadro
     UART_init( UARTm1, UART_115200 );
-    UART_init( UARTm2, UART_460800 );
-    UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt );
+    UART_init( UARTm2, UART_115200 );
     UART_write_string( UARTm1, "UART initialized\n" );
     
     cmdProcessor_init();
-    
+    UART_write_string( UARTm1, "Start!\n" );
 #ifdef ENCODERS_ENABLED 
     _TRISD9 = _TRISD8 = _TRISD10 = _TRISD11 = 1;
     
@@ -59,45 +58,55 @@ int main ( void )
     _IC4IF = 0;     // Zero interrupt flag
     _IC4IE = 1;     // Enable interrupt
 #endif
-    uint16_t    sendCommand,
-                quadroData[5];
-    uint8_t     sendFlag = 0;
+    uint16_t    quadroData[5];
+    bool        sendData = false;
     
     while ( 1 ) 
     {
         switch ( cmdProcessor_U1_rcvCommand() )
         {
             case CONNECT:
-                UART_write_string( UARTm1, "ok!" );
-                sendCommand = (uint16_t)CMD_PREFIX << 8 | CMD_CONNECT_CODE;
-                UART_write_words( UARTm2, &sendCommand, 1 );
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        CMD_PREFIX, CMD_CONNECT_CODE );
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        CMD_PREFIX, CMD_DATA_STOP_CODE );
+                if ( cmdProcessor_U2_waitResponse() < 0 )
+                    cmdProcessor_write_cmd_resp( UARTm1, 
+                            RESPONSE_PREFIX, RESP_NOCONNECT );
+                else
+                    cmdProcessor_write_cmd_resp( UARTm1, 
+                            RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case DATA_START:
-                sendFlag = 1;
-                UART_write_string( UARTm1, "ok!" );
-                sendCommand = (uint16_t)CMD_PREFIX << 8 | CMD_DATA_START_CODE;
-                UART_write_words( UARTm2, &sendCommand, 1 );
+                sendData = true;
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        CMD_PREFIX, CMD_DATA_START_CODE );
+                cmdProcessor_write_cmd_resp( UARTm1, 
+                        RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case DATA_STOP:
-                sendFlag = 0;
-                UART_write_string( UARTm1, "ok!" );
-                sendCommand = (uint16_t)CMD_PREFIX << 8 | CMD_DATA_STOP_CODE;
-                UART_write_words( UARTm2, &sendCommand, 1 );
+                sendData = false;
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        CMD_PREFIX, CMD_DATA_STOP_CODE );
+                cmdProcessor_write_cmd_resp( UARTm1, 
+                        RESPONSE_PREFIX, RESP_NOERROR );
+                cmdProcessor_cleanBuffer( UARTm2 );
                 break;
             case UNKNOWN_COMMAND:
-                UART_write_string( UARTm1, "no!" );
+                cmdProcessor_write_cmd_resp( UARTm1,
+                        RESPONSE_PREFIX, RESP_NOCONNECT );
                 break;
             default:
                 break;
         }
         
-        if ( sendFlag && cmdProcessor_U2_rcvData( quadroData ) == 0 )
+        if ( sendData && cmdProcessor_U2_rcvData( quadroData ) == 0 )
         {
             // encoder: 90 degree = 1000 points
             quadroData[3] = (encoderRoll * 90) >> 2;  // angle * 250
             quadroData[4] = (encoderPitch * 90) >> 2;
             UART_write_byte( UARTm1, DATA_PREFIX );
-            UART_write_words( UARTm1, quadroData, 5 );
+            UART_write_words( UARTm1, quadroData, 3 );
         }
 //        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
 //        delay_ms( 100 );

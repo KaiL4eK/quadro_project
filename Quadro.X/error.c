@@ -1,5 +1,4 @@
-#include "error_.h"
-#include "per_proto.h"
+#include "core.h"
 
 #define SET_ERR_L   { ERR_LIGHT = 0; }
 

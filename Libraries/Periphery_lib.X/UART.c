@@ -46,7 +46,7 @@ void UART_init( UART_moduleNum_t module, UART_speed_t UART_br )
     }
 }
 
-void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode )
+void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority )
 {
     if ( module & UARTm1 )
     {
@@ -55,6 +55,7 @@ void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode )
         {
             case UARTr_interrupt:
                 _U1RXIE = 1;          // Enable Rx interrupt
+                _U1RXIP = priority;
                 break;
             case UARTr_polling:
                 _U1RXIE = 0;
@@ -70,6 +71,7 @@ void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode )
         {
             case UARTr_interrupt:
                 _U2RXIE = 1;          // Enable Rx interrupt
+                _U2RXIP = priority;
                 break;
             case UARTr_polling:
                 _U2RXIE = 0;

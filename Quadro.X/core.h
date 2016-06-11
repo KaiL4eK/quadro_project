@@ -1,14 +1,7 @@
 #ifndef Q_CORE_H_
 #define	Q_CORE_H_
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <xc.h>
-
+#include "per_proto.h"
 #include "error_.h"
 
 #define CONTROL_BYTE    0xff
@@ -26,16 +19,6 @@ typedef struct
             gyr_delta_y,
             gyr_delta_z;
 }Angles_t;
-
-typedef enum {
-    
-    NO_COMMAND,
-    UNKNOWN_COMMAND,
-    CONNECT,
-    DATA_START,
-    DATA_STOP
-    
-}UART_commands_e;
 
 #endif	/* Q_CORE_H_ */
 
