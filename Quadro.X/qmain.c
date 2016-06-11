@@ -367,7 +367,7 @@ inline void process_sending_UART_data( void )
             break;
     }
     
-    if ( dataSend && ++counterSend == 10 )
+    if ( dataSend && ++counterSend == 4 )
     {
         current_angles.roll = current_angles.pitch = 45*ANGLES_COEFF*sin(timeMoments/10.0);
         uint16_t sendBuffer[3];

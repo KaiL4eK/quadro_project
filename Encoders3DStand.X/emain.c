@@ -88,7 +88,7 @@ int main ( void )
                 cmdProcessor_write_cmd_resp( UARTm2, 
                         COMMAND_PREFIX, CMD_DATA_STOP_CODE );
                 cmdProcessor_write_cmd_resp( UARTm1, 
-                        RESPONSE_PREFIX, RESP_NOERROR );
+                        RESPONSE_PREFIX, RESP_ENDDATA );
                 break;
             case UNKNOWN_COMMAND:
                 cmdProcessor_write_cmd_resp( UARTm1, 

@@ -139,7 +139,10 @@ int cmdProcessor_U2_rcvData ( uint16_t *rcvBuffer )
 void cmdProcessor_cleanBuffer ( UART_moduleNum_t module )
 {
     if ( module & UARTm1 )
+    {
+        cmdBShift = 0;
         replace_buffers( UARTm1, u1_buffer_index );
+    }
     
     if ( module & UARTm2 )
     {
@@ -221,7 +224,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
         if ( u1_buffer_index == CMD_PROC_BUFFER_LENGTH )
         {
             UART_write_string( UARTm1, "Of1\n" );
-            while( 1 ); // Error overflow
+            cmdProcessor_cleanBuffer( UARTm1 );
         }
     }
     
