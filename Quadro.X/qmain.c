@@ -108,7 +108,8 @@ int main(void)
 
 static uint16_t prop_r = 30, integr_r = 10000, differ_r = 70,
                 prop_p = 20, integr_p = 6250, differ_p = 40;
-bool start_motors = false;
+bool start_motors = false,
+     stop_motors = false;
 
 #ifdef PID_tuning
 static void process_UART_input_command( uint8_t input )
@@ -258,6 +259,8 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 }
 #endif
 
+uint16_t motorPower = 0;
+
 inline void process_control_system ( void )
 {
 #ifndef PROGRAM_INPUT   
@@ -277,31 +280,36 @@ inline void process_control_system ( void )
     if ( start_motors )
     {
 #endif
-            if ( motors_armed )
-            {   // If motors were armed - turn them off
-                set_motors_stopped();
-                UART_write_string( UARTm1, "Motors stopped\n" );
-            }
-            else
-            {   // If not armed - turn on and zero integral part of controller
-                integrPitch = integrRoll = 0;
-                set_motors_started( MOTORS_ALL);
-                UART_write_string( UARTm1, "All motors started\n" );
-            }
-            motors_armed = !motors_armed;
+        if ( !motors_armed )
+        {
+            integrPitch = integrRoll = 0;
+            set_motors_started( MOTORS_ALL);
+            UART_write_string( UARTm1, 
+                    "All motors started with power %d\n", motorPower );
+            motors_armed = true;
+        }
+        start_motors = false;
+    }
+    if ( stop_motors )
+    {
+        if ( motors_armed )
+        {   // If motors were armed - turn them off
+            set_motors_stopped();
+            UART_write_string( UARTm1, "Motors stopped\n" );
+            motors_armed = false;
+        }
+        stop_motors = false;
+    }
 #ifndef PROGRAM_INPUT
         }
-#else
-        start_motors = false;
 #endif
-    }
         
     // Each angle presents as integer 30.25 = 30250
     // control pitch [-1000 --- 1000]
 
     if ( motors_armed )
     {
-        control_values.throttle = 0;
+        control_values.throttle = motorPower;
 #ifndef PROGRAM_INPUT
         if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
@@ -345,31 +353,47 @@ uint8_t counterSend = 0;
 
 inline void process_sending_UART_data( void )
 {
-    switch ( receive_command() )
+    UART_frame_t *frame = cmdProcessor_rcvFrame();
+    switch ( frame->command )
     {
         case NO_COMMAND:
             break;
         case CONNECT:
-            UART_write_string( UARTm1, "Connect\n" );
             cmdProcessor_write_cmd_resp( UARTm2, 
                     RESPONSE_PREFIX, RESP_NOERROR );
             dataSend = false;
+            stop_motors = true;
+            UART_write_string( UARTm1, "Connect\n" );
             break;
         case DATA_START:
-            UART_write_string( UARTm1, "DStart\n" );
             timeMoments = 0;
             counterSend = 0;
             dataSend = true;
+            UART_write_string( UARTm1, "DStart\n" );
             break;
         case DATA_STOP:
-            UART_write_string( UARTm1, "DStop\n" );
             dataSend = false;
+            UART_write_string( UARTm1, "DStop\n" );
+            break;
+        case MOTOR_START:
+//            cmdProcessor_write_cmd_resp( UARTm2, 
+//                    RESPONSE_PREFIX, RESP_NOERROR );
+            start_motors = true;
+            motorPower = frame->motorPower*100;
+            UART_write_string( UARTm1, "MStart\n" );
+            break;
+        case MOTOR_STOP:
+//            cmdProcessor_write_cmd_resp( UARTm2, 
+//                    RESPONSE_PREFIX, RESP_NOERROR );
+            stop_motors = true;
+            UART_write_string( UARTm1, "MStop\n" );
             break;
     }
     
     if ( dataSend && ++counterSend == 4 )
     {
-        current_angles.roll = current_angles.pitch = 45*ANGLES_COEFF*sin(timeMoments/10.0);
+        current_angles.roll = current_angles.pitch = 
+                45*ANGLES_COEFF*sin(timeMoments/100.0);
         uint16_t sendBuffer[3];
         // angle * 250
         sendBuffer[0] = current_angles.roll >> 2;     // -22500 - 22500
@@ -378,7 +402,7 @@ inline void process_sending_UART_data( void )
         
         UART_write_byte( UARTm2, DATA_PREFIX );
         UART_write_words( UARTm2, sendBuffer, 3 );
-        UART_write_string( UARTm1, ">>%d\n", timeMoments );
+        UART_write_string( UARTm1, ">>\t", timeMoments );
         
         timeMoments++;
         if ( timeMoments == UINT16_MAX )
@@ -387,6 +411,7 @@ inline void process_sending_UART_data( void )
                     RESPONSE_PREFIX, RESP_ENDDATA );
             UART_write_string( UARTm1, "DStop1\n" );
             dataSend = false;
+            start_motors = false;
         }
         counterSend = 0;
     }
@@ -468,11 +493,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
 //    UART_write_string( UARTm1, "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
-    process_control_system();
 #endif // TEST_WO_MODULES
-#ifndef PID_tuning
     process_sending_UART_data();
-#endif
+    process_control_system();
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */

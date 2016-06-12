@@ -63,11 +63,13 @@ int main ( void )
     
     while ( 1 ) 
     {
-        switch ( cmdProcessor_U1_rcvCommand() )
+        UART_frame_t *frame = cmdProcessor_rcvFrame();
+        switch ( frame->command )
         {
             case CONNECT:
                 cmdProcessor_write_cmd_resp( UARTm2, 
                         COMMAND_PREFIX, CMD_CONNECT_CODE );
+                
                 if ( cmdProcessor_U2_waitResponse() < 0 )
                     cmdProcessor_write_cmd_resp( UARTm1, 
                             RESPONSE_PREFIX, RESP_NOCONNECT );
@@ -80,15 +82,41 @@ int main ( void )
                 cmdProcessor_cleanBuffer( UARTm2 );
                 cmdProcessor_write_cmd_resp( UARTm2, 
                         COMMAND_PREFIX, CMD_DATA_START_CODE );
-                cmdProcessor_write_cmd_resp( UARTm1, 
-                        RESPONSE_PREFIX, RESP_NOERROR );
+                
+//                cmdProcessor_write_cmd_resp( UARTm1, 
+//                        RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case DATA_STOP:
                 sendData = false;
                 cmdProcessor_write_cmd_resp( UARTm2, 
                         COMMAND_PREFIX, CMD_DATA_STOP_CODE );
-                cmdProcessor_write_cmd_resp( UARTm1, 
-                        RESPONSE_PREFIX, RESP_ENDDATA );
+                
+//                cmdProcessor_write_cmd_resp( UARTm1, 
+//                        RESPONSE_PREFIX, RESP_ENDDATA );
+                break;
+            case MOTOR_START:
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        PARAMETER_PREFIX, PARAM_MOTOR_START );
+                UART_write_byte( UARTm2, frame->motorPower );
+                
+//                if ( cmdProcessor_U2_waitResponse() < 0 )
+//                    cmdProcessor_write_cmd_resp( UARTm1, 
+//                            RESPONSE_PREFIX, RESP_NOCONNECT );
+//                else
+//                    cmdProcessor_write_cmd_resp( UARTm1, 
+//                            RESPONSE_PREFIX, RESP_NOERROR );
+                break;
+            case MOTOR_STOP:
+                cmdProcessor_write_cmd_resp( UARTm2, 
+                        PARAMETER_PREFIX, PARAM_MOTOR_STOP );
+                UART_write_byte( UARTm2, 0 );
+                
+//                if ( cmdProcessor_U2_waitResponse() < 0 )
+//                    cmdProcessor_write_cmd_resp( UARTm1, 
+//                            RESPONSE_PREFIX, RESP_NOCONNECT );
+//                else
+//                    cmdProcessor_write_cmd_resp( UARTm1, 
+//                            RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case UNKNOWN_COMMAND:
                 cmdProcessor_write_cmd_resp( UARTm1, 

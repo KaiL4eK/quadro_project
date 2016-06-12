@@ -169,13 +169,16 @@ typedef enum {
     UNKNOWN_COMMAND,
     CONNECT,
     DATA_START,
-    DATA_STOP
+    DATA_STOP,
+    MOTOR_START,
+    MOTOR_STOP
     
 }UART_commands_e;
 
 #define COMMAND_FRAME_SIZE      2    // bytes
 #define DATA_FRAME_SIZE         7
 #define RESPONSE_FRAME_SIZE     2
+#define PARAMETER_FRAME_SIZE    3
 
 #define COMMAND_PREFIX          '*'
 #define CMD_CONNECT_CODE        'c'
@@ -188,7 +191,22 @@ typedef enum {
 #define RESP_NOCONNECT          '1'
 #define RESP_ENDDATA            '2'
 
+#define PARAMETER_PREFIX        '~'
+#define PARAM_MOTOR_START       's'
+#define PARAM_MOTOR_STOP        't'
+
 #define CMD_PROC_BUFFER_LENGTH  64
+
+typedef struct {
+ 
+    UART_commands_e command;
+    uint8_t         motorPower;
+    // Not ready
+}UART_frame_t;
+
+void cmdProcessor_init ( void );
+UART_frame_t *cmdProcessor_rcvFrame ( void );
+void cmdProcessor_write_cmd_resp ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
 
 #endif	/* PERIPHERY_PROTO_H_ */
 

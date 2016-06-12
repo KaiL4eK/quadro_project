@@ -15,12 +15,12 @@ void cmdProcessor_init ( void )
     UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt, INT_PRIO_HIGHEST );
 }
 
-void replace_buffers ( UART_moduleNum_t module, int offset )
+void replace_buffers ( UART_moduleNum_t module, uint8_t offset )
 {
     if ( offset == 0 )
         return;
     
-    if ( module & UARTm1 )
+    if ( (module & UARTm1) && offset <= u1_buffer_index )
     {
         _U1RXIE = 0;
         memcpy( replaceBuffer, u1_buffer + offset, CMD_PROC_BUFFER_LENGTH - offset );
@@ -32,7 +32,7 @@ void replace_buffers ( UART_moduleNum_t module, int offset )
         _U1RXIE = 1;
     }
     
-    if ( module & UARTm2 )
+    if ( (module & UARTm2) && offset <= u2_buffer_index )
     {
         _U2RXIE = 0;
         memcpy( replaceBuffer, u2_buffer + offset, CMD_PROC_BUFFER_LENGTH - offset );
@@ -48,10 +48,11 @@ void replace_buffers ( UART_moduleNum_t module, int offset )
 }
 
 uint8_t cmdBShift = 0;
+UART_frame_t    frame;
 
-UART_commands_e cmdProcessor_U1_rcvCommand ( void )
+UART_frame_t *cmdProcessor_rcvFrame ( void )
 {
-    UART_commands_e command = NO_COMMAND;
+    frame.command = NO_COMMAND;
     
     if ( u1_buffer_index > cmdBShift )
     {
@@ -62,18 +63,37 @@ UART_commands_e cmdProcessor_U1_rcvCommand ( void )
                 switch( u1_buffer[cmdBShift + 1])
                 {
                     case CMD_CONNECT_CODE:
-                        command = CONNECT;
+                        frame.command = CONNECT;
                         break;
                     case CMD_DATA_START_CODE:
-                        command = DATA_START;
+                        frame.command = DATA_START;
                         break;
                     case CMD_DATA_STOP_CODE:
-                        command = DATA_STOP;
+                        frame.command = DATA_STOP;
                         break;
                     default:
-                        command = UNKNOWN_COMMAND;
+                        frame.command = UNKNOWN_COMMAND;
                 }
                 cmdBShift += COMMAND_FRAME_SIZE;
+            }
+        }
+        else if ( u1_buffer[cmdBShift] == PARAMETER_PREFIX )
+        {
+            if ( u1_buffer_index >= PARAMETER_FRAME_SIZE + cmdBShift )
+            {
+                switch( u1_buffer[cmdBShift + 1])
+                {
+                    case PARAM_MOTOR_START:
+                        frame.command = MOTOR_START;
+                        frame.motorPower = u1_buffer[cmdBShift + 2];
+                        break;
+                    case PARAM_MOTOR_STOP:
+                        frame.command = MOTOR_STOP;
+                        break;
+                    default:
+                        frame.command = UNKNOWN_COMMAND;
+                }
+                cmdBShift += PARAMETER_FRAME_SIZE;
             }
         }
         else
@@ -87,7 +107,7 @@ UART_commands_e cmdProcessor_U1_rcvCommand ( void )
         cmdBShift = 0;
     }
     
-    return( command );
+    return( &frame );
 }
 
 uint8_t dataBShift = 0;

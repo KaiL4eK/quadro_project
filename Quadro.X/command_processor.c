@@ -12,9 +12,9 @@ void cmdProcessor_init ( void )
     UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt, INT_PRIO_HIGHEST );
 }
 
-void replace_buffers ( int offset )
+void replace_buffers ( uint8_t offset )
 {
-    if ( offset == 0 )
+    if ( offset == 0 || offset > buffer_index )
         return;
     
     _U2RXIE = 0;
@@ -27,11 +27,14 @@ void replace_buffers ( int offset )
     _U2RXIE = 1;
 }
 
-int cmdBShift = 0;
+uint8_t cmdBShift = 0;
 
-UART_commands_e receive_command ()
+UART_frame_t    frame;
+
+UART_frame_t *cmdProcessor_rcvFrame ( void )
 {
-    UART_commands_e command = NO_COMMAND;
+    frame.command = NO_COMMAND;
+    
     if ( buffer_index > cmdBShift )
     {
         if ( buffer[cmdBShift] == COMMAND_PREFIX )
@@ -41,18 +44,37 @@ UART_commands_e receive_command ()
                 switch( buffer[cmdBShift + 1])
                 {
                     case CMD_CONNECT_CODE:
-                        command = CONNECT;
+                        frame.command = CONNECT;
                         break;
                     case CMD_DATA_START_CODE:
-                        command = DATA_START;
+                        frame.command = DATA_START;
                         break;
                     case CMD_DATA_STOP_CODE:
-                        command = DATA_STOP;
+                        frame.command = DATA_STOP;
                         break;
                     default:
-                        command = UNKNOWN_COMMAND;
+                        frame.command = UNKNOWN_COMMAND;
                 }
                 cmdBShift += COMMAND_FRAME_SIZE;
+            }
+        }
+        else if ( buffer[cmdBShift] == PARAMETER_PREFIX )
+        {
+            if ( buffer_index >= PARAMETER_FRAME_SIZE + cmdBShift )
+            {
+                switch( buffer[cmdBShift + 1])
+                {
+                    case PARAM_MOTOR_START:
+                        frame.command = MOTOR_START;
+                        frame.motorPower = buffer[cmdBShift + 2];
+                        break;
+                    case PARAM_MOTOR_STOP:
+                        frame.command = MOTOR_STOP;
+                        break;
+                    default:
+                        frame.command = UNKNOWN_COMMAND;
+                }
+                cmdBShift += PARAMETER_FRAME_SIZE;
             }
         }
         else
@@ -66,8 +88,7 @@ UART_commands_e receive_command ()
         cmdBShift = 0;
     }
     
-    
-    return( command );
+    return( &frame );
 }
 
 void cmdProcessor_write_cmd_resp ( UART_moduleNum_t module, uint8_t prefix, uint8_t code )
