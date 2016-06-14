@@ -8,6 +8,8 @@
 #include "core.h"
 #include "pragmas.h"
 
+#define ENCODERS_ENABLED
+
 uint8_t     sendFlag = 0;
 uint32_t    encoderRoll = 0,
             encoderPitch = 0;
@@ -30,7 +32,7 @@ int main ( void )
     IC1CONbits.ICTMR = IC_TIMER_2;
     IC1CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC1CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC1IP = 7;     //Priority 7 (highest))
+    _IC1IP = INT_PRIO_MID;
     _IC1IF = 0;     // Zero interrupt flag
     _IC1IE = 1;     // Enable interrupt
     
@@ -38,7 +40,7 @@ int main ( void )
     IC2CONbits.ICTMR = IC_TIMER_2;
     IC2CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC2CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC2IP = 7;     //Priority 7 (highest))
+    _IC2IP = INT_PRIO_MID;
     _IC2IF = 0;     // Zero interrupt flag
     _IC2IE = 1;     // Enable interrupt
     
@@ -46,7 +48,7 @@ int main ( void )
     IC3CONbits.ICTMR = IC_TIMER_2;
     IC3CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC3CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC3IP = 7;     //Priority 7 (highest))
+    _IC3IP = INT_PRIO_MID;
     _IC3IF = 0;     // Zero interrupt flag
     _IC3IE = 1;     // Enable interrupt
     
@@ -54,7 +56,7 @@ int main ( void )
     IC4CONbits.ICTMR = IC_TIMER_2;
     IC4CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC4CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC4IP = 7;     //Priority 7 (highest))
+    _IC4IP = INT_PRIO_MID;
     _IC4IF = 0;     // Zero interrupt flag
     _IC4IE = 1;     // Enable interrupt
 #endif
@@ -138,8 +140,8 @@ int main ( void )
                 sendData = false;
             }
             // encoder: 90 degree = 1000 points
-            encoderRoll = (quadroData[0]*4.0 + 5 * 1000)/90.0;
-            encoderPitch = (quadroData[1]*4.0 + 5 * 1000)/90.0;
+//            encoderRoll = (quadroData[0]*4.0 + 5 * 1000)/90.0;
+//            encoderPitch = (quadroData[1]*4.0 + 5 * 1000)/90.0;
             
             quadroData[3] = (encoderRoll * 90) >> 2;  // angle * 250
             quadroData[4] = (encoderPitch * 90) >> 2;

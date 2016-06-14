@@ -13,7 +13,7 @@
 //#define SD_CARD
 #define PROGRAM_INPUT
 //#define PID_tuning
-#define TEST_WO_MODULES
+//#define TEST_WO_MODULES
 //#define MEASURE_INT_TIME
 
 void control_system_timer_init( void )
@@ -42,7 +42,7 @@ int main(void)
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    UART_init( UARTm1, UART_460800, true );
+    UART_init( UARTm1, UART_115200, true );
     UART_init( UARTm2, UART_19200, false );
     cmdProcessor_init();
     UART_write_string( UARTm1, "/------------------------/\n" );
@@ -392,8 +392,8 @@ inline void process_sending_UART_data( void )
     
     if ( dataSend && ++counterSend == 4 )
     {
-        current_angles.roll = current_angles.pitch = 
-                45*ANGLES_COEFF*sin(timeMoments/100.0);
+//        current_angles.roll = current_angles.pitch = 
+//                45*ANGLES_COEFF*sin(timeMoments/100.0);
         uint16_t sendBuffer[3];
         // angle * 250
         sendBuffer[0] = current_angles.roll >> 2;     // -22500 - 22500
@@ -481,14 +481,14 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     timer_start();
 #endif
 #ifndef TEST_WO_MODULES
-    bmp180_rcv_filtered_data();
+//    bmp180_rcv_filtered_data();
     
     mpu6050_receive_gyro_accel_raw_data();
     mpu6050_get_gyro_accel_raw_data( &curr_data_accel_gyro );
     
 //    int16_t angle_deg = hmc5883l_get_yaw_angle();
     
-    get_control_values( &control_values );
+//    get_control_values( &control_values );
     process_counts();
 
 //    bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
