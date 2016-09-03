@@ -121,9 +121,12 @@ int cmdProcessor_U2_rcvData ( uint16_t *rcvBuffer )
         {
             if ( u2_buffer_index >= DATA_FRAME_SIZE + dataBShift )
             {
-                rcvBuffer[0] = (uint16_t)u2_buffer[1] << 8 | u2_buffer[2];
-                rcvBuffer[1] = (uint16_t)u2_buffer[3] << 8 | u2_buffer[4];
-                rcvBuffer[2] = (uint16_t)u2_buffer[5] << 8 | u2_buffer[6];
+                rcvBuffer[0] = (uint16_t)u2_buffer[dataBShift+1] << 8 | u2_buffer[dataBShift+2];
+                rcvBuffer[1] = (uint16_t)u2_buffer[dataBShift+3] << 8 | u2_buffer[dataBShift+4];
+                rcvBuffer[2] = (uint16_t)u2_buffer[dataBShift+5] << 8 | u2_buffer[dataBShift+6];
+                rcvBuffer[3] = (uint16_t)u2_buffer[dataBShift+7] << 8 | u2_buffer[dataBShift+8];
+                rcvBuffer[4] = (uint16_t)u2_buffer[dataBShift+9] << 8 | u2_buffer[dataBShift+10];
+//                memcpy( rcvBuffer, &u2_buffer[dataBShift + 1], DATA_FRAME_SIZE - 1 );
                 dataBShift += DATA_FRAME_SIZE;
 //                UART_write_string( UARTm1, "\t%d\n", dataBShift );
                 return( 0 );

@@ -8,6 +8,7 @@
 #include <math.h>
 #include <string.h>
 #include <xc.h>
+#include "core.h"
 
 typedef union
 {
@@ -40,10 +41,9 @@ typedef union
   } value;
 }gyro_accel_data_t;
 
-int mpu6050_init ( void );
-void send_UART_mpu6050_data ( void );
-int8_t mpu6050_receive_gyro_accel_raw_data ( void );
-void mpu6050_get_gyro_accel_raw_data ( gyro_accel_data_t *out_gyr_acc_data );
+gyro_accel_data_t *mpu6050_init ( void );
+void send_UART_mpu6050_data ( UART_moduleNum_t mod );
+int mpu6050_receive_gyro_accel_raw_data ( void );
 void mpu6050_set_DLPF ( uint8_t value );
 void mpu6050_set_sleep_bit ( uint8_t value );
 void mpu6050_set_clock_source ( uint8_t value );

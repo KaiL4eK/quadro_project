@@ -20,7 +20,7 @@ int main ( void )
     // UARTm1 - USB
     // UARTm2 - dsPIC on Quadro
     UART_init( UARTm1, UART_460800, true );
-    UART_init( UARTm2, UART_19200, false );
+    UART_init( UARTm2, UART_38400, false );
     UART_write_string( UARTm1, "UART initialized\n" );
     
     cmdProcessor_init();
@@ -35,7 +35,7 @@ int main ( void )
     _IC1IP = INT_PRIO_MID;
     _IC1IF = 0;     // Zero interrupt flag
     _IC1IE = 1;     // Enable interrupt
-    
+/*
     IC2CONbits.ICM = IC_CE_MODE_DISABLED;
     IC2CONbits.ICTMR = IC_TIMER_2;
     IC2CONbits.ICI = IC_INT_MODE_1ST_CE;
@@ -43,7 +43,7 @@ int main ( void )
     _IC2IP = INT_PRIO_MID;
     _IC2IF = 0;     // Zero interrupt flag
     _IC2IE = 1;     // Enable interrupt
-    
+*/
     IC3CONbits.ICM = IC_CE_MODE_DISABLED;
     IC3CONbits.ICTMR = IC_TIMER_2;
     IC3CONbits.ICI = IC_INT_MODE_1ST_CE;
@@ -51,7 +51,7 @@ int main ( void )
     _IC3IP = INT_PRIO_MID;
     _IC3IF = 0;     // Zero interrupt flag
     _IC3IE = 1;     // Enable interrupt
-    
+/*
     IC4CONbits.ICM = IC_CE_MODE_DISABLED;
     IC4CONbits.ICTMR = IC_TIMER_2;
     IC4CONbits.ICI = IC_INT_MODE_1ST_CE;
@@ -59,8 +59,9 @@ int main ( void )
     _IC4IP = INT_PRIO_MID;
     _IC4IF = 0;     // Zero interrupt flag
     _IC4IE = 1;     // Enable interrupt
+*/
 #endif
-    uint16_t    quadroData[5];
+    
     bool        sendData = false;
     
     while ( 1 ) 
@@ -101,24 +102,12 @@ int main ( void )
                         PARAMETER_PREFIX, PARAM_MOTOR_START );
                 UART_write_byte( UARTm2, frame->motorPower );
                 
-//                if ( cmdProcessor_U2_waitResponse() < 0 )
-//                    cmdProcessor_write_cmd_resp( UARTm1, 
-//                            RESPONSE_PREFIX, RESP_NOCONNECT );
-//                else
-//                    cmdProcessor_write_cmd_resp( UARTm1, 
-//                            RESPONSE_PREFIX, RESP_NOERROR );
                 break;
             case MOTOR_STOP:
                 cmdProcessor_write_cmd_resp( UARTm2, 
                         PARAMETER_PREFIX, PARAM_MOTOR_STOP );
                 UART_write_byte( UARTm2, 0 );
-                
-//                if ( cmdProcessor_U2_waitResponse() < 0 )
-//                    cmdProcessor_write_cmd_resp( UARTm1, 
-//                            RESPONSE_PREFIX, RESP_NOCONNECT );
-//                else
-//                    cmdProcessor_write_cmd_resp( UARTm1, 
-//                            RESPONSE_PREFIX, RESP_NOERROR );
+
                 break;
             case UNKNOWN_COMMAND:
                 cmdProcessor_write_cmd_resp( UARTm1, 
@@ -130,24 +119,20 @@ int main ( void )
         
         if ( sendData )
         {
-            int res = 0;
-            while ( (res = cmdProcessor_U2_rcvData( quadroData )) < 0 )
-            { Nop(); }
-            if ( res == 1 )
-            {
-                cmdProcessor_write_cmd_resp( UARTm1, 
-                        RESPONSE_PREFIX, RESP_ENDDATA );
+            uint16_t    quadroData[7];
+            int         res             = 0;
+            while ( (res = cmdProcessor_U2_rcvData( quadroData )) < 0 ) { Nop(); }
+            if ( res == 1 ) {
+                cmdProcessor_write_cmd_resp( UARTm1, RESPONSE_PREFIX, RESP_ENDDATA );
                 sendData = false;
             }
-            // encoder: 90 degree = 1000 points
-//            encoderRoll = (quadroData[0]*4.0 + 5 * 1000)/90.0;
-//            encoderPitch = (quadroData[1]*4.0 + 5 * 1000)/90.0;
+            // encoder: 180 degree = 1000 points
+#define DEGREE_PER_100_POINTS 18
             
-            quadroData[3] = (encoderRoll * 90) >> 2;  // angle * 250
-            quadroData[4] = (encoderPitch * 90) >> 2;
+            quadroData[5] = (encoderRoll * DEGREE_PER_100_POINTS);  // angle * 100
+            quadroData[6] = (encoderPitch * DEGREE_PER_100_POINTS);
             UART_write_byte( UARTm1, DATA_PREFIX );
-            UART_write_words( UARTm1, quadroData, 5 );
-//            UART_write_string( UARTm1, "sent\n" );
+            UART_write_words( UARTm1, quadroData, 7 );
         }
 //        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
 //        delay_ms( 100 );
@@ -166,7 +151,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _IC1Interrupt()
     uint16_t trash = IC1BUF;
     _IC1IF = 0;
 }
-
+/*
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC2Interrupt()
 {
     if ( _RD9 )
@@ -177,7 +162,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _IC2Interrupt()
     uint16_t trash = IC2BUF;
     _IC2IF = 0;
 }
-
+*/
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC3Interrupt()
 {
     if ( _RD10 )
@@ -188,7 +173,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _IC3Interrupt()
     uint16_t trash = IC3BUF;
     _IC3IF = 0;
 }
-
+/*
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC4Interrupt()
 {
     if ( _RD11 )
@@ -199,4 +184,5 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _IC4Interrupt()
     uint16_t trash = IC4BUF;
     _IC4IF = 0;
 }
+*/
 #endif

@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QCheckBox>
 #include <QGridLayout>
+#include <QProgressBar>
 #include "qwtPlotter.h"
 
 namespace Ui {
@@ -39,6 +40,11 @@ private:
     QLineEdit   *serialNameFld,
                 *motorSpeedFld;
 
+    QProgressBar *motor1_power;
+    QProgressBar *motor2_power;
+    QProgressBar *motor3_power;
+    QProgressBar *motor4_power;
+
     QWidget     *controlWidget;
 
     bool connectionBtnState = false;
@@ -64,6 +70,7 @@ public slots:
     void onConnectionBtnClick(bool state);
     void changeConnectionState(bool state);
     void errorHandler(QString errMsg, qint64 errCode);
+    void updateMotorsPower(quint8 motor1, quint8 motor2, quint8 motor3, quint8 motor4);
 };
 
 #endif // MAINWINDOW_H

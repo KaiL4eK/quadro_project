@@ -97,10 +97,10 @@ void cmdProcessor_write_cmd_resp ( UART_moduleNum_t module, uint8_t prefix, uint
     UART_write_words( module, &sendCommand, 1 );
 }
 
-void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
-{
-    _U1RXIF = 0;
-}
+//void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
+//{
+//    _U1RXIF = 0;
+//}
 
 void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 {

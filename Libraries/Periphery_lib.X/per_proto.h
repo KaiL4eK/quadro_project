@@ -176,7 +176,7 @@ typedef enum {
 }UART_commands_e;
 
 #define COMMAND_FRAME_SIZE      2    // bytes
-#define DATA_FRAME_SIZE         7
+#define DATA_FRAME_SIZE         11
 #define RESPONSE_FRAME_SIZE     2
 #define PARAMETER_FRAME_SIZE    3
 

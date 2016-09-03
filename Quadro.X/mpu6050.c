@@ -1,46 +1,56 @@
 #include "MPU6050_regs.h" 
 #include "MPU6050.h"
-#include "per_proto.h"
 
-static uint8_t              buffer[14],
-                            init_flag = 0;
-static gyro_accel_data_t    raw_gyr_acc;
+static uint8_t              buffer[14];
+static bool                 initialized = false;
+       gyro_accel_data_t    raw_gyr_acc;
 
-int mpu6050_init ( void )
+#define MAX_TRIES   100
+
+gyro_accel_data_t *mpu6050_init ( void )
 {
-    if ( mpu6050_get_id() != 0x68 )
-        return( -1 );
+    int     iTries      = 0;
+    bool    connected   = false;
+    
+    for ( iTries = 0; iTries < MAX_TRIES; iTries++ )
+        if ( mpu6050_get_id() == 0x68 ) {
+            connected = true;
+            break;
+        } 
+    
+    if ( !connected )
+        return( NULL );
 
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
     mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
-    mpu6050_setXAccelOffset(-3874);
-    mpu6050_setYAccelOffset(351);
-    mpu6050_setZAccelOffset(1693);
+    mpu6050_setXAccelOffset(-3473);
+    mpu6050_setYAccelOffset(-2891);
+    mpu6050_setZAccelOffset(1822);
     
-    mpu6050_setXGyroOffset(116);
-    mpu6050_setYGyroOffset(-14);
-    mpu6050_setZGyroOffset(-31);
+    mpu6050_setXGyroOffset(49);
+    mpu6050_setYGyroOffset(-60);
+    mpu6050_setZGyroOffset(-14);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
-    init_flag = 1;
-    return( 0 );
+    initialized = true;
+    
+    return( &raw_gyr_acc );
 }
 
 #define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
 
-int8_t mpu6050_receive_gyro_accel_raw_data ( void )
+int mpu6050_receive_gyro_accel_raw_data ( void )
 {
-    if ( !init_flag )
+    if ( !initialized )
         return( -1 );
     
     if ( i2c_read_bytes_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, (uint8_t *)(&raw_gyr_acc), 14 ) != 0 )
-    {
         return( -1 );
-    }
 
     SWAP (raw_gyr_acc.reg.x_accel_h, raw_gyr_acc.reg.x_accel_l);
     SWAP (raw_gyr_acc.reg.y_accel_h, raw_gyr_acc.reg.y_accel_l);
@@ -49,23 +59,19 @@ int8_t mpu6050_receive_gyro_accel_raw_data ( void )
     SWAP (raw_gyr_acc.reg.x_gyro_h,  raw_gyr_acc.reg.x_gyro_l);
     SWAP (raw_gyr_acc.reg.y_gyro_h,  raw_gyr_acc.reg.y_gyro_l);
     SWAP (raw_gyr_acc.reg.z_gyro_h,  raw_gyr_acc.reg.z_gyro_l);
+    
     return( 0 );
 }
 
-void send_UART_mpu6050_data ( void )
+void send_UART_mpu6050_data ( UART_moduleNum_t mod )
 {
-    UART_write_string( UARTm1, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n\r",
+    UART_write_string( mod, "#G:%05d,%05d,%05d#A:%05d,%05d,%05d\n",
                 raw_gyr_acc.value.x_gyro, 
                 raw_gyr_acc.value.y_gyro, 
                 raw_gyr_acc.value.z_gyro,
                 raw_gyr_acc.value.x_accel, 
                 raw_gyr_acc.value.y_accel, 
                 raw_gyr_acc.value.z_accel );  
-}
-
-void mpu6050_get_gyro_accel_raw_data ( gyro_accel_data_t *out_gyr_acc_data )
-{
-    memcpy( out_gyr_acc_data, &raw_gyr_acc, sizeof(raw_gyr_acc) );
 }
 
 uint8_t mpu6050_get_id ( void )
@@ -239,7 +245,7 @@ void mpu6050_calibration ( void )
         gy_offset=-mean_gy/4;
         gz_offset=-mean_gz/4;
         while (1){
-            send_UART_mpu6050_data();
+            send_UART_mpu6050_data( UARTm1 );
             int ready=0;
             mpu6050_setXAccelOffset(ax_offset);
             mpu6050_setYAccelOffset(ay_offset);

@@ -65,13 +65,13 @@ typedef struct
     uint8_t     two_pos_switch;
 }Control_values_t;
 
-void ic_init();
+Control_values_t *ic_init( void );
 void ic_make_calibration();
 void ic_find_control();
 void send_UART_calibration_data( void );
 void send_UART_control_raw_data( void );
 void send_UART_control_values( void );
-int8_t get_control_values( Control_values_t *out_dir_vals );
+int get_control_values( void );
 
 #endif	/* INPUT_CONTROL_H_ */
 

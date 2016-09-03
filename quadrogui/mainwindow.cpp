@@ -51,11 +51,35 @@ MainWindow::MainWindow(QWidget *parent) :
     QwtPlot *rollPlot = new QwtPlot(),
             *pitchPlot = new QwtPlot();
 
+    motor1_power = new QProgressBar();
+    motor1_power->setOrientation( Qt::Vertical );
+    motor1_power->setRange(0, 100);
+    motor1_power->setTextVisible(true);
+
+    motor2_power = new QProgressBar();
+    motor2_power->setOrientation( Qt::Vertical );
+    motor2_power->setRange(0, 100);
+    motor2_power->setTextVisible(true);
+
+    motor3_power = new QProgressBar();
+    motor3_power->setOrientation( Qt::Vertical );
+    motor3_power->setRange(0, 100);
+    motor3_power->setTextVisible(true);
+
+    motor4_power = new QProgressBar();
+    motor4_power->setOrientation( Qt::Vertical );
+    motor4_power->setRange(0, 100);
+    motor4_power->setTextVisible(true);
+
     QGridLayout *layout = new QGridLayout;
     layout->addWidget(rollPlot, 0, 0);
     layout->addWidget(pitchPlot, 1, 0);
     layout->addWidget(hideBtn, 2, 0);
     layout->addWidget(controlWidget, 3, 0);
+    layout->addWidget(motor2_power, 0, 1);
+    layout->addWidget(motor1_power, 0, 2);
+    layout->addWidget(motor3_power, 1, 1);
+    layout->addWidget(motor4_power, 1, 2);
 
     QWidget *window = new QWidget();
     window->setLayout(layout);
@@ -111,6 +135,7 @@ void MainWindow::createNewLink()
 
     connect( this, &MainWindow::sendStartStopMotorSignal, serial, &SerialLink::processStartStopMotorCommand );
     connect( serial, &SerialLink::sendMotorStartStopFinished, this, &MainWindow::motorStartStopReady );
+    connect( serial, &SerialLink::sendMotorPowers, this, &MainWindow::updateMotorsPower );
 
     linkThread->start();
 }
@@ -249,4 +274,12 @@ void MainWindow::errorHandler(QString errMsg, qint64 errCode)
 {
     QMessageBox::critical(this, "Error " + QString::number(errCode),
                           errMsg);
+}
+
+void MainWindow::updateMotorsPower(quint8 motor1, quint8 motor2, quint8 motor3, quint8 motor4)
+{
+    motor1_power->setValue( motor1 );
+    motor2_power->setValue( motor2 );
+    motor3_power->setValue( motor3 );
+    motor4_power->setValue( motor4 );
 }

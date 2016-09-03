@@ -1,94 +1,91 @@
 #include "motor_control.h"
-#include "per_proto.h"
 
 /********************************/
 /*              PWM             */
 /********************************/
 
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2
-static const uint16_t   esc_max_power = PWM_USEC(1900),
-                        esc_min_power = PWM_USEC(1200),
-                        esc_stop_power = PWM_USEC(900);
 
-static uint8_t  motor1_armed = 0,
-                motor2_armed = 0,
-                motor3_armed = 0,
-                motor4_armed = 0;
+bool        aMotor_armed[4]    = {false, false, false, false};
+uint16_t    aMotor_PWM[4];
+
+void set_motor_PWM( uint8_t nChannel, uint16_t pwm_value )
+{
+    switch( nChannel ) {
+        case 1:
+            PDC1 = pwm_value << 1;
+            break;
+            
+        case 2:
+            PDC2 = pwm_value << 1;
+            break;
+            
+        case 3:
+            PDC3 = pwm_value << 1;
+            break;
+            
+        case 4:
+            PDC4 = pwm_value << 1;
+            break;
+            
+        default:
+            break;
+    }
+}
 
 void set_motors_started( uint8_t motor_nums )
 {
-    if ( motor_nums & MOTOR_1 )
-    {
-        motor1_armed = 1;
-        PDC1 = esc_min_power << 1;
+    if ( motor_nums & MOTOR_1 ) {
+        aMotor_armed[0] = true;
+        set_motor_PWM( 1, ESC_MIN_POWER );
     }
-    if ( motor_nums & MOTOR_2 )
-    {
-        motor2_armed = 1;
-        PDC2 = esc_min_power << 1;
+    
+    if ( motor_nums & MOTOR_2 ) {
+        aMotor_armed[1] = true;
+        set_motor_PWM( 2, ESC_MIN_POWER );
     }
-    if ( motor_nums & MOTOR_3 )
-    {
-        motor3_armed = 1;
-        PDC3 = esc_min_power << 1;
+    
+    if ( motor_nums & MOTOR_3 ) {
+        aMotor_armed[2] = true;
+        set_motor_PWM( 3, ESC_MIN_POWER );
     }
-    if ( motor_nums & MOTOR_4 )
-    {
-        motor4_armed = 1;
-        PDC4 = esc_min_power << 1;
+    
+    if ( motor_nums & MOTOR_4 ) {
+        aMotor_armed[3] = true;
+        set_motor_PWM( 4, ESC_MIN_POWER );
     }
 }
 
 void set_motors_stopped()
 {
-    motor1_armed = motor2_armed = motor3_armed = motor4_armed = 0;
-    PDC1 = PDC2 = PDC3 = PDC4 = esc_stop_power << 1;
+    aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = false;
+    set_motor_PWM( 1, ESC_STOP_POWER );
+    set_motor_PWM( 2, ESC_STOP_POWER );
+    set_motor_PWM( 3, ESC_STOP_POWER );
+    set_motor_PWM( 4, ESC_STOP_POWER );
 }
 
-static uint16_t 
-map_power( uint32_t val )
+inline uint16_t power_2_PWM( uint16_t power )
 {
-    return( val * (esc_max_power - esc_min_power)/INPUT_POWER_MAX + esc_min_power );
+//    return( val * (esc_max_power - esc_min_power)/INPUT_POWER_MAX + esc_min_power );
+    return( power + ESC_MIN_POWER );
 }
-
-#define check_input_power( power ) power > INPUT_POWER_MAX ? INPUT_POWER_MAX : power < INPUT_POWER_MIN ? INPUT_POWER_MIN : power
 
 // Always shift duty cycle << 1 if prescaler not 1:1
-void set_motor1_power( int16_t power ) //Power [0 --- 10000]
+void set_motor_power( uint8_t nMotor, int32_t power )
 {
-    if ( !motor1_armed )
+    if ( nMotor > 4 )
         return;
-    uint16_t input_power = check_input_power( power );
-    uint16_t mapped_power = map_power( input_power );
-    PDC1 = mapped_power << 1;
+    
+    if ( !aMotor_armed[nMotor-1] )
+        return;
+    
+    uint16_t input_power = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+    
+    set_motor_PWM( nMotor, power_2_PWM( input_power ) );
 }
 
-void set_motor2_power( int16_t power ) //Power [0 --- 10000]
-{
-    if ( !motor2_armed )
-        return;
-    uint16_t input_power = check_input_power( power );    
-    uint16_t mapped_power = map_power( input_power );
-    PDC2 = mapped_power << 1;
-}
-
-void set_motor3_power( int16_t power ) //Power [0 --- 10000]
-{
-    if ( !motor3_armed)
-        return;
-    uint16_t input_power = check_input_power( power );
-    uint16_t mapped_power = map_power( input_power );
-    PDC3 = mapped_power << 1;
-}
-
-void set_motor4_power( int16_t power ) //Power [0 --- 10000]
-{
-    if ( !motor4_armed )
-        return;
-    uint16_t input_power = check_input_power( power );
-    uint16_t mapped_power = map_power( input_power );
-    PDC4 = mapped_power << 1;
-}
+#define PWM_PERIOD      9999 //((FCY/FREQ_CONTROL_SYSTEM/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767
 
 void motors_init()
 {
@@ -99,6 +96,7 @@ void motors_init()
     P1TCONbits.PTCKPS = 0b01;   //<<<Prescale 1:4
     P1TCONbits.PTMOD = 0;       //<<<Free running PWM output mode
     P1TMRbits.PTMR = 0;
+    
     PWM1CON1bits.PMOD1 = 1; //Independent PWM output mode PWM1
     PWM1CON1bits.PEN1L = 1; //Enable PWM1L - E0
     PWM1CON1bits.PMOD2 = 1; //Independent PWM output mode PWM2
@@ -107,7 +105,10 @@ void motors_init()
     PWM1CON1bits.PEN3L = 1; //Enable PWM1L - E4
     PWM1CON1bits.PMOD4 = 1; //Independent PWM output mode PWM4
     PWM1CON1bits.PEN4L = 1; //Enable PWM1L - E6
+    
     P1TPERbits.PTPER = PWM_PERIOD;
-    PDC1 = PDC2 = PDC3 = PDC4 = esc_stop_power << 1;
+    
+    set_motors_stopped();
+    
     P1TCONbits.PTEN = 1; 
 }

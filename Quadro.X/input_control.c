@@ -2,11 +2,11 @@
 #include "per_proto.h"
 
 static Control_t            control_raw;
-static Calibrated_control_t clbr_control_raw = { { 16839, 30125, 23482 },   //Roll
-                                                 { 16756, 30104, 23430 },   //Pitch
-                                                 { 16832, 30149, 23490 },   //Throttle
-                                                 { 16740, 30073, 23406 },   //Yaw
-                                                 { 16787, 30145, 23466 }
+static Calibrated_control_t clbr_control_raw = { { 16683, 29979, 23331 },   //Roll
+                                                 { 16731, 30042, 23386 },   //Pitch
+                                                 { 16829, 30074, 23451 },   //Throttle
+                                                 { 16750, 29976, 23363 },   //Yaw
+                                                 { 16728, 30024, 23376 }
                                                 };
 static Control_values_t     dir_values;
 static uint8_t              // calibration_flag = 0,
@@ -33,8 +33,7 @@ void ic_find_control()
 {
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
     memset( &control_raw, 0, sizeof(control_raw) );
-    while( !input_control_online )
-    {
+    while( !input_control_online ) {
         LOSS_LIGHT = LOSS_LIGHT_LOST;
     }
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
@@ -61,7 +60,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
     _T3IF = 0;
 }
 
-void ic_init()
+Control_values_t *ic_init( void )
 {
     T2CONbits.TON = 0;
     T2CONbits.TCKPS = TIMER_DIV_1;
@@ -76,6 +75,8 @@ void ic_init()
     T2CONbits.TON = 1;
     init_watch_dog_timer();
     init_flag = 1;
+    
+    return( &dir_values );
 }
 
 /********************************/
@@ -135,6 +136,7 @@ void ic_make_calibration()
         clbr_control_raw.channel_4.min = min( clbr_control_raw.channel_4.min, control_raw.channel_4 );
         clbr_control_raw.channel_5.max = max( clbr_control_raw.channel_5.max, control_raw.channel_5 );
         clbr_control_raw.channel_5.min = min( clbr_control_raw.channel_5.min, control_raw.channel_5 );
+        UART_write_string( UARTm1, "Calibration\n" );
     }
     turn_off_timer1_time_measurement();
     clbr_control_raw.channel_1.mid = (clbr_control_raw.channel_1.max + clbr_control_raw.channel_1.min)/2;
@@ -148,7 +150,7 @@ void ic_make_calibration()
 
 void send_UART_calibration_data( void )
 {
-    UART_write_string( UARTm1, "\n\rMin:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMax:%05ld, %05ld, %05ld, %05ld, %05ld\n\rMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
+    UART_write_string( UARTm1, "\nMin:%05ld, %05ld, %05ld, %05ld, %05ld\nMax:%05ld, %05ld, %05ld, %05ld, %05ld\nMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
                         clbr_control_raw.channel_1.min, clbr_control_raw.channel_2.min, clbr_control_raw.channel_3.min, clbr_control_raw.channel_4.min, clbr_control_raw.channel_5.min,
                         clbr_control_raw.channel_1.max, clbr_control_raw.channel_2.max, clbr_control_raw.channel_3.max, clbr_control_raw.channel_4.max, clbr_control_raw.channel_5.max,
                         clbr_control_raw.channel_1.mid, clbr_control_raw.channel_2.mid, clbr_control_raw.channel_3.mid, clbr_control_raw.channel_4.mid, clbr_control_raw.channel_5.mid
@@ -164,7 +166,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()
 /********************************/
 /*  CHANNELS PARAMETERS OUTPUT  */
 /********************************/
-int8_t get_control_values( Control_values_t *out_dir_vals )
+int get_control_values( void )
 {
     int16_t res = 0;
     Control_t tmp_count_cntrl_raw;
@@ -197,8 +199,6 @@ int8_t get_control_values( Control_values_t *out_dir_vals )
     dir_values.pitch = res < ANGLES_MIN ? ANGLES_MIN : ANGLES_MAX < res ? ANGLES_MAX : res;
     
     dir_values.two_pos_switch = tmp_count_cntrl_raw.channel_5 > clbr_control_raw.channel_5.mid ? TWO_POS_SWITCH_ON : TWO_POS_SWITCH_OFF;
-    
-    memcpy( out_dir_vals, &dir_values, sizeof( dir_values ) );
     
     return( 0 );
 }

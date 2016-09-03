@@ -223,39 +223,56 @@ bool SerialLink::processReceiveData()
     return( true );
 }
 
-void SerialLink::parseDataFrame(QByteArray &frame)
+struct serial_data_
 {
     qint16  rollAngle,
             pitchAngle,
             timeMoment,
             encoderRoll,
             encoderPitch;
+    qint8   motor1_power,
+            motor2_power,
+            motor3_power,
+            motor4_power;
+};
 
-    QByteArray tmpBuffer = frame.mid(0, 2);
-    QDataStream streamRoll( &tmpBuffer, QIODevice::ReadWrite );
-    streamRoll >> rollAngle;
-    tmpBuffer = frame.mid(2, 2);
-    QDataStream streamPitch( &tmpBuffer, QIODevice::ReadWrite );
-    streamPitch >> pitchAngle;
-    tmpBuffer = frame.mid(4, 2);
-    QDataStream streamTime( &tmpBuffer, QIODevice::ReadWrite );
-    streamTime >> timeMoment;
-    tmpBuffer = frame.mid(6, 2);
-    QDataStream streamEncR( &tmpBuffer, QIODevice::ReadWrite );
-    streamEncR >> encoderRoll;
-    tmpBuffer = frame.mid(8, 2);
-    QDataStream streamEncP( &tmpBuffer, QIODevice::ReadWrite );
-    streamEncP >> encoderPitch;
+QDataStream &operator >>(QDataStream &out, serial_data_ &any)
+{
+    out >> any.rollAngle;
+    out >> any.pitchAngle;
+    out >> any.timeMoment;
+    out >> any.motor1_power;
+    out >> any.motor2_power;
+    out >> any.motor3_power;
+    out >> any.motor4_power;
+    out >> any.encoderRoll;
+    out >> any.encoderPitch;
+    return out;
+}
 
-    qDebug() << rollAngle/250.0f << "\t" << pitchAngle/250.0f << "\t"
-             << timeMoment*10.0f << "\t" << encoderRoll/250.0f << "\t"
-             << encoderPitch/250.0f;
+void SerialLink::parseDataFrame(QByteArray &frame)
+{
+    serial_data_ buffer;
 
-    rollDataList->push_back( rollAngle/250.0f );
-    pitchDataList->push_back( pitchAngle/250.0f );
-    encRollDataList->push_back( encoderRoll/250.0f + encoderRollCOffset );
-    encPitchDataList->push_back( encoderPitch/250.0f + encoderPitchCOffset );
-    timeList->push_back( timeMoment*10.0f ); // milliseconds
+    QDataStream streamRoll( &frame, QIODevice::ReadWrite );
+    streamRoll >> buffer;
+
+#define ANGLE_COEFFICIENT   100.0f
+#define ENCODER_COEFFICIENT 100.0f
+
+    qDebug() << buffer.rollAngle/ANGLE_COEFFICIENT << "\t" << buffer.pitchAngle/ANGLE_COEFFICIENT << "\t"
+             << buffer.timeMoment*10.0f << "\t" << buffer.encoderRoll/ENCODER_COEFFICIENT << "\t"
+             << buffer.encoderPitch/ENCODER_COEFFICIENT << "\t"
+             << buffer.motor1_power << "\t" << buffer.motor2_power << "\t"
+             << buffer.motor3_power << "\t" << buffer.motor4_power;
+
+    sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
+
+    rollDataList->push_back( buffer.rollAngle/ANGLE_COEFFICIENT );
+    pitchDataList->push_back( buffer.pitchAngle/ANGLE_COEFFICIENT );
+    encRollDataList->push_back( buffer.encoderRoll/ENCODER_COEFFICIENT + encoderRollCOffset );
+    encPitchDataList->push_back( buffer.encoderPitch/ENCODER_COEFFICIENT + encoderPitchCOffset );
+    timeList->push_back( buffer.timeMoment*10.0f ); // milliseconds
 
     if ( calibrationFlag )
     {

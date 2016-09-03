@@ -202,7 +202,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
         spi_read();
         spi_cs_set( 1 );
         UART_write_string( UARTm1, "SD writing error: 0x%08x\n", response );
-        error_process();
+        error_process( "SD card write error" );
         return( TIMEOUT_ERROR_WRITE_NOT_ACCEPTED );
     }
 

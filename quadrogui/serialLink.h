@@ -54,7 +54,7 @@ private:
 
     const int   commandLength = 2,
                 respLength =    1,
-                dataFrameSize = 10;
+                dataFrameSize = 14;
 
     const char  noErrorResponse =   '0',
                 dataStopResp =      '2';
@@ -84,6 +84,7 @@ signals:
     void sendCalibrationReady(bool completed);
     void sendMotorStartStopFinished(bool completed);
     void error( QString, qint64 );
+    void sendMotorPowers( quint8, quint8, quint8, quint8 );
 
 public slots:
     void process();

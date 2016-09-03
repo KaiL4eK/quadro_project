@@ -40,11 +40,10 @@ static Task_t       *tasks_list = NULL,
 int init_sd_file_io ( void )
 {
     spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
-    if ( init_FAT32() < 0 )
-    {
-        UART_write_string( UARTm1, "FAT32 not found!\n" );
-        error_process();
+    if ( init_FAT32() < 0 ) {
+        error_process( "FAT32 not found!" );
     }
+    
     spi_set_speed( SPI_PRIM_1, SPI_SEC_8 );
     PROCESSING_TRIS = 0;
     PROCESSING_LIGHT = 1;
@@ -177,9 +176,8 @@ inline void set_next_buffer( void )
     current_buffer = current_buffer == BUFFERS_AMOUNT ? 0 : current_buffer;
     while ( busy_buffers[current_buffer] )
     {
-        UART_write_string( UARTm1, "Buffers overlay\n" );
         if ( out_counter++ == 255 )
-            error_process();
+            error_process( "Buffers overlay" );
     }
     data_offset = 0;
     memset( data_buffer[current_buffer], 0, sizeof( data_buffer[current_buffer] ) );
