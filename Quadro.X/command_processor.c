@@ -1,121 +1,75 @@
 #include "core.h"
+#include "serial_protocol.h"
 
-uint16_t    buffer_index = 0;
+UART_moduleNum_t m_module = -1;
 
-uint8_t     *buffer = NULL,
-            *replaceBuffer = NULL;
-
-void cmdProcessor_init ( void )
+void cmdProcessor_init ( UART_moduleNum_t module )
 {
-    buffer = calloc( 1, CMD_PROC_BUFFER_LENGTH );
-    replaceBuffer = calloc( 1, CMD_PROC_BUFFER_LENGTH );
-    UART_set_receive_mode( UARTm1 | UARTm2, UARTr_interrupt, INT_PRIO_HIGHEST );
+    m_module = module;
 }
-
-void replace_buffers ( uint8_t offset )
-{
-    if ( offset == 0 || offset > buffer_index )
-        return;
-    
-    _U2RXIE = 0;
-    memcpy( replaceBuffer, buffer + offset, CMD_PROC_BUFFER_LENGTH - offset );
-    buffer_index -= offset;
-    
-    uint8_t *tmpPointer = replaceBuffer;
-    replaceBuffer = buffer;
-    buffer = tmpPointer;
-    _U2RXIE = 1;
-}
-
-uint8_t cmdBShift = 0;
 
 UART_frame_t    frame;
+uint8_t         prefix_byte = 0;
 
 UART_frame_t *cmdProcessor_rcvFrame ( void )
 {
     frame.command = NO_COMMAND;
     
-    if ( buffer_index > cmdBShift )
+    if ( UART_bytes_available( m_module ) > 0 )
     {
-        if ( buffer[cmdBShift] == COMMAND_PREFIX )
+        if ( !prefix_byte )
+            prefix_byte = UART_get_byte( m_module );
+        
+        if ( prefix_byte == COMMAND_PREFIX &&
+             UART_bytes_available( m_module ) >= COMMAND_FRAME_SIZE )
         {
-            if ( buffer_index >= COMMAND_FRAME_SIZE + cmdBShift )
+            uint8_t command_byte = UART_get_byte( m_module );
+            switch( command_byte )
             {
-                switch( buffer[cmdBShift + 1])
-                {
-                    case CMD_CONNECT_CODE:
-                        frame.command = CONNECT;
-                        break;
-                    case CMD_DATA_START_CODE:
-                        frame.command = DATA_START;
-                        break;
-                    case CMD_DATA_STOP_CODE:
-                        frame.command = DATA_STOP;
-                        break;
-                    default:
-                        frame.command = UNKNOWN_COMMAND;
-                }
-                cmdBShift += COMMAND_FRAME_SIZE;
+                case CMD_CONNECT_CODE:
+                    frame.command = CONNECT;
+                    break;
+                case CMD_DATA_START_CODE:
+                    frame.command = DATA_START;
+                    break;
+                case CMD_DATA_STOP_CODE:
+                    frame.command = DATA_STOP;
+                    break;
+                case CMD_MOTOR_STOP:
+                    frame.command = MOTOR_STOP;
+                    break;
+                case CMD_MOTOR_START:
+                    frame.command = MOTOR_START;
+                    break;
+                default:
+                    frame.command = UNKNOWN_COMMAND;
             }
-        }
-        else if ( buffer[cmdBShift] == PARAMETER_PREFIX )
+            prefix_byte = 0;
+
+        } else if ( prefix_byte == PARAMETER_PREFIX &&
+                    UART_bytes_available( m_module ) >= PARAMETER_FRAME_SIZE )
         {
-            if ( buffer_index >= PARAMETER_FRAME_SIZE + cmdBShift )
+            uint8_t parameter_byte = UART_get_byte( m_module );
+            uint8_t value_byte     = UART_get_byte( m_module );
+
+            switch( parameter_byte )
             {
-                switch( buffer[cmdBShift + 1])
-                {
-                    case PARAM_MOTOR_START:
-                        frame.command = MOTOR_START;
-                        frame.motorPower = buffer[cmdBShift + 2];
-                        break;
-                    case PARAM_MOTOR_STOP:
-                        frame.command = MOTOR_STOP;
-                        break;
-                    default:
-                        frame.command = UNKNOWN_COMMAND;
-                }
-                cmdBShift += PARAMETER_FRAME_SIZE;
+                case PARAM_MOTOR_POWER:
+                    frame.command = MOTOR_SET_POWER;
+                    frame.motorPower = value_byte;
+                    break;
+                default:
+                    frame.command = UNKNOWN_COMMAND;
             }
+            prefix_byte = 0;
         }
-        else
-        {
-            cmdBShift++;
-        }
-    }
-    else
-    {
-        replace_buffers( cmdBShift );
-        cmdBShift = 0;
     }
     
     return( &frame );
 }
 
-void cmdProcessor_write_cmd_resp ( UART_moduleNum_t module, uint8_t prefix, uint8_t code )
+void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code )
 {
     uint16_t sendCommand = (uint16_t)prefix << 8 | code;
     UART_write_words( module, &sendCommand, 1 );
-}
-
-//void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
-//{
-//    _U1RXIF = 0;
-//}
-
-void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
-{
-    while ( U2STAbits.URXDA )
-    {
-        buffer[buffer_index] = U2RXREG;
-        buffer_index++;
-//        UART_write_string( UARTm1, ">>%d %c\n", 
-//                buffer_index, buffer[buffer_index-1] );
-        if ( buffer_index == CMD_PROC_BUFFER_LENGTH )
-        {
-            UART_write_string( UARTm1, "Of\n" );
-            while( 1 ); // Error overflow
-        }
-    }
-        
-    _U2RXIF = 0;
 }

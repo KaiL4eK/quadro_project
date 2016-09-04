@@ -24,15 +24,6 @@ private:
                     *encPitchDataList = NULL,
                     *timeList = NULL;
 
-    enum FrameType_t
-    {
-        Command = '*',
-        Parameter = '~',
-        Response = '#',
-        Data = '$',
-        None = 0
-    };
-
     qint64  receivedPoints = 0;
     qint32  serialSpeed = 460800;
     QString serialName;
@@ -46,25 +37,12 @@ private:
     quint8  calibrationCounter = 0;
     bool    calibrationFlag = false;
 
-    const char  cmdConnect =        'c',
-                cmdDataStart =      's',
-                cmdDataStop =       'p',
-                paramMotorStart =   's',
-                paramMotorStop =    't';
-
-    const int   commandLength = 2,
-                respLength =    1,
-                dataFrameSize = 14;
-
-    const char  noErrorResponse =   '0',
-                dataStopResp =      '2';
-
     void clearDataBase( void );
     void initSerial( void );
 
     int initLink();
 
-    FrameType_t receiveFrameHead();
+    quint8 receiveFrameHead();
     QByteArray receiveNextFrame();
 
     bool makeLinkToPort();

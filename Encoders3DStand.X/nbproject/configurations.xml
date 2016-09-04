@@ -7,6 +7,7 @@
       <itemPath>per_proto.h</itemPath>
       <itemPath>pragmas.h</itemPath>
       <itemPath>core.h</itemPath>
+      <itemPath>serial_protocol.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"

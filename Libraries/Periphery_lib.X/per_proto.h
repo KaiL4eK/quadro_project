@@ -22,27 +22,31 @@ int16_t ADC_read( void );
 
 /*** UART.c ***/
 
+
 typedef enum
 {
+    // High speed values BRGH = 1
     UART_460800 = 8,
     UART_230400 = 16,
     UART_115200 = 34,        
     UART_57600 = 68,
-    UART_38400 = 103,
-    UART_19200 = 207        
-}UART_speed_t;
-
+    // Low speed values BRGH = 0
+    UART_38400 = 25,
+    UART_19200 = 51,
+    UART_9600 = 103
+} UART_speed_t;
+ 
 typedef enum
 {
     UARTr_interrupt = 1,
     UARTr_polling = 2
-}UART_receiveMode_t;
+} UART_receiveMode_t;
 
 typedef enum
 {
     UARTm1 = 1 << 0,
     UARTm2 = 1 << 1
-}UART_moduleNum_t;
+} UART_moduleNum_t;
 
 typedef enum
 {
@@ -55,14 +59,18 @@ typedef enum
     INT_PRIO_HIGH = 6,
     INT_PRIO_HIGHEST = 7
             
-}Interrupt_priority_lvl_t;
+} Interrupt_priority_lvl_t;
 
-void UART_init( UART_moduleNum_t module, UART_speed_t UART_br, bool highSpeed );
+void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority );
 void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
-int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
+//int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
 void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority );
+
+uint8_t UART_bytes_available( UART_moduleNum_t module );
+uint8_t UART_get_byte( UART_moduleNum_t module );
+void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_bytes );
 
 /*** twi.c ***/
 
@@ -171,31 +179,10 @@ typedef enum {
     DATA_START,
     DATA_STOP,
     MOTOR_START,
-    MOTOR_STOP
+    MOTOR_STOP,
+    MOTOR_SET_POWER
     
 }UART_commands_e;
-
-#define COMMAND_FRAME_SIZE      2    // bytes
-#define DATA_FRAME_SIZE         11
-#define RESPONSE_FRAME_SIZE     2
-#define PARAMETER_FRAME_SIZE    3
-
-#define COMMAND_PREFIX          '*'
-#define CMD_CONNECT_CODE        'c'
-#define CMD_DATA_START_CODE     's'
-#define CMD_DATA_STOP_CODE      'p'
-
-#define DATA_PREFIX             '$'
-#define RESPONSE_PREFIX         '#'
-#define RESP_NOERROR            '0'
-#define RESP_NOCONNECT          '1'
-#define RESP_ENDDATA            '2'
-
-#define PARAMETER_PREFIX        '~'
-#define PARAM_MOTOR_START       's'
-#define PARAM_MOTOR_STOP        't'
-
-#define CMD_PROC_BUFFER_LENGTH  64
 
 typedef struct {
  
@@ -204,9 +191,9 @@ typedef struct {
     // Not ready
 }UART_frame_t;
 
-void cmdProcessor_init ( void );
+void cmdProcessor_init ( UART_moduleNum_t module );
 UART_frame_t *cmdProcessor_rcvFrame ( void );
-void cmdProcessor_write_cmd_resp ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
+void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
 
 #endif	/* PERIPHERY_PROTO_H_ */
 

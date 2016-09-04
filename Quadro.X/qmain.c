@@ -31,14 +31,14 @@ quadrotor_state_t    quadrotor_state;
 Control_values_t     *control_values;
 gyro_accel_data_t    *gyro_accel_data;
 
-int main(void) 
+int main ( void ) 
 {
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    UART_init( UARTm1, UART_115200, true );
-    UART_init( UARTm2, UART_38400, false );
-    cmdProcessor_init();
+    UART_init( UARTm1, UART_115200, INT_PRIO_HIGH );
+    UART_init( UARTm2, UART_38400, INT_PRIO_HIGHEST );
+    cmdProcessor_init( UARTm2 );
     UART_write_string( UARTm1, "/------------------------/\n" );
     UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
 #ifndef TEST_WO_MODULES 
@@ -117,16 +117,10 @@ bool start_motors = false,
      stop_motors = false;
 
 #ifdef PID_tuning
-uint8_t receivedByte = 0;
-void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
-{
-    receivedByte = U1RXREG;
-    _U1RXIF = 0;
-}
 
 static void process_UART_PID_tuning()
 {
-    switch ( receivedByte )
+    switch ( UART_get_byte( UARTm1 ) )
     {
         case 0:
             return;
@@ -188,7 +182,6 @@ static void process_UART_PID_tuning()
             break;
     }
     UART_write_string( UARTm1, "P%d D%d I%d | P%d D%d I%d\n", prop_r, differ_r, integr_r, prop_p, differ_p, integr_p );
-    receivedByte = 0;
 }
 #endif
 
@@ -338,7 +331,9 @@ inline void process_control_system ( void )
 }
 
 #define POWER_2_PERCENT(x) ( (uint8_t)((x)*100L/INPUT_POWER_MAX) )
-           
+
+#include "serial_protocol.h"
+
 void process_sending_UART_data( void )
 {
     static bool         dataSend        = false;
@@ -352,8 +347,7 @@ void process_sending_UART_data( void )
         case UNKNOWN_COMMAND:
             break;
         case CONNECT:
-            cmdProcessor_write_cmd_resp( UARTm2, 
-                    RESPONSE_PREFIX, RESP_NOERROR );
+            cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_NOERROR );
             dataSend = false;
             stop_motors = true;
             UART_write_string( UARTm1, "Connect\n" );
@@ -370,12 +364,15 @@ void process_sending_UART_data( void )
             break;
         case MOTOR_START:
             start_motors = true;
-            motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
             UART_write_string( UARTm1, "MStart\n" );
             break;
         case MOTOR_STOP:
             stop_motors = true;
             UART_write_string( UARTm1, "MStop\n" );
+            break;
+        case MOTOR_SET_POWER:
+            motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
+            UART_write_string( UARTm1, "MSetPower\n" );
             break;
     }
     
@@ -396,11 +393,11 @@ void process_sending_UART_data( void )
         sendBuffer[4] |= POWER_2_PERCENT(quadrotor_state.motor4_power);
         
         UART_write_byte( UARTm2, DATA_PREFIX );
-        UART_write_words( UARTm2, sendBuffer, 5 );
+        UART_write_words( UARTm2, sendBuffer, DATA_QUADRO_FRAME_SIZE/2 );
 
         if ( ++timeMoments == UINT16_MAX )
         {
-            cmdProcessor_write_cmd_resp( UARTm2, RESPONSE_PREFIX, RESP_ENDDATA );
+            cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_ENDDATA );
             UART_write_string( UARTm1, "DStop1\n" );
             dataSend = false;
             start_motors = false;

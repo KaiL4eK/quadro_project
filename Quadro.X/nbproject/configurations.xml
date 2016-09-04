@@ -18,6 +18,7 @@
       <itemPath>math_proto.h</itemPath>
       <itemPath>error_.h</itemPath>
       <itemPath>pragmas.h</itemPath>
+      <itemPath>../Encoders3DStand.X/serial_protocol.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -49,6 +50,7 @@
     <Elem>.</Elem>
     <Elem>../../Dropbox/Ard_Scetches/MPU6050_1</Elem>
     <Elem>../Libraries/Periphery_lib.X</Elem>
+    <Elem>../Encoders3DStand.X</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>

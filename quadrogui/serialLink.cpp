@@ -2,6 +2,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+#include <serial_protocol.h>
+
 SerialLink::SerialLink(QVector<double> *rollDbPtr, QVector<double> *pitchDbPtr,
                        QVector<double> *encRollDbPtr, QVector<double> *encPitchDbPtr,
                        QVector<double> *timeVectPtr , QString sName, QObject *parent)
@@ -10,7 +12,6 @@ SerialLink::SerialLink(QVector<double> *rollDbPtr, QVector<double> *pitchDbPtr,
       encRollDataList( encRollDbPtr ), encPitchDataList( encPitchDbPtr ),
       timeList( timeVectPtr ), serialName( sName )
 {
-
 }
 
 SerialLink::~SerialLink()
@@ -102,8 +103,8 @@ bool SerialLink::processConnectionCommand()
         serial->clear();
 
     QByteArray command;
-    command.append(Command);
-    command.append(cmdConnect);
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_CONNECT_CODE);
     if ( serial->write( command ) < 0 )
     {
         emit error( "Failed to send connection command", serial->error() );
@@ -117,8 +118,8 @@ bool SerialLink::processConnectionCommand()
 bool SerialLink::processDataStartCommand()
 {
     QByteArray command;
-    command.append(Command);
-    command.append(cmdDataStart);
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_DATA_START_CODE);
     if ( serial->write( command ) < 0 )
     {
         emit error( "Failed to send data start command", serial->error() );
@@ -129,27 +130,11 @@ bool SerialLink::processDataStartCommand()
     return( true );
 }
 
-bool SerialLink::waitForResponse()
-{
-    QByteArray replyBytes = receiveNextFrame();
-    if ( replyBytes.isEmpty() )
-        return( false );
-
-    if ( replyBytes[0] != (char)Response || replyBytes[1] != noErrorResponse )
-    {
-        emit error( "Received response with code: " + QString::number(replyBytes[1]),
-                    serial->error() );
-        return( false );
-    }
-    qDebug() << "Received " + QString::number(replyBytes[1]);
-    return( true );
-}
-
 bool SerialLink::processDataStopCommand()
 {
     QByteArray command;
-    command.append(Command);
-    command.append(cmdDataStop);
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_DATA_STOP_CODE);
     if ( serial->write( command ) < 0 )
     {
         emit error( "Failed to send data stop command", serial->error() );
@@ -166,9 +151,11 @@ bool SerialLink::processDataStopCommand()
 bool SerialLink::processMotorStartCommand(quint8 speed)
 {
     QByteArray command;
-    command.append(Parameter);
-    command.append(paramMotorStart);
+    command.append(PARAMETER_PREFIX);
+    command.append(PARAM_MOTOR_POWER);
     command.append(speed);
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_MOTOR_START);
     if ( serial->write( command ) < 0 )
     {
         emit error( "Failed to send motor start command", serial->error() );
@@ -182,9 +169,8 @@ bool SerialLink::processMotorStartCommand(quint8 speed)
 bool SerialLink::processMotorStopCommand()
 {
     QByteArray command;
-    command.append(Parameter);
-    command.append(paramMotorStop);
-    command.append((char)0);
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_MOTOR_STOP);
     if ( serial->write( command ) < 0 )
     {
         emit error( "Failed to send motor stop command", serial->error() );
@@ -203,19 +189,19 @@ bool SerialLink::processReceiveData()
 
     switch ( frame[0] )
     {
-        case Response:
-            if ( frame[1] == dataStopResp )
+        case RESPONSE_PREFIX:
+            if ( frame[1] == RESP_ENDDATA )
                 receiveData = false;
             break;
-        case Data:
+        case DATA_PREFIX:
             if ( receiveData )
             {
-                QByteArray frameContent = frame.mid(1, dataFrameSize);
+                QByteArray frameContent = frame.mid(1, DATA_FULL_FRAME_SIZE);
                 parseDataFrame( frameContent );
             }
             break;
-        case None:
-        case Command:
+        case 0:
+        case COMMAND_PREFIX:
         default:
             break;
     }
@@ -318,7 +304,7 @@ int SerialLink::initLink()
     return( 0 );
 }
 
-SerialLink::FrameType_t SerialLink::receiveFrameHead()
+quint8 SerialLink::receiveFrameHead()
 {
     while ( serial->bytesAvailable() < 1 )  // Receive frame type
     {
@@ -331,7 +317,7 @@ SerialLink::FrameType_t SerialLink::receiveFrameHead()
                 emit error( "Failed to receive frame type [timeout]",
                             serial->error() );
 
-            return( None );
+            return( 0 );
         }
     }
     char frameHead;
@@ -339,27 +325,27 @@ SerialLink::FrameType_t SerialLink::receiveFrameHead()
     {
         emit error( "Failed to receive frame type [serial error]",
                     serial->error() );
-        return( None );
+        return( 0 );
     }
 
-    return( (FrameType_t)frameHead );
+    return( frameHead );
 }
 
 QByteArray SerialLink::receiveNextFrame()
 {
     QByteArray result;
-    FrameType_t type = receiveFrameHead();
+    quint8 type = receiveFrameHead();
     quint8 length = 0;
     switch( type )
     {
-        case Response:
-            length = respLength;
+        case RESPONSE_PREFIX:
+            length = RESPONSE_FRAME_SIZE;
             break;
-        case Data:
-            length = dataFrameSize;
+        case DATA_PREFIX:
+            length = DATA_FULL_FRAME_SIZE;
             break;
-        case None:
-        case Command:
+        case 0:
+        case COMMAND_PREFIX:
         default:
             return( result );
     }
@@ -389,4 +375,20 @@ QByteArray SerialLink::receiveNextFrame()
         result.insert(0, (char)type);
     }
     return( result );
+}
+
+bool SerialLink::waitForResponse()
+{
+    QByteArray replyBytes = receiveNextFrame();
+    if ( replyBytes.isEmpty() )
+        return( false );
+
+    if ( replyBytes[0] != RESPONSE_PREFIX || replyBytes[1] != RESP_NOERROR )
+    {
+        emit error( "Received response with code: " + QString::number(replyBytes[1]),
+                    serial->error() );
+        return( false );
+    }
+    qDebug() << "Received " + QString::number(replyBytes[1]);
+    return( true );
 }

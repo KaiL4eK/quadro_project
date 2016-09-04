@@ -12,7 +12,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = DataProcessing
 TEMPLATE = app
 
-INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include
+INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include \
+               ../Libraries/common
 
 LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -lqwt
 
