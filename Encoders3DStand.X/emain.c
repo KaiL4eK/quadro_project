@@ -24,8 +24,8 @@ int main ( void )
     OFF_ALL_ANALOG_INPUTS;
     // UARTm1 - USB
     // UARTm2 - dsPIC on Quadro
-    UART_init( UARTm1, UART_460800, INT_PRIO_HIGHEST );
-    UART_init( UARTm2, UART_38400, INT_PRIO_HIGHEST );
+    UART_init( UARTm1, UART_9600, INT_PRIO_HIGHEST );
+    UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
     UART_write_string( UARTm1, "UART initialized\n" );
     
     command_translator_init( UARTm1, UARTm2 );

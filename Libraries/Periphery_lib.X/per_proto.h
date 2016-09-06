@@ -22,7 +22,6 @@ int16_t ADC_read( void );
 
 /*** UART.c ***/
 
-
 typedef enum
 {
     // High speed values BRGH = 1
@@ -44,8 +43,8 @@ typedef enum
 
 typedef enum
 {
-    UARTm1 = 1 << 0,
-    UARTm2 = 1 << 1
+    UARTm1,
+    UARTm2
 } UART_moduleNum_t;
 
 typedef enum
@@ -66,7 +65,7 @@ void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
 //int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
-void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority );
+//void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority );
 
 uint8_t UART_bytes_available( UART_moduleNum_t module );
 uint8_t UART_get_byte( UART_moduleNum_t module );
@@ -170,30 +169,6 @@ int flash_set ( FlashData_t data_type, int data );
 int flash_get ( FlashData_t data_type );
 
 /*** command_processor.c (not in lib) ***/
-
-typedef enum {
-    
-    NO_COMMAND,
-    UNKNOWN_COMMAND,
-    CONNECT,
-    DATA_START,
-    DATA_STOP,
-    MOTOR_START,
-    MOTOR_STOP,
-    MOTOR_SET_POWER
-    
-}UART_commands_e;
-
-typedef struct {
- 
-    UART_commands_e command;
-    uint8_t         motorPower;
-    // Not ready
-}UART_frame_t;
-
-void cmdProcessor_init ( UART_moduleNum_t module );
-UART_frame_t *cmdProcessor_rcvFrame ( void );
-void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
 
 #endif	/* PERIPHERY_PROTO_H_ */
 

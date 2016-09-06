@@ -23,5 +23,30 @@ typedef struct
                 motor4_power;
 }quadrotor_state_t;
 
+typedef enum {
+    
+    NO_COMMAND,
+    UNKNOWN_COMMAND,
+    CONNECT,
+    DISCONNECT,
+    DATA_START,
+    DATA_STOP,
+    MOTOR_START,
+    MOTOR_STOP,
+    MOTOR_SET_POWER
+    
+}UART_commands_e;
+
+typedef struct {
+ 
+    UART_commands_e command;
+    uint8_t         motorPower;
+    // Not ready
+}UART_frame_t;
+
+void cmdProcessor_init ( UART_moduleNum_t module );
+UART_frame_t *cmdProcessor_rcvFrame ( void );
+void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
+
 #endif	/* Q_CORE_H_ */
 

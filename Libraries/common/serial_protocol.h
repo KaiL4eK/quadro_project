@@ -9,6 +9,7 @@
 
 #define COMMAND_PREFIX          '*'
 #define CMD_CONNECT_CODE        'c'
+#define CMD_DISCONNECT_CODE     'd'
 #define CMD_DATA_START_CODE     's'
 #define CMD_DATA_STOP_CODE      'p'
 #define CMD_MOTOR_STOP          't'

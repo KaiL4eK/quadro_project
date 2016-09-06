@@ -25,8 +25,8 @@ typedef struct
 UART_module_fd  uart1 = { .initialized = false },
                 uart2 = { .initialized = false };
 
-UART_buffer_t   ub1 = { .i_head_byte = 0, .i_tail_byte = 0, .n_bytes = 0, .overflow = false },
-                ub2 = { .i_head_byte = 0, .i_tail_byte = 0, .n_bytes = 0, .overflow = false };
+volatile UART_buffer_t  ub1 = { .i_head_byte = 0, .i_tail_byte = 0, .n_bytes = 0, .overflow = false },
+                        ub2 = { .i_head_byte = 0, .i_tail_byte = 0, .n_bytes = 0, .overflow = false };
 
 
 static inline bool UART_low_speed( UART_speed_t baud )
@@ -61,10 +61,10 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
         U2MODEbits.UEN      = 0;		// Bits8,9 TX,RX enabled, CTS,RTS not
         
         if ( UART_low_speed( baud ) )
-            U1MODEbits.BRGH = 0;
+            U2MODEbits.BRGH = 0;
         else
-            U1MODEbits.BRGH = 1;
-        U1BRG               = baud;
+            U2MODEbits.BRGH = 1;
+        U2BRG               = baud;
         
         _U2RXIE             = 1;          // Enable Rx interrupt
         _U2RXIP             = priority;
@@ -135,7 +135,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 
 uint8_t UART_get_byte( UART_moduleNum_t module )   
 {
-    UART_buffer_t *data;
+    volatile UART_buffer_t *data;
     
     if ( module == UARTm1 )
         data = &ub1;
@@ -153,7 +153,7 @@ uint8_t UART_get_byte( UART_moduleNum_t module )
 
 void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_bytes )
 {
-    UART_buffer_t *data;
+    volatile UART_buffer_t *data;
     
     if ( module == UARTm1 )
         data = &ub1;
@@ -202,7 +202,7 @@ void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
 
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count )
 {
-    uint8_t iter = 0;
+    uint16_t iter = 0;
     for ( iter = 0; iter < count; iter++ ) {
         UART_write_byte( module, HIGH_16( arr[iter] ) );
         UART_write_byte( module, LOW_16( arr[iter] ) );
@@ -221,6 +221,6 @@ void UART_write_string( UART_moduleNum_t module, const char *fstring, ... )
     vsprintf( send_buffer, fstring, str_args );
     va_end( str_args );
     
-    while( send_buffer[iter] )
+    while( send_buffer[iter] != '\0' )
         UART_write_byte( module, send_buffer[iter++] );
 }

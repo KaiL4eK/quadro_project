@@ -10,6 +10,7 @@
 #include "pragmas.h"
 
 void control_system_timer_init( void );
+void process_UART_frame( void );
 
 //#define SD_CARD
 #define PROGRAM_INPUT
@@ -37,10 +38,10 @@ int main ( void )
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UARTm1, UART_115200, INT_PRIO_HIGH );
-    UART_init( UARTm2, UART_38400, INT_PRIO_HIGHEST );
+    UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
     cmdProcessor_init( UARTm2 );
     UART_write_string( UARTm1, "/------------------------/\n" );
-    UART_write_string( UARTm1, "UART initialized to interrupt mode\n" );
+    UART_write_string( UARTm1, "UART initialized\n" );
 #ifndef TEST_WO_MODULES 
 #ifdef SD_CARD
     flash_read();
@@ -104,6 +105,7 @@ int main ( void )
     while( 1 ) {
 //        UART_write_string( UARTm1, "Hello\n" );
         file_process_tasks();
+        process_UART_frame();
 //        delay_ms( 500 );
     }
     
@@ -113,9 +115,6 @@ int main ( void )
 static uint16_t prop_r = 7, integr_r = 4000, differ_r = 25,
                 prop_p = 7,  integr_p = 4000, differ_p = 25;
 
-bool start_motors = false,
-     stop_motors = false;
-
 #ifdef PID_tuning
 
 static void process_UART_PID_tuning()
@@ -124,14 +123,6 @@ static void process_UART_PID_tuning()
     {
         case 0:
             return;
-//        case 'B':
-//        case 'b':
-//            start_motors = true;
-//            break;
-//        case 'N':
-//        case 'n':
-//            stop_motors = true;
-//            break;
         case 'Q':
         case 'q':
             prop_r++;
@@ -192,6 +183,9 @@ static void process_UART_PID_tuning()
                             control_values.rudder > (-1*START_ANGLES) && \
                             control_values.roll < START_ANGLES && \
                             control_values.pitch > (-1*START_ANGLES) )
+
+volatile bool   start_motors    = false,
+                stop_motors     = false;
 
 #define MAX_CONTROL_ANGLE   25L
 #define CONTROL_2_ANGLE(x) ((x)/10 * MAX_CONTROL_ANGLE)
@@ -334,12 +328,12 @@ inline void process_control_system ( void )
 
 #include "serial_protocol.h"
 
-void process_sending_UART_data( void )
-{
-    static bool         dataSend        = false;
-    static uint8_t      counterSend     = 0;
-    static uint16_t     timeMoments     = 0;
+volatile bool         dataSend        = false;
+volatile uint8_t      counterSend     = 0;
+volatile uint16_t     timeMoments     = 0;
     
+void process_UART_frame( void )
+{
     UART_frame_t *frame = cmdProcessor_rcvFrame();
     switch ( frame->command )
     {
@@ -351,6 +345,11 @@ void process_sending_UART_data( void )
             dataSend = false;
             stop_motors = true;
             UART_write_string( UARTm1, "Connect\n" );
+            break;
+        case DISCONNECT:
+            dataSend = false;
+            stop_motors = true;
+            UART_write_string( UARTm1, "Disconnect\n" );
             break;
         case DATA_START:
             timeMoments = 0;
@@ -375,7 +374,10 @@ void process_sending_UART_data( void )
             UART_write_string( UARTm1, "MSetPower\n" );
             break;
     }
-    
+}
+               
+void process_sending_UART_data( void )
+{
     if ( dataSend && ++counterSend == 4 )
     {
 //        quadrotor_state.roll = quadrotor_state.pitch = 

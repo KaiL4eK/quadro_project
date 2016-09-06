@@ -25,7 +25,7 @@ private:
                     *timeList = NULL;
 
     qint64  receivedPoints = 0;
-    qint32  serialSpeed = 460800;
+    qint32  serialSpeed = 9600;// 460800;
     QString serialName;
     bool    receiveData = false,
             isRunning = false;
@@ -40,13 +40,12 @@ private:
     void clearDataBase( void );
     void initSerial( void );
 
-    int initLink();
-
     quint8 receiveFrameHead();
     QByteArray receiveNextFrame();
 
     bool makeLinkToPort();
-    bool processConnectionCommand();
+    bool processConnectCommand();
+    bool processDisconnectCommand();
     bool processDataStartCommand();
     bool processDataStopCommand();
     bool processMotorStartCommand(quint8 speed);

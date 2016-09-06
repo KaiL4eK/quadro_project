@@ -10,9 +10,7 @@ SerialLink::SerialLink(QVector<double> *rollDbPtr, QVector<double> *pitchDbPtr,
     : QObject( parent ),
       rollDataList( rollDbPtr ), pitchDataList( pitchDbPtr ),
       encRollDataList( encRollDbPtr ), encPitchDataList( encPitchDbPtr ),
-      timeList( timeVectPtr ), serialName( sName )
-{
-}
+      timeList( timeVectPtr ), serialName( sName ) {}
 
 SerialLink::~SerialLink()
 {
@@ -26,14 +24,30 @@ SerialLink::~SerialLink()
 
 void SerialLink::stopLink()
 {
-    processMotorStopCommand();
-    processDataStopCommand();
+    qDebug() << "Stop link signal emmited";
+    processDisconnectCommand();
     isRunning = false;
+}
+
+bool SerialLink::makeLinkToPort()
+{
+    serial = new QSerialPort( serialName );
+    serial->setBaudRate( serialSpeed );
+    serial->setDataBits( QSerialPort::Data8 );
+    serial->setParity( QSerialPort::NoParity );
+    serial->setStopBits( QSerialPort::OneStop );
+    serial->setFlowControl( QSerialPort::NoFlowControl );
+
+    if ( serial->open( QIODevice::ReadWrite ) )
+        return( true );
+
+    emit error( "Failed to connect to serial port: " + serial->portName(), serial->error() );
+    return( false );
 }
 
 void SerialLink::process()
 {
-    if ( makeLinkToPort() && processConnectionCommand() )
+    if ( makeLinkToPort() && processConnectCommand() )
     {
         emit sendConnectionState( true );
         isRunning = true;
@@ -70,9 +84,7 @@ void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
         qDebug() << "Send command to start motors with speed " +
                     QString::number(speed);
         result = processMotorStartCommand(speed);
-    }
-    else
-    {
+    } else {
         qDebug() << "Send command to stop motors";
         result = processMotorStopCommand();
     }
@@ -97,10 +109,10 @@ void SerialLink::clearDataBase()
     timeList->clear();
 }
 
-bool SerialLink::processConnectionCommand()
+bool SerialLink::processConnectCommand()
 {
-    if ( serial->isOpen() )
-        serial->clear();
+//    if ( serial->isOpen() )
+//        serial->clear();
 
     QByteArray command;
     command.append(COMMAND_PREFIX);
@@ -113,6 +125,24 @@ bool SerialLink::processConnectionCommand()
     serial->flush();
 
     return( waitForResponse() );
+}
+
+bool SerialLink::processDisconnectCommand()
+{
+//    if ( serial->isOpen() )
+//        serial->clear();
+
+    qDebug() << "Send disconnect cmd";
+    QByteArray command;
+    command.append(COMMAND_PREFIX);
+    command.append(CMD_DISCONNECT_CODE);
+    if ( serial->write( command ) < 0 ) {
+        emit error( "Failed to send disconnection command", serial->error() );
+        return( false );
+    }
+    serial->flush();
+
+    return( true );
 }
 
 bool SerialLink::processDataStartCommand()
@@ -252,7 +282,7 @@ void SerialLink::parseDataFrame(QByteArray &frame)
              << buffer.motor1_power << "\t" << buffer.motor2_power << "\t"
              << buffer.motor3_power << "\t" << buffer.motor4_power;
 
-    sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
+    emit sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
 
     rollDataList->push_back( buffer.rollAngle/ANGLE_COEFFICIENT );
     pitchDataList->push_back( buffer.pitchAngle/ANGLE_COEFFICIENT );
@@ -281,27 +311,6 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     }
     else
         emit dataReceived();
-}
-
-bool SerialLink::makeLinkToPort()
-{
-    initLink();
-    if ( serial->open( QIODevice::ReadWrite ) )
-        return( true );
-
-    emit error( "Failed to connect to serial port: " + serial->portName(), serial->error() );
-    return( false );
-}
-
-int SerialLink::initLink()
-{
-    serial = new QSerialPort( serialName );
-    serial->setBaudRate( serialSpeed );
-    serial->setDataBits( QSerialPort::Data8 );
-    serial->setParity( QSerialPort::NoParity );
-    serial->setStopBits( QSerialPort::OneStop );
-    serial->setFlowControl( QSerialPort::NoFlowControl );
-    return( 0 );
 }
 
 quint8 SerialLink::receiveFrameHead()
