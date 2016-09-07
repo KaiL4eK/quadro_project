@@ -38,6 +38,7 @@
       <itemPath>file_io.c</itemPath>
       <itemPath>error.c</itemPath>
       <itemPath>command_processor.c</itemPath>
+      <itemPath>mpu6050_DMP.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

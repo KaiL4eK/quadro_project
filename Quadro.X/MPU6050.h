@@ -53,7 +53,7 @@ void mpu6050_set_interrupt_data_rdy_bit ( uint8_t value );
 void mpu6050_set_sample_rate_divider ( uint8_t value );
 
 uint8_t mpu6050_get_id ( void );
-
+void mpu6050_reset ( void );
 void mpu6050_calibration ( void );
 
 int16_t MPU6050_getXAccelOffset ( void );
@@ -68,6 +68,26 @@ int16_t MPU6050_getYGyroOffset ( void );
 void mpu6050_setYGyroOffset ( int16_t offset );
 int16_t MPU6050_getZGyroOffset ( void );
 void mpu6050_setZGyroOffset ( int16_t offset );
+
+// DMP
+
+bool mpu6050_dmpPacketAvailable();
+uint8_t mpu6050_dmpInitialize();
+
+typedef struct
+{
+    float w;
+    float x;
+    float y;
+    float z;
+}quaternion_t;
+
+typedef struct
+{
+    float roll;
+    float pitch;
+    float yaw;
+}euler_angles_t;
 
 #endif	/* MPU6050_H_ */
 

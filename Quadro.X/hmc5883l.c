@@ -118,7 +118,7 @@ int8_t hmc5883l_receive_mag_raw_data ( void )
         return( -1 );
     }
     
-    if ( i2c_read_bytes_eeprom( HMC5883_ADDRESS, HMC5883_REGISTER_MAG_OUT_X_H_M, (uint8_t *)(&raw_magnetic), 6 ) != 0 )
+    if ( i2c_read_bytes_eeprom( HMC5883_ADDRESS, HMC5883_REGISTER_MAG_OUT_X_H_M, 6, (uint8_t *)(&raw_magnetic) ) != 0 )
     {
         return( -1 );
     }
