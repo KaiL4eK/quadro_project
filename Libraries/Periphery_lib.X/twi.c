@@ -117,14 +117,11 @@ inline int8_t i2c_receive_bytes(uint8_t *str, uint8_t length)
 
 int i2c_write_bytes_eeprom( uint8_t slave_addr, uint8_t eeprom_addr, uint8_t size, uint8_t *data_buffer )
 {
-    uint16_t i = 0;
-    
     i2c_start();
-    i2c_send_byte( slave_addr << 1 );
+    i2c_send_byte( slave_addr << 1 | 0x0 );
     i2c_send_byte( eeprom_addr );
     
-    for ( i = 0; i < size; i++ )
-        i2c_send_byte( data_buffer[i] );
+    i2c_send_bytes( data_buffer, size );
    
     i2c_stop();
     return( 0 );

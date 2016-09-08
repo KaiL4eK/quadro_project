@@ -20,12 +20,10 @@ int main(void) {
     UART_write_string( UARTm1, "Start mpu_init\n" );
     
 //    mpu6050_init();
-    
-    if ( mpu6050_dmpInitialize() ) {
-        while( 1 ) {
-            UART_write_string( UARTm1, "Initialization failed\n" );
-            delay_ms( 100 );
-        }
+    int result = 0;
+    if ( (result = mpu6050_dmpInitialize()) ) {
+        UART_write_string( UARTm1, "Initialization failed: %d\n", result );
+        while( 1 );
     }
     
     UART_write_string( UARTm1, "Initialized!\n" );

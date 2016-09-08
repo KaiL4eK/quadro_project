@@ -10,42 +10,40 @@
 #include "MPU6050.h"
 
 // Teensy 3.0 library conditional PROGMEM code from Paul Stoffregen
-#ifndef __PGMSPACE_H_
-    #include <stdint.h>
+#include <stdint.h>
 
-    #define PROGMEM
-    #define PGM_P  const char *
-    #define PSTR(str) (str)
-    #define F(x) x
+#define PROGMEM
+//#define PGM_P  const char *
+//#define PSTR(str) (str)
+#define F(x) x
+//
+//typedef void prog_void;
+//typedef char prog_char;
+//typedef unsigned char prog_uchar;
+//typedef int8_t prog_int8_t;
+//typedef uint8_t prog_uint8_t;
+//typedef int16_t prog_int16_t;
+//typedef uint16_t prog_uint16_t;
+//typedef int32_t prog_int32_t;
+//typedef uint32_t prog_uint32_t;
+//
+//#define strcpy_P(dest, src) strcpy((dest), (src))
+//#define strcat_P(dest, src) strcat((dest), (src))
+//#define strcmp_P(a, b) strcmp((a), (b))
 
-    typedef void prog_void;
-    typedef char prog_char;
-    typedef unsigned char prog_uchar;
-    typedef int8_t prog_int8_t;
-    typedef uint8_t prog_uint8_t;
-    typedef int16_t prog_int16_t;
-    typedef uint16_t prog_uint16_t;
-    typedef int32_t prog_int32_t;
-    typedef uint32_t prog_uint32_t;
+#define pgm_read_byte(addr) (*(const uint8_t *)(addr))
+#define pgm_read_word(addr) (*(const uint16_t *)(addr))
+#define pgm_read_dword(addr) (*(const uint32_t *)(addr))
+#define pgm_read_float(addr) (*(const float *)(addr))
 
-    #define strcpy_P(dest, src) strcpy((dest), (src))
-    #define strcat_P(dest, src) strcat((dest), (src))
-    #define strcmp_P(a, b) strcmp((a), (b))
-
-    #define pgm_read_byte(addr) (*(const uint8_t *)(addr))
-    #define pgm_read_word(addr) (*(const uint16_t *)(addr))
-    #define pgm_read_dword(addr) (*(const uint32_t *)(addr))
-    #define pgm_read_float(addr) (*(const float *)(addr))
-
-    #define pgm_read_byte_near(addr) pgm_read_byte(addr)
-    #define pgm_read_word_near(addr) pgm_read_word(addr)
-    #define pgm_read_dword_near(addr) pgm_read_dword(addr)
-    #define pgm_read_float_near(addr) pgm_read_float(addr)
-    #define pgm_read_byte_far(addr) pgm_read_byte(addr)
-    #define pgm_read_word_far(addr) pgm_read_word(addr)
-    #define pgm_read_dword_far(addr) pgm_read_dword(addr)
-    #define pgm_read_float_far(addr) pgm_read_float(addr)
-#endif
+//#define pgm_read_byte_near(addr) pgm_read_byte(addr)
+//#define pgm_read_word_near(addr) pgm_read_word(addr)
+//#define pgm_read_dword_near(addr) pgm_read_dword(addr)
+//#define pgm_read_float_near(addr) pgm_read_float(addr)
+//#define pgm_read_byte_far(addr) pgm_read_byte(addr)
+//#define pgm_read_word_far(addr) pgm_read_word(addr)
+//#define pgm_read_dword_far(addr) pgm_read_dword(addr)
+//#define pgm_read_float_far(addr) pgm_read_float(addr)
 
 #ifdef DEBUG
     #define DEBUG_PRINT(x) Serial.print(x)
@@ -326,21 +324,27 @@ bool mpu6050_writeMemoryBlock( const uint8_t *data, uint16_t dataSize, uint8_t b
     uint8_t *progBuffer     = NULL;
     uint16_t i;
     uint8_t j;
-    if (verify) verifyBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
-    if (useProgMem) progBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
+
+    if (verify) 
+        verifyBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
+    if (useProgMem) 
+        progBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
     for (i = 0; i < dataSize;) {
         // determine correct chunk size according to bank position and data size
         chunkSize = MPU6050_DMP_MEMORY_CHUNK_SIZE;
 
         // make sure we don't go past the data size
-        if (i + chunkSize > dataSize) chunkSize = dataSize - i;
+        if (i + chunkSize > dataSize) 
+            chunkSize = dataSize - i;
 
         // make sure this chunk doesn't go past the bank boundary (256 bytes)
-        if (chunkSize > 256 - address) chunkSize = 256 - address;
+        if (chunkSize > 256 - address) 
+            chunkSize = 256 - address;
         
         if (useProgMem) {
             // write the chunk of data as specified
-            for (j = 0; j < chunkSize; j++) progBuffer[j] = pgm_read_byte(data + i + j);
+            for (j = 0; j < chunkSize; j++) 
+                progBuffer[j] = pgm_read_byte(data + i + j) ;
         } else {
             // write the chunk of data as specified
             progBuffer = (uint8_t *)data + i;
@@ -352,25 +356,20 @@ bool mpu6050_writeMemoryBlock( const uint8_t *data, uint16_t dataSize, uint8_t b
         if (verify && verifyBuffer) {
             mpu6050_set_memory_bank(bank, false, false);
             mpu6050_set_memory_start_address(address);
+            
             i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_MEM_R_W, chunkSize, verifyBuffer);
+            
             if (memcmp(progBuffer, verifyBuffer, chunkSize) != 0) {
-                /*Serial.print("Block write verification error, bank ");
-                Serial.print(bank, DEC);
-                Serial.print(", address ");
-                Serial.print(address, DEC);
-                Serial.print("!\nExpected:");
+                UART_write_string( UARTm1, "Block write verification error, bank %d, address %d!\n", bank, address );
+                UART_write_string( UARTm1, "Expected:" );
+                for (j = 0; j < chunkSize; j++)
+                    UART_write_string( UARTm1, " 0x%x", progBuffer[j] );
+
+                UART_write_string( UARTm1, "\nReceived:" );
                 for (j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (progBuffer[j] < 16) Serial.print("0");
-                    Serial.print(progBuffer[j], HEX);
+                    UART_write_string( UARTm1, " 0x%x", verifyBuffer[i + j] );
                 }
-                Serial.print("\nReceived:");
-                for (uint8_t j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (verifyBuffer[i + j] < 16) Serial.print("0");
-                    Serial.print(verifyBuffer[i + j], HEX);
-                }
-                Serial.print("\n");*/
+                UART_write_string( UARTm1, "\n" );
                 free(verifyBuffer);
                 if (useProgMem) 
                     free(progBuffer);
@@ -386,7 +385,8 @@ bool mpu6050_writeMemoryBlock( const uint8_t *data, uint16_t dataSize, uint8_t b
 
         // if we aren't done, update bank (if necessary) and address
         if (i < dataSize) {
-            if (address == 0) bank++;
+            if (address == 0) 
+                bank++;
             mpu6050_set_memory_bank(bank, false, false);
             mpu6050_set_memory_start_address(address);
         }
@@ -641,31 +641,31 @@ void mpu6050_resetI2CMaster() {
 uint8_t mpu6050_dmpInitialize() 
 {
     // reset device
-    DEBUG_PRINTLN(F("\n\nResetting MPU6050..."));
+    DEBUG_PRINTLN("\n\nResetting MPU6050...");
     mpu6050_reset();
     delay_ms(300); // wait after reset
 
     // enable sleep mode and wake cycle
-    /*Serial.println(F("Enabling sleep mode..."));
+    /*Serial.println"Enabling sleep mode...");
     setSleepEnabled(true);
-    Serial.println(F("Enabling wake cycle..."));
+    Serial.println("Enabling wake cycle...");
     setWakeCycleEnabled(true);*/
 
     // disable sleep mode
-    DEBUG_PRINTLN(F("Disabling sleep mode..."));
+    DEBUG_PRINTLN("Disabling sleep mode...");
     mpu6050_set_sleep_bit( 0 );
 
     // get MPU hardware revision
-    DEBUG_PRINTLN(F("Selecting user bank 16..."));
+    DEBUG_PRINTLN("Selecting user bank 16...");
     mpu6050_set_memory_bank( 0x10, true, true );
-    DEBUG_PRINTLN(F("Selecting memory byte 6..."));
+    DEBUG_PRINTLN("Selecting memory byte 6...");
     mpu6050_set_memory_start_address( 0x06 );
-    DEBUG_PRINTLN(F("Checking hardware revision..."));
 #if 0
+    DEBUG_PRINTLN("Checking hardware revision...");
     uint8_t hwRevision = mpu6050_read_memory_byte();
-    DEBUG_PRINT(F("Revision @ user[16][6] = "));
-    DEBUG_PRINTLNF(hwRevision, HEX);
-    DEBUG_PRINTLN(F("Resetting memory bank selection to 0..."));
+    DEBUG_PRINT"Revision @ user[16][6] = ");
+    DEBUG_PRINTLN(hwRevision, HEX);
+    DEBUG_PRINTLN("Resetting memory bank selection to 0...");
 #endif
     mpu6050_set_memory_bank(0, false, false);
 #if 0
@@ -674,12 +674,13 @@ uint8_t mpu6050_dmpInitialize()
     uint8_t otpValid = mpu6050_getOTPBankValid();
     DEBUG_PRINT(F("OTP bank is "));
     DEBUG_PRINTLN(otpValid ? F("valid!") : F("invalid!"));
-#endif
+
     // get X/Y/Z gyro offsets
-    DEBUG_PRINTLN(F("Reading gyro offset TC values..."));
+    DEBUG_PRINTLN("Reading gyro offset TC values...");
     int8_t xgOffsetTC = mpu6050_getXGyroOffsetTC();
     int8_t ygOffsetTC = mpu6050_getYGyroOffsetTC();
     int8_t zgOffsetTC = mpu6050_getZGyroOffsetTC();
+    UART_write_string( UARTm1, "Read offset\n" );
 //    DEBUG_PRINT(F("X gyro offset = "));
 //    DEBUG_PRINTLN(xgOffsetTC);
 //    DEBUG_PRINT(F("Y gyro offset = "));
@@ -688,7 +689,7 @@ uint8_t mpu6050_dmpInitialize()
 //    DEBUG_PRINTLN(zgOffsetTC);
 
     // setup weird slave stuff (?)
-#if 0
+
     DEBUG_PRINTLN(F("Setting slave 0 address to 0x7F..."));
     mpu6050_setSlaveAddress(0, 0x7F);
     DEBUG_PRINTLN(F("Disabling I2C Master mode..."));
@@ -708,55 +709,55 @@ uint8_t mpu6050_dmpInitialize()
         if (mpu6050_writeProgDMPConfigurationSet(dmpConfig, MPU6050_DMP_CONFIG_SIZE)) {
             UART_write_string( UARTm1, "Success! DMP configuration written and verified." );
 
-            DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
+            DEBUG_PRINTLN("Setting clock source to Z Gyro...");
             mpu6050_set_clock_source(MPU6050_CLOCK_PLL_ZGYRO);
 
-            DEBUG_PRINTLN(F("Setting DMP and FIFO_OFLOW interrupts enabled..."));
+            DEBUG_PRINTLN("Setting DMP and FIFO_OFLOW interrupts enabled...");
             mpu6050_setIntEnabled(0x12);
 
-            DEBUG_PRINTLN(F("Setting sample rate to 20Hz..."));
+            DEBUG_PRINTLN("Setting sample rate to 20Hz...");
             mpu6050_set_sample_rate_divider( 4 ); // 1khz / (1 + 4) = 200 Hz
 
-            DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
+            DEBUG_PRINTLN("Setting external frame sync to TEMP_OUT_L[0]...");
             mpu6050_setExternalFrameSync( MPU6050_EXT_SYNC_TEMP_OUT_L );
 
-            DEBUG_PRINTLN(F("Setting DLPF bandwidth to 42Hz..."));
+            DEBUG_PRINTLN("Setting DLPF bandwidth to 42Hz...");
             mpu6050_set_DLPF( MPU6050_DLPF_BW_42 );
 
-            DEBUG_PRINTLN(F("Setting gyro sensitivity to +/- 2000 deg/sec..."));
+            DEBUG_PRINTLN("Setting gyro sensitivity to +/- 2000 deg/sec...");
             mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_2000 );
 
-            DEBUG_PRINTLN(F("Setting DMP configuration bytes (function unknown)..."));
+            DEBUG_PRINTLN("Setting DMP configuration bytes (function unknown)...");
             mpu6050_setDMPConfig1(0x03);
             mpu6050_setDMPConfig2(0x00);
 
-            DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
+            DEBUG_PRINTLN("Clearing OTP Bank flag...");
             mpu6050_setOTPBankValid(false);
-
-            DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
+#if 0
+            DEBUG_PRINTLN("Setting X/Y/Z gyro offset TCs to previous values...");
             mpu6050_setXGyroOffsetTC(xgOffsetTC);
             mpu6050_setYGyroOffsetTC(ygOffsetTC);
             mpu6050_setZGyroOffsetTC(zgOffsetTC);
-
+#endif
             //DEBUG_PRINTLN(F("Setting X/Y/Z gyro user offsets to zero..."));
             //setXGyroOffset(0);
             //setYGyroOffset(0);
             //setZGyroOffset(0);
 
-            DEBUG_PRINTLN(F("Writing final memory update 1/7 (function unknown)..."));
+            DEBUG_PRINTLN("Writing final memory update 1/7 (function unknown)...");
             uint8_t dmpUpdate[16], j;
             uint16_t pos = 0;
             for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
             mpu6050_writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1], true, false);
 
-            DEBUG_PRINTLN(F("Writing final memory update 2/7 (function unknown)..."));
+            DEBUG_PRINTLN("Writing final memory update 2/7 (function unknown)...");
             for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
             mpu6050_writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1], true, false);
 
-            DEBUG_PRINTLN(F("Resetting FIFO..."));
+            DEBUG_PRINTLN("Resetting FIFO...");
             mpu6050_resetFIFO();
 
-            DEBUG_PRINTLN(F("Reading FIFO count..."));
+            DEBUG_PRINTLN("Reading FIFO count...");
             uint16_t fifoCount = mpu6050_getFIFOCount();
             uint8_t fifoBuffer[128];
 
@@ -775,27 +776,27 @@ uint8_t mpu6050_dmpInitialize()
             DEBUG_PRINTLN(F("Setting zero-motion detection duration to 0..."));
             setZeroMotionDetectionDuration(0);
 #endif
-            DEBUG_PRINTLN(F("Resetting FIFO..."));
+            DEBUG_PRINTLN("Resetting FIFO...");
             mpu6050_resetFIFO();
 
-            DEBUG_PRINTLN(F("Enabling FIFO..."));
+            DEBUG_PRINTLN("Enabling FIFO...");
             mpu6050_setFIFOEnabled(true);
 
-            DEBUG_PRINTLN(F("Enabling DMP..."));
+            DEBUG_PRINTLN("Enabling DMP...");
             mpu6050_setDMPEnabled(true);
 
-            DEBUG_PRINTLN(F("Resetting DMP..."));
+            DEBUG_PRINTLN("Resetting DMP...");
             mpu6050_resetDMP();
 
-            DEBUG_PRINTLN(F("Writing final memory update 3/7 (function unknown)..."));
+            DEBUG_PRINTLN("Writing final memory update 3/7 (function unknown)...");
             for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
             mpu6050_writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1], true, false);
 
-            DEBUG_PRINTLN(F("Writing final memory update 4/7 (function unknown)..."));
+            DEBUG_PRINTLN("Writing final memory update 4/7 (function unknown)...");
             for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
             mpu6050_writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1], true, false);
 
-            DEBUG_PRINTLN(F("Writing final memory update 5/7 (function unknown)..."));
+            DEBUG_PRINTLN("Writing final memory update 5/7 (function unknown)...");
             for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
             mpu6050_writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1], true, false);
 
