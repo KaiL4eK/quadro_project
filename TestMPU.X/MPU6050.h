@@ -9,6 +9,7 @@
 #include <string.h>
 #include <xc.h>
 #include "per_proto.h"
+#include "MPU6050_regs.h"
 
 typedef union
 {
@@ -55,6 +56,7 @@ void mpu6050_set_sample_rate_divider ( uint8_t value );
 uint8_t mpu6050_get_id ( void );
 void mpu6050_reset ( void );
 void mpu6050_calibration ( void );
+bool mpu6050_test_connection( void );
 
 int16_t MPU6050_getXAccelOffset ( void );
 void mpu6050_setXAccelOffset ( int16_t offset );
@@ -72,7 +74,7 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 // DMP
 
 bool mpu6050_dmpPacketAvailable();
-uint8_t mpu6050_dmpInitialize();
+int mpu6050_dmpInitialize();
 
 typedef struct
 {

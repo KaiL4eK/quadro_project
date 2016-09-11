@@ -117,11 +117,16 @@ inline int8_t i2c_receive_bytes(uint8_t *str, uint8_t length)
 
 int i2c_write_bytes_eeprom( uint8_t slave_addr, uint8_t eeprom_addr, uint8_t size, uint8_t *data_buffer )
 {
+    if ( !size )
+        return( 0 );
+    
     i2c_start();
     i2c_send_byte( slave_addr << 1 | 0x0 );
     i2c_send_byte( eeprom_addr );
     
-    i2c_send_bytes( data_buffer, size );
+    if ( i2c_send_bytes( data_buffer, size ) ) {
+        UART_write_string( UARTm1, "Error sending from %s\n", __FUNCTION__ );
+    }
    
     i2c_stop();
     return( 0 );
@@ -154,6 +159,9 @@ int i2c_write_word_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint16_t data
 
 int i2c_read_bytes_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t lenght, uint8_t *data)
 {
+    if ( !lenght )
+        return( 0 );
+    
     i2c_start();                    //Generate Start Condition
     if ( i2c_send_byte( slave_addr << 1 ) != 0 )        //Write Control Byte
     {
@@ -211,6 +219,9 @@ int i2c_write_bit_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint8_t bit_st
 
 uint8_t i2c_read_bits_eeprom( uint8_t slave_addr, uint8_t eeprom_addr, uint8_t bit_start, uint8_t length )
 {
+    if ( !length )
+        return( 0 );
+    
     uint8_t mask = (1 << length) - 1;
     return( (i2c_read_byte_eeprom( slave_addr, eeprom_addr ) >> (bit_start - length + 1)) & mask );
 }

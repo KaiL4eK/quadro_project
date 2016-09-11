@@ -8,6 +8,7 @@
       <itemPath>per_proto.h</itemPath>
       <itemPath>MPU6050.h</itemPath>
       <itemPath>MPU6050_regs.h</itemPath>
+      <itemPath>mpu6050_dmp.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -162,7 +163,7 @@
         <property key="general-code-protect" value="no_code_protect"/>
         <property key="general-write-protect" value="no_write_protect"/>
         <property key="generate-cross-reference-file" value="false"/>
-        <property key="heap-size" value="1024"/>
+        <property key="heap-size" value=""/>
         <property key="input-libraries" value=""/>
         <property key="linker-stack" value="true"/>
         <property key="linker-symbols" value=""/>
@@ -277,7 +278,7 @@
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="3.0"/>
+        <property key="voltagevalue" value="3.5"/>
       </PICkit3PlatformTool>
     </conf>
   </confs>
