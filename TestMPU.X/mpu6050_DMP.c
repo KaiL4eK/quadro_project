@@ -314,6 +314,22 @@ void mpu6050_resetI2CMaster() {
     i2c_write_bit_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_I2C_MST_RESET_BIT, true);
 }
 
+void mpu6050_setMotionDetectionThreshold(uint8_t threshold) {
+    i2c_write_byte_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_MOT_THR, threshold);
+}
+
+void mpu6050_setMotionDetectionDuration(uint8_t duration) {
+    i2c_write_byte_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_MOT_DUR, duration);
+}
+
+void mpu6050_setZeroMotionDetectionThreshold(uint8_t threshold) {
+    i2c_write_byte_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZRMOT_THR, threshold);
+}
+
+void mpu6050_setZeroMotionDetectionDuration(uint8_t duration) {
+    i2c_write_byte_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_ZRMOT_DUR, duration);
+}
+
 int mpu6050_dmpInitialize() 
 {
     // reset device
@@ -333,7 +349,7 @@ int mpu6050_dmpInitialize()
     // disable sleep mode
     DEBUG_PRINTLN("Disabling sleep mode...");
     mpu6050_set_sleep_bit( 0 );
-#if 0
+
     // get MPU hardware revision
     DEBUG_PRINTLN("Selecting user bank 16...");
     mpu6050_set_memory_bank( 0x10, true, true );
@@ -342,24 +358,24 @@ int mpu6050_dmpInitialize()
 
     DEBUG_PRINTLN("Checking hardware revision...");
     uint8_t hwRevision = mpu6050_read_memory_byte();
-    DEBUG_PRINT"Revision @ user[16][6] = ");
-    DEBUG_PRINTLN(hwRevision, HEX);
+    DEBUG_PRINT("Revision @ user[16][6] = ");
+    DEBUG_PRINTLN(hwRevision);
     DEBUG_PRINTLN("Resetting memory bank selection to 0...");
 
     mpu6050_set_memory_bank(0, false, false);
     
     // check OTP bank valid
-    DEBUG_PRINTLN("Reading OTP bank valid flag..."));
+    DEBUG_PRINTLN("Reading OTP bank valid flag...");
     uint8_t otpValid = mpu6050_getOTPBankValid();
-    DEBUG_PRINT("OTP bank is "));
+    DEBUG_PRINT("OTP bank is ");
     DEBUG_PRINTLN(otpValid ? ("valid!") : ("invalid!"));
 
     // get X/Y/Z gyro offsets
-    DEBUG_PRINTLN("Reading gyro offset TC values...");
-    int8_t xgOffsetTC = mpu6050_getXGyroOffsetTC();
-    int8_t ygOffsetTC = mpu6050_getYGyroOffsetTC();
-    int8_t zgOffsetTC = mpu6050_getZGyroOffsetTC();
-    UART_write_string( UARTm1, "Read offset\n" );
+//    DEBUG_PRINTLN("Reading gyro offset TC values...");
+//    int8_t xgOffsetTC = mpu6050_getXGyroOffsetTC();
+//    int8_t ygOffsetTC = mpu6050_getYGyroOffsetTC();
+//    int8_t zgOffsetTC = mpu6050_getZGyroOffsetTC();
+//    UART_write_string( UARTm1, "Read offset\n" );
 
     DEBUG_PRINTLN("Setting slave 0 address to 0x7F...");
     mpu6050_setSlaveAddress(0, 0x7F);
@@ -369,7 +385,7 @@ int mpu6050_dmpInitialize()
     mpu6050_setSlaveAddress(0, 0x68);
     DEBUG_PRINTLN("Resetting I2C Master control...");
     mpu6050_resetI2CMaster();
-#endif
+
     delay_ms( 20 );
 
     // load DMP code into memory banks
@@ -464,18 +480,18 @@ int mpu6050_dmpInitialize()
 
             UART_write_string( UARTm1, "Current FIFO count = %d\n", fifoCount );
             mpu6050_getFIFOBytes(fifoBuffer, fifoCount);
-#if 0
+#if 1
             DEBUG_PRINTLN("Setting motion detection threshold to 2...");
-            setMotionDetectionThreshold(2);
+            mpu6050_setMotionDetectionThreshold(2);
 
             DEBUG_PRINTLN("Setting zero-motion detection threshold to 156...");
-            setZeroMotionDetectionThreshold(156);
+            mpu6050_setZeroMotionDetectionThreshold(156);
 
             DEBUG_PRINTLN("Setting motion detection duration to 80...");
-            setMotionDetectionDuration(80);
+            mpu6050_setMotionDetectionDuration(80);
 
             DEBUG_PRINTLN("Setting zero-motion detection duration to 0...");
-            setZeroMotionDetectionDuration(0);
+            mpu6050_setZeroMotionDetectionDuration(0);
 #endif
             DEBUG_PRINTLN("Resetting FIFO...");
             mpu6050_resetFIFO();
@@ -588,13 +604,13 @@ int mpu6050_dmpInitialize()
         return 1; // main binary block loading failed
     }
     
-//    mpu6050_setXAccelOffset(-3473);
-//    mpu6050_setYAccelOffset(-2891);
-//    mpu6050_setZAccelOffset(1822);
-//    
-//    mpu6050_setXGyroOffset(49);
-//    mpu6050_setYGyroOffset(-60);
-//    mpu6050_setZGyroOffset(-14);
+    mpu6050_setXAccelOffset(-3594);
+    mpu6050_setYAccelOffset(-5370);
+    mpu6050_setZAccelOffset(1813);
+    
+    mpu6050_setXGyroOffset(142);
+    mpu6050_setYGyroOffset(-22);
+    mpu6050_setZGyroOffset(-19);
     
     mpu6050_setDMPEnabled( true );
     
@@ -622,8 +638,8 @@ int mpu6050_dmpGetEuler(euler_angles_t *a)
     q->y = (float)qI[2] / 16384.0f;
     q->z = (float)qI[3] / 16384.0f;
 #define RADS_TO_DEGREE_C 57.295779f
-    a->yaw = RADS_TO_DEGREE_C * atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w * q->w + 2 * q->x * q->x - 1);  // psi
-    a->pitch = RADS_TO_DEGREE_C * -asin(2 * q->x * q->z + 2 * q->w * q->y);                                         // theta
+    a->pitch = RADS_TO_DEGREE_C * atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w * q->w + 2 * q->x * q->x - 1);  // psi
+    a->yaw = RADS_TO_DEGREE_C * -asin(2 * q->x * q->z + 2 * q->w * q->y);                                         // theta
     a->roll = RADS_TO_DEGREE_C * atan2(2 * q->y * q->z - 2 * q->w * q->x, 2 * q->w * q->w + 2 * q->z * q->z - 1);  // phi
     
     
