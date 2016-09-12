@@ -91,5 +91,7 @@ typedef struct
     float yaw;
 }euler_angles_t;
 
+int mpu6050_dmpGetEuler(euler_angles_t *a);
+
 #endif	/* MPU6050_H_ */
 

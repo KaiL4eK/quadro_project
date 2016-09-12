@@ -30,7 +30,7 @@
 #endif
 
 static uint8_t dmpPacketSize = 42;
-static uint8_t fifo_buffer[42];
+static uint8_t fifo_buffer[255];
     
 /* ================================================================================================ *
  | Default MotionApps v2.0 42-byte FIFO packet structure:                                           |
@@ -160,7 +160,7 @@ bool mpu6050_writeMemoryBlock( uint8_t *data, uint16_t dataSize, uint8_t bank, u
 bool mpu6050_writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize) {
     uint8_t *progBuffer = NULL, 
             success = 0;
-    uint16_t i, j;
+    uint16_t i;
 
     // config set data is a long string of blocks with the following structure:
     // [bank] [offset] [length] [byte[0], byte[1], ..., byte[length]]
@@ -449,7 +449,6 @@ int mpu6050_dmpInitialize()
             uint16_t    pos = 0;
             
             uint16_t fifoCount = 0;
-            uint8_t fifoBuffer[128];
             
             p_dmp_update        = (uint8_t *)&dmpUpdates[pos];
             dmp_update_bank     = p_dmp_update[0];
@@ -479,7 +478,7 @@ int mpu6050_dmpInitialize()
             fifoCount = mpu6050_getFIFOCount();
 
             UART_write_string( UARTm1, "Current FIFO count = %d\n", fifoCount );
-            mpu6050_getFIFOBytes(fifoBuffer, fifoCount);
+            mpu6050_getFIFOBytes(fifo_buffer, fifoCount);
 #if 1
             DEBUG_PRINTLN("Setting motion detection threshold to 2...");
             mpu6050_setMotionDetectionThreshold(2);
@@ -543,7 +542,7 @@ int mpu6050_dmpInitialize()
 
             UART_write_string( UARTm1, "Current FIFO count = %d\n", fifoCount );
             DEBUG_PRINTLN("Reading FIFO data...");
-            mpu6050_getFIFOBytes(fifoBuffer, fifoCount);
+            mpu6050_getFIFOBytes(fifo_buffer, fifoCount);
 
             DEBUG_PRINTLN("Reading interrupt status...");
             uint8_t mpuIntStatus = mpu6050_getIntStatus();
@@ -568,7 +567,7 @@ int mpu6050_dmpInitialize()
             DEBUG_PRINTLN(fifoCount);
 
             DEBUG_PRINTLN("Reading FIFO data...");
-            mpu6050_getFIFOBytes(fifoBuffer, fifoCount);
+            mpu6050_getFIFOBytes(fifo_buffer, fifoCount);
 
             DEBUG_PRINTLN("Reading interrupt status...");
             mpuIntStatus = mpu6050_getIntStatus();
@@ -604,8 +603,8 @@ int mpu6050_dmpInitialize()
         return 1; // main binary block loading failed
     }
     
-    mpu6050_setXAccelOffset(-3594);
-    mpu6050_setYAccelOffset(-5370);
+//    mpu6050_setXAccelOffset(-3594);
+//    mpu6050_setYAccelOffset(-5370);
     mpu6050_setZAccelOffset(1813);
     
     mpu6050_setXGyroOffset(142);
@@ -625,7 +624,7 @@ int mpu6050_dmpGetEuler(euler_angles_t *a)
 {
     quaternion_t internal_data;
     quaternion_t *q = &internal_data;
-    mpu6050_getFIFOBytes(fifo_buffer, sizeof( fifo_buffer ));
+    mpu6050_getFIFOBytes(fifo_buffer, dmpPacketSize);
     
     int16_t qI[4];
     qI[0] = ((fifo_buffer[0] << 8) + fifo_buffer[1]);
