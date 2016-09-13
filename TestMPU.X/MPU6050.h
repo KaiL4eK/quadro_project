@@ -9,6 +9,7 @@
 #include <string.h>
 #include <xc.h>
 #include "per_proto.h"
+#include "MPU6050_regs.h"
 
 typedef union
 {
@@ -55,6 +56,7 @@ void mpu6050_set_sample_rate_divider ( uint8_t value );
 uint8_t mpu6050_get_id ( void );
 void mpu6050_reset ( void );
 void mpu6050_calibration ( void );
+bool mpu6050_test_connection( void );
 
 uint16_t mpu6050_getFIFOCount();
 uint8_t mpu6050_getFIFOByte();
@@ -78,9 +80,10 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 // DMP
 
 bool mpu6050_dmpPacketAvailable();
-uint8_t mpu6050_dmpInitialize();
+
 int mpu6050_dmpInitialize_2( void );
 
+int mpu6050_dmpInitialize();
 
 typedef struct
 {
@@ -96,7 +99,6 @@ typedef struct
     float pitch;
     float yaw;
 }euler_angles_t;
-
 
 int mpu6050_dmpGetEuler(euler_angles_t *a);
 

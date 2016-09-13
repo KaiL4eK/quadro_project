@@ -19,27 +19,30 @@ int main(void) {
     delay_ms( 100 );
     UART_write_string( UARTm1, "/--------------------/\nStart mpu_init\n" );
     
-    if ( mpu6050_get_id() != 0x34 ) {
-        UART_write_string( UARTm1, "MPU not found\n" );
+    UART_write_string( UARTm1, "Start mpu_init\n" );
+#if 0
+    if ( !mpu6050_init() ) {
+        UART_write_string( UARTm1, "Initialization failed\n" );
         while( 1 );
-    } 
-    
-//    mpu6050_init();
+    }
+#else
     int result = 0;
-    if ( (result = mpu6050_dmpInitialize_2()) ) {
+    
+    delay_ms( 100 );
+    
+    if ( (result = mpu6050_dmpInitialize()) ) {
         UART_write_string( UARTm1, "Initialization failed: %d\n", result );
         while( 1 );
     }
-    
+#endif
     UART_write_string( UARTm1, "Initialized!\n" );
     
     euler_angles_t angles;
     
     while( 1 ) {
-//        UART_write_string( UARTm1, "FIFO count: %d\n", mpu6050_getFIFOCount() );
         if ( mpu6050_dmpPacketAvailable() ) {
-            if ( mpu6050_dmpGetEuler( &angles ) == 0 );
-                UART_write_string( UARTm1, "Angles: %.2f, %.2f, %.2f\n", angles.roll, angles.pitch, angles.yaw );
+            mpu6050_dmpGetEuler( &angles );
+            UART_write_string( UARTm1, "Angles: %.2f, %.2f, %.2f\n", angles.roll, angles.pitch, angles.yaw );
         }
 //        mpu6050_receive_gyro_accel_raw_data();
 //        send_UART_mpu6050_data( UARTm1 );

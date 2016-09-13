@@ -1,24 +1,12 @@
-#include "MPU6050_regs.h" 
 #include "MPU6050.h"
 
 static uint8_t              buffer[14];
 static bool                 initialized = false;
        gyro_accel_data_t    raw_gyr_acc;
 
-#define MAX_CONNECT_TRIES   100
-
 gyro_accel_data_t *mpu6050_init ( void )
 {
-    int     iTries      = 0;
-    bool    connected   = false;
-    
-    for ( iTries = 0; iTries < MAX_CONNECT_TRIES; iTries++ )
-        if ( mpu6050_get_id() == 0x34 ) {
-            connected = true;
-            break;
-        } 
-    
-    if ( !connected )
+    if ( !mpu6050_test_connection() )
         return( NULL );
 
     mpu6050_set_sleep_bit( 0 );
@@ -37,13 +25,13 @@ gyro_accel_data_t *mpu6050_init ( void )
 //    mpu6050_setYGyroOffset(-60);
 //    mpu6050_setZGyroOffset(-14);
     
-    mpu6050_setXAccelOffset(-3462);
-    mpu6050_setYAccelOffset(-5400);
-    mpu6050_setZAccelOffset(1828);
+    mpu6050_setXAccelOffset(-3594);
+    mpu6050_setYAccelOffset(-5370);
+    mpu6050_setZAccelOffset(1813);
     
-    mpu6050_setXGyroOffset(139);
-    mpu6050_setYGyroOffset(-24);
-    mpu6050_setZGyroOffset(-18);
+    mpu6050_setXGyroOffset(142);
+    mpu6050_setYGyroOffset(-22);
+    mpu6050_setZGyroOffset(-19);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
@@ -87,6 +75,24 @@ void send_UART_mpu6050_data ( UART_moduleNum_t mod )
 uint8_t mpu6050_get_id ( void )
 {
     return( i2c_read_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH ) );
+}
+
+#define MAX_CONNECT_TRIES   100
+
+bool mpu6050_test_connection( void )
+{
+    int     iTries      = 0;
+    bool    connected   = false;
+    
+    for ( iTries = 0; iTries < MAX_CONNECT_TRIES; iTries++ ) {
+        if ( (connected = (mpu6050_get_id() == 0x68)) )
+            break;
+        
+        mpu6050_reset();
+        delay_ms( 30 );
+    }
+    
+    return( connected );
 }
 
 void mpu6050_set_sleep_bit ( uint8_t value )
