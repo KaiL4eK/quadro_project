@@ -13,7 +13,7 @@ TARGET = DataProcessing
 TEMPLATE = app
 
 INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include \
-               ../Libraries/common
+               ../common
 
 LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -lqwt
 

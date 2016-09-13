@@ -25,4 +25,6 @@
 #define PARAMETER_PREFIX        '~'
 #define PARAM_MOTOR_POWER       'o'
 
+#define ANGLES_COEFF            100L        // each float is represented as integer *100 (2 decimals after point)
+
 #endif // SERIAL_PROTOCOL_H_

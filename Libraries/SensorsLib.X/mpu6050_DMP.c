@@ -1,15 +1,6 @@
-/*
- * File:   mpu6050_DMP.c
- * Author: alexey
- *
- * Created on September 7, 2016, 12:25 PM
- */
-
-
 #include "mpu6050_dmp.h" 
 #include "MPU6050.h"
 
-// Teensy 3.0 library conditional PROGMEM code from Paul Stoffregen
 #include <stdint.h>
 
 #ifdef DEBUG
@@ -388,17 +379,18 @@ int mpu6050_dmpInitialize()
             DEBUG_PRINTLN("Setting DMP and FIFO_OFLOW interrupts enabled...");
             mpu6050_setIntEnabled(0x12);
 
-            DEBUG_PRINTLN("Setting sample rate to 500Hz...");
+            DEBUG_PRINTLN("Setting sample rate to 250Hz...");
             mpu6050_set_sample_rate_divider( 1 ); // 1khz / (1 + 1) = 500 Hz
 
             DEBUG_PRINTLN("Setting external frame sync to TEMP_OUT_L[0]...");
             mpu6050_setExternalFrameSync( MPU6050_EXT_SYNC_TEMP_OUT_L );
 
-            DEBUG_PRINTLN("Setting DLPF bandwidth to 20Hz...");
-            mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
+            DEBUG_PRINTLN("Setting DLPF bandwidth to 42Hz...");
+            mpu6050_set_DLPF( MPU6050_DLPF_BW_42 );
 
             DEBUG_PRINTLN("Setting gyro sensitivity to +/- 2000 deg/sec...");
             mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_2000 );
+//            mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
 
             DEBUG_PRINTLN("Setting DMP configuration bytes (function unknown)...");
             mpu6050_setDMPConfig1(0x03);
@@ -520,11 +512,11 @@ int mpu6050_dmpInitialize()
     
 //    mpu6050_setXAccelOffset(-3594);
 //    mpu6050_setYAccelOffset(-5370);
-    mpu6050_setZAccelOffset(1813);
+    mpu6050_setZAccelOffset(1822);
     
-    mpu6050_setXGyroOffset(142);
-    mpu6050_setYGyroOffset(-22);
-    mpu6050_setZGyroOffset(-19);
+    mpu6050_setXGyroOffset(49);
+    mpu6050_setYGyroOffset(-60);
+    mpu6050_setZGyroOffset(-14);
     
     mpu6050_setDMPEnabled( true );
     
@@ -539,22 +531,38 @@ int mpu6050_dmpGetEuler(euler_angles_t *a)
 {
     quaternion_t internal_data;
     quaternion_t *q = &internal_data;
-    mpu6050_getFIFOBytes(fifo_buffer, dmpPacketSize);
+    mpu_fifo_frame_t *frame = ( mpu_fifo_frame_t * )fifo_buffer;
     
-    int16_t qI[4];
-    qI[0] = ((fifo_buffer[0] << 8) + fifo_buffer[1]);
-    qI[1] = ((fifo_buffer[4] << 8) + fifo_buffer[5]);
-    qI[2] = ((fifo_buffer[8] << 8) + fifo_buffer[9]);
-    qI[3] = ((fifo_buffer[12] << 8) + fifo_buffer[13]);
+    mpu6050_getFIFOBytes( fifo_buffer, dmpPacketSize );
+//
+//    int16_t qI[4];
+//    qI[0] = ((fifo_buffer[0] << 8) + fifo_buffer[1]);
+//    qI[1] = ((fifo_buffer[4] << 8) + fifo_buffer[5]);
+//    qI[2] = ((fifo_buffer[8] << 8) + fifo_buffer[9]);
+//    qI[3] = ((fifo_buffer[12] << 8) + fifo_buffer[13]);
+  
+    SWAP( frame->reg.quat_w[0], frame->reg.quat_w[1] );
+    SWAP( frame->reg.quat_x[0], frame->reg.quat_x[1] );
+    SWAP( frame->reg.quat_y[0], frame->reg.quat_y[1] );
+    SWAP( frame->reg.quat_z[0], frame->reg.quat_z[1] );
     
-    q->w = (float)qI[0] / 16384.0f;
-    q->x = (float)qI[1] / 16384.0f;
-    q->y = (float)qI[2] / 16384.0f;
-    q->z = (float)qI[3] / 16384.0f;
-#define RADS_TO_DEGREE_C 57.295779f
-    a->pitch = RADS_TO_DEGREE_C * atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w * q->w + 2 * q->x * q->x - 1);  // psi
-    a->yaw = RADS_TO_DEGREE_C * -asin(2 * q->x * q->z + 2 * q->w * q->y);                                         // theta
-    a->roll = RADS_TO_DEGREE_C * atan2(2 * q->y * q->z - 2 * q->w * q->x, 2 * q->w * q->w + 2 * q->z * q->z - 1);  // phi
+//    SWAP (frame->reg.x_accel[0], frame->reg.x_accel[1]);
+//    SWAP (frame->reg.y_accel[0], frame->reg.y_accel[1]);
+//    SWAP (frame->reg.z_accel[0], frame->reg.z_accel[1]);
+//    SWAP (frame->reg.x_gyro[0],  frame->reg.x_gyro[1]);
+//    SWAP (frame->reg.y_gyro[0],  frame->reg.y_gyro[1]);
+//    SWAP (frame->reg.z_gyro[0],  frame->reg.z_gyro[1]);
+//    
+    q->w = frame->value.quat_w / 16384.0f;
+    q->x = frame->value.quat_x / 16384.0f;
+    q->y = frame->value.quat_y / 16384.0f;
+    q->z = frame->value.quat_z / 16384.0f;
+
+    a->yaw = RADIANS_TO_DEGREES * atan2(2 * q->x * q->y - 2 * q->w * q->z, 2 * q->w * q->w + 2 * q->x * q->x - 1);
+    a->roll = RADIANS_TO_DEGREES * asin(2 * q->x * q->z + 2 * q->w * q->y);
+    a->pitch = RADIANS_TO_DEGREES * -atan2(2 * q->y * q->z - 2 * q->w * q->x, 2 * q->w * q->w + 2 * q->z * q->z - 1);
+    
+//    UART_write_string( UARTm1, "Angles: %.2f, %.2f, %.2f\n", a->roll, a->pitch, a->yaw );
     
     return 0;
 }
@@ -675,8 +683,6 @@ int mpu6050_dmpInitialize_2( void )
     
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_2000 );
     i2c_write_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_USER_CTRL, 0xC0 );
-    
-    
     
     return( 0 );
 }

@@ -273,10 +273,10 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     QDataStream streamRoll( &frame, QIODevice::ReadWrite );
     streamRoll >> buffer;
 
-#define ANGLE_COEFFICIENT   100.0f
 #define ENCODER_COEFFICIENT 100.0f
+#define ANGLES_COEFFICIENT  100.0f
 
-    qDebug() << buffer.rollAngle/ANGLE_COEFFICIENT << "\t" << buffer.pitchAngle/ANGLE_COEFFICIENT << "\t"
+    qDebug() << buffer.rollAngle/ANGLES_COEFFICIENT << "\t" << buffer.pitchAngle/ANGLES_COEFFICIENT << "\t"
              << buffer.timeMoment*10.0f << "\t" << buffer.encoderRoll/ENCODER_COEFFICIENT << "\t"
              << buffer.encoderPitch/ENCODER_COEFFICIENT << "\t"
              << buffer.motor1_power << "\t" << buffer.motor2_power << "\t"
@@ -284,8 +284,8 @@ void SerialLink::parseDataFrame(QByteArray &frame)
 
     emit sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
 
-    rollDataList->push_back( buffer.rollAngle/ANGLE_COEFFICIENT );
-    pitchDataList->push_back( buffer.pitchAngle/ANGLE_COEFFICIENT );
+    rollDataList->push_back( buffer.rollAngle/ANGLES_COEFFICIENT );
+    pitchDataList->push_back( buffer.pitchAngle/ANGLES_COEFFICIENT );
     encRollDataList->push_back( buffer.encoderRoll/ENCODER_COEFFICIENT + encoderRollCOffset );
     encPitchDataList->push_back( buffer.encoderPitch/ENCODER_COEFFICIENT + encoderPitchCOffset );
     timeList->push_back( buffer.timeMoment*10.0f ); // milliseconds

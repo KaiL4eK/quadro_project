@@ -30,7 +30,6 @@ static int32_t      bmp180_altitude = 0;
 
 quadrotor_state_t    quadrotor_state;
 Control_values_t     *control_values;
-gyro_accel_data_t    *gyro_accel_data;
 
 int main ( void ) 
 {
@@ -67,8 +66,7 @@ int main ( void )
     i2c_init( 400000 );
     UART_write_string( UARTm1, "I2C initialized\n" );
     
-    if ( (gyro_accel_data = mpu6050_init()) == NULL )
-    {
+    if ( mpu6050_init( false ) ) {
         UART_write_string( UARTm1, "Failed MPU init\n" );
         error_process( "MPU6050 initialization" );
     }
@@ -86,6 +84,7 @@ int main ( void )
     bmp180_calibrate( &bmp180_press );
     bmp180_initial_altitude = bmp180_get_altitude( bmp180_press, 101325 );
 #endif
+    
 #ifdef ENABLE_HMC5883
     if ( hmc5883l_init( -48, -440 ) != 0 )
     {
@@ -375,7 +374,9 @@ void process_UART_frame( void )
             break;
     }
 }
-               
+
+euler_angles_t angles;
+
 void process_sending_UART_data( void )
 {
     if ( dataSend && ++counterSend == 4 )
@@ -466,35 +467,6 @@ inline void bmp180_rcv_filtered_data ( void )
 }
 #endif
 
-#define GYR_COEF                    131.0f      // = 65535/2/250
-#define ANGLES_COEFF                100L        // each float is represented as integer *100 (2 decimals after point)
-#define SENS_TIME                   0.0025f     // 2500L/1000000
-
-#define COMPLIMENTARY_COEFFICIENT   0.95f
-
-static void process_counts()
-{
-    gyro_accel_data_t *c_d = gyro_accel_data;
-    
-    // Just for one of arguments for atan2 be not zero
-    int32_t acc_x = c_d->value.x_accel == 0 ? 1 : c_d->value.x_accel,
-            acc_y = c_d->value.y_accel == 0 ? 1 : c_d->value.y_accel,
-            acc_z = c_d->value.z_accel;
-
-    quadrotor_state.acc_x = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF,
-    quadrotor_state.acc_y = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF;
-    
-    int32_t gyr_delta_x = (c_d->value.x_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
-    int32_t gyr_delta_y = (c_d->value.y_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
-    int32_t gyr_delta_z = (c_d->value.z_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
-    
-    quadrotor_state.pitch = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_x + quadrotor_state.pitch)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * quadrotor_state.acc_x;
-    quadrotor_state.roll  = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_y + quadrotor_state.roll)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * quadrotor_state.acc_y;
-    quadrotor_state.yaw   = gyr_delta_z + quadrotor_state.yaw;
-}
-
 void control_system_timer_init( void )
 {
     T4CONbits.TON = 0;
@@ -529,7 +501,10 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 //    send_UART_control_values();
 //    send_UART_calibration_data();
     
-    process_counts();
+    mpu6050_get_euler( &angles );
+    quadrotor_state.pitch = angles.pitch * ANGLES_COEFF;
+    quadrotor_state.roll  = angles.roll * ANGLES_COEFF;
+    
 //    UART_write_string( UARTm1, "R %ld, P %ld\n", quadrotor_state.roll, quadrotor_state.pitch );
     
 #ifdef ENABLE_BMP180

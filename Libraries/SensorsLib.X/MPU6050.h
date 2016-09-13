@@ -42,7 +42,7 @@ typedef union
   } value;
 }gyro_accel_data_t;
 
-gyro_accel_data_t *mpu6050_init ( void );
+int mpu6050_init ( bool use_dmp );
 void send_UART_mpu6050_data ( UART_moduleNum_t mod );
 int mpu6050_receive_gyro_accel_raw_data ( void );
 void mpu6050_set_DLPF ( uint8_t value );
@@ -100,7 +100,61 @@ typedef struct
     float yaw;
 }euler_angles_t;
 
+typedef union
+{
+    struct
+    {
+        uint8_t quat_w[2];
+        uint8_t res1[2];
+        uint8_t quat_x[2];
+        uint8_t res2[2];
+        uint8_t quat_y[2];
+        uint8_t res3[2];
+        uint8_t quat_z[2];
+        uint8_t res4[2];
+        uint8_t x_gyro[2];
+        uint8_t res5[2];
+        uint8_t y_gyro[2];
+        uint8_t res6[2];
+        uint8_t z_gyro[2];
+        uint8_t res7[2];
+        uint8_t x_accel[2];
+        uint8_t res8[2];
+        uint8_t y_accel[2];
+        uint8_t res9[2];
+        uint8_t z_accel[2];
+        uint8_t res10[4];
+    } reg;
+    struct
+    {
+        int16_t quat_w;
+        uint8_t res1[2];
+        int16_t quat_x;
+        uint8_t res2[2];
+        int16_t quat_y;
+        uint8_t res3[2];
+        int16_t quat_z;
+        uint8_t res4[2];
+        int16_t x_gyro;
+        uint8_t res5[2];
+        int16_t y_gyro;
+        uint8_t res6[2];
+        int16_t z_gyro;
+        uint8_t res7[2];
+        int16_t x_accel;
+        uint8_t res8[2];
+        int16_t y_accel;
+        uint8_t res9[2];
+        int16_t z_accel;
+        uint8_t res10[4];
+    } value;
+}mpu_fifo_frame_t;
+
 int mpu6050_dmpGetEuler(euler_angles_t *a);
+void mpu6050_get_euler( euler_angles_t *angles );
+
+#define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
+#define RADIANS_TO_DEGREES          57.295779513f
 
 #endif	/* MPU6050_H_ */
 
