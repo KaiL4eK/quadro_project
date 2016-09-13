@@ -6,7 +6,7 @@
  */
 
 #include <per_proto.h>
-#include "MPU6050.h"
+#include <MPU6050.h>
 
 #include <pragmas.h>
 

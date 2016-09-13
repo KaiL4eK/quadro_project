@@ -92,14 +92,14 @@ ${OBJECTDIR}/emain.o: emain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/emain.o.d 
 	@${RM} ${OBJECTDIR}/emain.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  emain.c  -o ${OBJECTDIR}/emain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  emain.c  -o ${OBJECTDIR}/emain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emain.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Libraries/Periphery_lib.X" -I"../common" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/emain.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/command_processor.o: command_processor.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/command_processor.o.d 
 	@${RM} ${OBJECTDIR}/command_processor.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Libraries/Periphery_lib.X" -I"../common" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/command_processor.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
@@ -107,14 +107,14 @@ ${OBJECTDIR}/emain.o: emain.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/emain.o.d 
 	@${RM} ${OBJECTDIR}/emain.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  emain.c  -o ${OBJECTDIR}/emain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emain.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  emain.c  -o ${OBJECTDIR}/emain.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emain.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Libraries/Periphery_lib.X" -I"../common" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/emain.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/command_processor.o: command_processor.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/command_processor.o.d 
 	@${RM} ${OBJECTDIR}/command_processor.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  command_processor.c  -o ${OBJECTDIR}/command_processor.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/command_processor.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Libraries/Periphery_lib.X" -I"../common" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/command_processor.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif

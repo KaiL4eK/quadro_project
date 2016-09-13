@@ -8,14 +8,11 @@
       <itemPath>motor_control.h</itemPath>
       <itemPath>input_control.h</itemPath>
       <itemPath>HMC5883L.h</itemPath>
-      <itemPath>MPU6050.h</itemPath>
-      <itemPath>MPU6050_regs.h</itemPath>
       <itemPath>BMP180.h</itemPath>
       <itemPath>FAT32.h</itemPath>
       <itemPath>file_io.h</itemPath>
       <itemPath>SDcard.h</itemPath>
       <itemPath>error_.h</itemPath>
-      <itemPath>../Encoders3DStand.X/serial_protocol.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -29,13 +26,11 @@
       <itemPath>input_control.c</itemPath>
       <itemPath>bmp180.c</itemPath>
       <itemPath>hmc5883l.c</itemPath>
-      <itemPath>mpu6050.c</itemPath>
       <itemPath>FAT32.c</itemPath>
       <itemPath>SDcard.c</itemPath>
       <itemPath>file_io.c</itemPath>
       <itemPath>error.c</itemPath>
       <itemPath>command_processor.c</itemPath>
-      <itemPath>mpu6050_DMP.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -100,6 +95,23 @@
                             DD="dist/default/debug/Math_lib.X.a">
               </makeArtifact>
             </linkerLibProjectItem>
+            <linkerLibProjectItem>
+              <makeArtifact PL="../Libraries/SensorsLib.X"
+                            CT="3"
+                            CN="default"
+                            AC="true"
+                            BL="true"
+                            WD="../Libraries/SensorsLib.X"
+                            BC="${MAKE}  -f Makefile CONF=default"
+                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
+                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
+                            OP="dist/default/production/SensorsLib.X.a"
+                            DOP="dist/default/debug/SensorsLib.X.a"
+                            FL="dist/default/production/SensorsLib.X.a"
+                            PD="dist/default/production/SensorsLib.X.a"
+                            DD="dist/default/debug/SensorsLib.X.a">
+              </makeArtifact>
+            </linkerLibProjectItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -134,7 +146,8 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories" value=""/>
+        <property key="extra-include-directories"
+                  value="../Libraries/Math_lib.X;../Libraries/Periphery_lib.X;../common;../Libraries/SensorsLib.X"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
