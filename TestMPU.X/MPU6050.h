@@ -56,6 +56,12 @@ uint8_t mpu6050_get_id ( void );
 void mpu6050_reset ( void );
 void mpu6050_calibration ( void );
 
+uint16_t mpu6050_getFIFOCount();
+uint8_t mpu6050_getFIFOByte();
+void mpu6050_getFIFOBytes( uint8_t *data, uint8_t length );
+void mpu6050_resetFIFO();
+void mpu6050_setFIFOEnabled( bool enabled );
+
 int16_t MPU6050_getXAccelOffset ( void );
 void mpu6050_setXAccelOffset ( int16_t offset );
 int16_t MPU6050_getYAccelOffset ( void );
@@ -73,6 +79,8 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 
 bool mpu6050_dmpPacketAvailable();
 uint8_t mpu6050_dmpInitialize();
+int mpu6050_dmpInitialize_2( void );
+
 
 typedef struct
 {
@@ -88,6 +96,9 @@ typedef struct
     float pitch;
     float yaw;
 }euler_angles_t;
+
+
+int mpu6050_dmpGetEuler(euler_angles_t *a);
 
 #endif	/* MPU6050_H_ */
 

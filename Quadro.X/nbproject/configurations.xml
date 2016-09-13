@@ -11,13 +11,10 @@
       <itemPath>MPU6050.h</itemPath>
       <itemPath>MPU6050_regs.h</itemPath>
       <itemPath>BMP180.h</itemPath>
-      <itemPath>../Libraries/Periphery_lib.X/per_proto.h</itemPath>
       <itemPath>FAT32.h</itemPath>
       <itemPath>file_io.h</itemPath>
       <itemPath>SDcard.h</itemPath>
-      <itemPath>math_proto.h</itemPath>
       <itemPath>error_.h</itemPath>
-      <itemPath>pragmas.h</itemPath>
       <itemPath>../Encoders3DStand.X/serial_protocol.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"

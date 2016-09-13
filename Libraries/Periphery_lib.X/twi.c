@@ -2,12 +2,27 @@
 
 /* I2C1 pins: SDA - RG3; SCL - RG2; */
 
-inline void i2c_idle( void )
+void i2c_idle( void )
 {
     // Wait until I2C Bus is Inactive
     while(I2C1CONbits.SEN || I2C1CONbits.RSEN || I2C1CONbits.PEN || I2C1CONbits.RCEN ||
           I2C1CONbits.ACKEN || I2C1STATbits.TRSTAT)
         Nop();
+}
+
+void i2c_start( void )
+{
+    i2c_idle();                     //Ensure Module is Idle
+    I2C1CONbits.SEN = 1;	//Initiate Start condition
+    while (I2C1CONbits.SEN);   
+}
+
+void i2c_stop( void )
+{
+    i2c_idle();                     //Ensure Module is Idle
+    //initiate stop bit
+    I2C1CONbits.PEN = 1;    //Initiate stop bit
+    while(I2C1CONbits.PEN);         // Wait for stop condition to finish
 }
 
 void i2c_init( long Fscl )
@@ -20,31 +35,20 @@ void i2c_init( long Fscl )
    IFS1bits.MI2C1IF = 0;            // Clear Interrupt
    I2C1CONbits.I2CEN = 1;           // Enable I2C Mode
    i2c_idle();
+   i2c_start();
+   i2c_idle();
+   i2c_stop();
+   i2c_idle();
 }
 
-inline void i2c_start( void )
-{
-    i2c_idle();                     //Ensure Module is Idle
-    I2C1CONbits.SEN = 1;	//Initiate Start condition
-    while (I2C1CONbits.SEN);   
-}
-
-inline void i2c_stop( void )
-{
-    i2c_idle();                     //Ensure Module is Idle
-    //initiate stop bit
-    I2C1CONbits.PEN = 1;    //Initiate stop bit
-    while(I2C1CONbits.PEN);         // Wait for stop condition to finish
-}
-
-inline void i2c_restart( void )
+void i2c_restart( void )
 {
     i2c_idle();                     //Ensure Module is Idle
     I2C1CONbits.RSEN = 1;	//Initiate restart condition
     while (I2C1CONbits.RSEN);
 }
 
-inline void i2c_ack( void )
+void i2c_ack( void )
 {
     i2c_idle();                     //Ensure Module is Idle
     I2C1CONbits.ACKDT = 0;          // Acknowledge data bit, 0 = ACK
@@ -52,7 +56,7 @@ inline void i2c_ack( void )
     while(I2C1CONbits.ACKEN);       // wait for ack data to send on bus
 }
 
-inline void i2c_nack( void )
+void i2c_nack( void )
 {
     i2c_idle();                     //Ensure Module is Idle
     I2C1CONbits.ACKDT = 1;          // Acknowledge data bit, 1 = NAK
@@ -60,7 +64,7 @@ inline void i2c_nack( void )
     while(I2C1CONbits.ACKEN);       // wait for ack data to send on bus
 }
 
-inline int8_t i2c_send_byte(uint8_t data)
+int8_t i2c_send_byte(uint8_t data)
 {
     i2c_idle();                     //Ensure Module is Idle
     I2C1TRN = data;    
@@ -70,7 +74,7 @@ inline int8_t i2c_send_byte(uint8_t data)
     return( 0 );
 }
 
-inline int8_t i2c_receive_byte(uint8_t *data)
+int8_t i2c_receive_byte(uint8_t *data)
 {
     i2c_idle();                     //Ensure Module is Idle
     I2C1CONbits.RCEN = 1;        // Enable data reception
@@ -80,7 +84,7 @@ inline int8_t i2c_receive_byte(uint8_t *data)
     return( 0 );
 }
 
-inline int8_t i2c_send_bytes(uint8_t *str, uint8_t lenght)
+int8_t i2c_send_bytes(uint8_t *str, uint8_t lenght)
 {
     while(lenght--)                    //Transmit Data Until Pagesize
     {
@@ -95,7 +99,7 @@ inline int8_t i2c_send_bytes(uint8_t *str, uint8_t lenght)
     return( 0 );
 }
 
-inline int8_t i2c_receive_bytes(uint8_t *str, uint8_t length)
+int8_t i2c_receive_bytes(uint8_t *str, uint8_t length)
 {
     while(length--)
     {

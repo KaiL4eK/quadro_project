@@ -13,7 +13,7 @@ gyro_accel_data_t *mpu6050_init ( void )
     bool    connected   = false;
     
     for ( iTries = 0; iTries < MAX_CONNECT_TRIES; iTries++ )
-        if ( mpu6050_get_id() == 0x68 ) {
+        if ( mpu6050_get_id() == 0x34 ) {
             connected = true;
             break;
         } 
@@ -86,7 +86,7 @@ void send_UART_mpu6050_data ( UART_moduleNum_t mod )
 
 uint8_t mpu6050_get_id ( void )
 {
-    return( i2c_read_byte_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I ) );
+    return( i2c_read_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH ) );
 }
 
 void mpu6050_set_sleep_bit ( uint8_t value )
@@ -128,6 +128,73 @@ void mpu6050_set_interrupt_data_rdy_bit ( uint8_t value )
     i2c_write_bits_eeprom( MPU6050_I2C_ADDRESS, MPU6050_RA_INT_ENABLE, 
             MPU6050_INTERRUPT_DATA_RDY_BIT, 1, value );
 }
+
+
+/** Get byte from FIFO buffer.
+ * This register is used to read and write data from the FIFO buffer. Data is
+ * written to the FIFO in order of register number (from lowest to highest). If
+ * all the FIFO enable flags (see below) are enabled and all External Sensor
+ * Data registers (Registers 73 to 96) are associated with a Slave device, the
+ * contents of registers 59 through 96 will be written in order at the Sample
+ * Rate.
+ *
+ * The contents of the sensor data registers (Registers 59 to 96) are written
+ * into the FIFO buffer when their corresponding FIFO enable flags are set to 1
+ * in FIFO_EN (Register 35). An additional flag for the sensor data registers
+ * associated with I2C Slave 3 can be found in I2C_MST_CTRL (Register 36).
+ *
+ * If the FIFO buffer has overflowed, the status bit FIFO_OFLOW_INT is
+ * automatically set to 1. This bit is located in INT_STATUS (Register 58).
+ * When the FIFO buffer has overflowed, the oldest data will be lost and new
+ * data will be written to the FIFO.
+ *
+ * If the FIFO buffer is empty, reading this register will return the last byte
+ * that was previously read from the FIFO until new data is available. The user
+ * should check FIFO_COUNT to ensure that the FIFO buffer is not read when
+ * empty.
+ *
+ * @return Byte from FIFO buffer
+ */
+uint8_t mpu6050_getFIFOByte() {
+    return i2c_read_byte_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_FIFO_R_W);
+}
+void mpu6050_getFIFOBytes(uint8_t *data, uint8_t length) {
+    i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_FIFO_R_W, length, data);
+}
+
+/** Get current FIFO buffer size.
+ * This value indicates the number of bytes stored in the FIFO buffer. This
+ * number is in turn the number of bytes that can be read from the FIFO buffer
+ * and it is directly proportional to the number of samples available given the
+ * set of sensor data bound to be stored in the FIFO (register 35 and 36).
+ * @return Current FIFO buffer size
+ */
+uint16_t mpu6050_getFIFOCount() {
+    uint8_t buffer[2];
+    i2c_read_bytes_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_FIFO_COUNTH, 2, buffer);
+    return (((uint16_t)buffer[0]) << 8) | buffer[1];
+}
+
+/** Reset the FIFO.
+ * This bit resets the FIFO buffer when set to 1 while FIFO_EN equals 0. This
+ * bit automatically clears to 0 after the reset has been triggered.
+ * @see MPU6050_RA_USER_CTRL
+ * @see MPU6050_USERCTRL_FIFO_RESET_BIT
+ */
+void mpu6050_resetFIFO() {
+    i2c_write_bit_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_RESET_BIT, true);
+}
+
+/** Set FIFO enabled status.
+ * @param enabled New FIFO enabled status
+ * @see getFIFOEnabled()
+ * @see MPU6050_RA_USER_CTRL
+ * @see MPU6050_USERCTRL_FIFO_EN_BIT
+ */
+void mpu6050_setFIFOEnabled(bool enabled) {
+    i2c_write_bit_eeprom(MPU6050_I2C_ADDRESS, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_EN_BIT, enabled);
+}
+
 
 /*
  *  8bit unsigned, sample rate = gyroscope rate / (1 + <value>)
