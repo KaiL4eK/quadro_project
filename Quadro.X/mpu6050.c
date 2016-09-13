@@ -28,13 +28,13 @@ gyro_accel_data_t *mpu6050_init ( void )
     mpu6050_set_sample_rate_divider( 1 );
     mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     
-    mpu6050_setXAccelOffset(-3473);
-    mpu6050_setYAccelOffset(-2891);
-    mpu6050_setZAccelOffset(1822);
+    mpu6050_setXAccelOffset(-3874);
+    mpu6050_setYAccelOffset(351);
+    mpu6050_setZAccelOffset(1693);
     
-    mpu6050_setXGyroOffset(49);
-    mpu6050_setYGyroOffset(-60);
-    mpu6050_setZGyroOffset(-14);
+    mpu6050_setXGyroOffset(116);
+    mpu6050_setYGyroOffset(-14);
+    mpu6050_setZGyroOffset(-31);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
