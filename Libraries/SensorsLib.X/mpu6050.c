@@ -5,24 +5,17 @@ static bool                 initialized = false,
                             m_dmp_use   = false;
        gyro_accel_data_t    raw_gyr_acc;
 
-int mpu6050_init ( bool use_dmp )
+gyro_accel_data_t *mpu6050_init ( void )
 {
-//    m_dmp_use = use_dmp;
-//    
-//    if ( m_dmp_use )
-//        return( mpu6050_dmpInitialize() );
-    
     if ( !mpu6050_test_connection() )
         return( NULL );
 
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
+    mpu6050_set_DLPF( MPU6050_DLPF_BW_42 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
-    mpu6050_set_sample_rate_divider( 1 );
-    mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     
-    // On quadro
     mpu6050_setXAccelOffset(-3473);
     mpu6050_setYAccelOffset(-2891);
     mpu6050_setZAccelOffset(1822);
@@ -31,19 +24,15 @@ int mpu6050_init ( bool use_dmp )
     mpu6050_setYGyroOffset(-60);
     mpu6050_setZGyroOffset(-14);
     
-//    memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
+    memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
     initialized = true;
     
-    return( 0 );
+    return( &raw_gyr_acc );
 }
 
 int mpu6050_receive_gyro_accel_raw_data ( void )
 {
-    if ( m_dmp_use ) {
-        return( 0 );
-    }
-    
     if ( !initialized )
         return( -1 );
     
@@ -53,7 +42,7 @@ int mpu6050_receive_gyro_accel_raw_data ( void )
     SWAP (raw_gyr_acc.reg.x_accel_h, raw_gyr_acc.reg.x_accel_l);
     SWAP (raw_gyr_acc.reg.y_accel_h, raw_gyr_acc.reg.y_accel_l);
     SWAP (raw_gyr_acc.reg.z_accel_h, raw_gyr_acc.reg.z_accel_l);
-    SWAP (raw_gyr_acc.reg.t_h,       raw_gyr_acc.reg.t_l);
+//    SWAP (raw_gyr_acc.reg.t_h,       raw_gyr_acc.reg.t_l);
     SWAP (raw_gyr_acc.reg.x_gyro_h,  raw_gyr_acc.reg.x_gyro_l);
     SWAP (raw_gyr_acc.reg.y_gyro_h,  raw_gyr_acc.reg.y_gyro_l);
     SWAP (raw_gyr_acc.reg.z_gyro_h,  raw_gyr_acc.reg.z_gyro_l);
@@ -72,18 +61,12 @@ void send_UART_mpu6050_data ( UART_moduleNum_t mod )
                 raw_gyr_acc.value.z_accel );  
 }
 
-#define COMPLIMENTARY_COEFFICIENT   0.95f
+#define COMPLIMENTARY_COEFFICIENT   0.9f
 #define SENS_TIME                   0.0025f     // 2500L/1000000
 #define GYR_COEF                    131.0f      // = 65535/2/250
 
 void mpu6050_get_euler( euler_angles_t *angles )
-{
-//    if ( m_dmp_use ) {
-//        if ( mpu6050_dmpPacketAvailable() )
-//            mpu6050_dmpGetEuler( angles );
-//        return;
-//    }
-    
+{    
     gyro_accel_data_t *c_d = &raw_gyr_acc;
     
     // Just for one of arguments for atan2 be not zero

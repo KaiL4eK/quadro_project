@@ -25,8 +25,6 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
             if ( UART_bytes_available( m_module ) >= COMMAND_FRAME_SIZE ) 
             {
                 uint8_t command_byte = UART_get_byte( m_module );
-                
-UART_write_string( UARTm1, "Hello!\n" );
                 switch( command_byte )
                 {
                     case CMD_CONNECT_CODE:

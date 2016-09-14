@@ -141,6 +141,7 @@ bool SerialLink::processDisconnectCommand()
         return( false );
     }
     serial->flush();
+QThread::msleep( 100 );
 
     return( true );
 }

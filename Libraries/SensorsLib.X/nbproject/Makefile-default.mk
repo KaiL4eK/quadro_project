@@ -92,14 +92,14 @@ ${OBJECTDIR}/mpu6050.o: mpu6050.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/mpu6050_DMP.o: mpu6050_DMP.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050_DMP.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050_DMP.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050_DMP.c  -o ${OBJECTDIR}/mpu6050_DMP.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050_DMP.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050_DMP.c  -o ${OBJECTDIR}/mpu6050_DMP.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050_DMP.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1    -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050_DMP.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 else
@@ -107,14 +107,14 @@ ${OBJECTDIR}/mpu6050.o: mpu6050.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050.c  -o ${OBJECTDIR}/mpu6050.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/mpu6050_DMP.o: mpu6050_DMP.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/mpu6050_DMP.o.d 
 	@${RM} ${OBJECTDIR}/mpu6050_DMP.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050_DMP.c  -o ${OBJECTDIR}/mpu6050_DMP.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050_DMP.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O1 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
+	${MP_CC} $(MP_EXTRA_CC_PRE)  mpu6050_DMP.c  -o ${OBJECTDIR}/mpu6050_DMP.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/mpu6050_DMP.o.d"        -g -omf=elf -legacy-libc  $(COMPARISON_BUILD)  -O0 -I"../Periphery_lib.X" -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/mpu6050_DMP.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif

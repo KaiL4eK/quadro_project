@@ -42,7 +42,7 @@ typedef union
   } value;
 }gyro_accel_data_t;
 
-int mpu6050_init ( bool use_dmp );
+gyro_accel_data_t *mpu6050_init ( void );
 void send_UART_mpu6050_data ( UART_moduleNum_t mod );
 int mpu6050_receive_gyro_accel_raw_data ( void );
 void mpu6050_set_DLPF ( uint8_t value );
@@ -80,9 +80,6 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 // DMP
 
 bool mpu6050_dmpPacketAvailable();
-
-int mpu6050_dmpInitialize_2( void );
-
 int mpu6050_dmpInitialize();
 
 typedef struct
