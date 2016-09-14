@@ -177,7 +177,7 @@ int flash_read ( void );
 int flash_set ( FlashData_t data_type, int data );
 int flash_get ( FlashData_t data_type );
 
-/*** command_processor.c (not in lib) ***/
+#define clip_value( power, min, max ) (power > max ? max : power < min ? min : power)
 
 #endif	/* PERIPHERY_PROTO_H_ */
 

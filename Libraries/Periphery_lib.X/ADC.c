@@ -3,19 +3,14 @@
 int ADC_init ( uint8_t channel )
 {
     if ( channel > 31 )
-    {
         return( -1 );
-    }
     
     AD1CON1bits.ADON = 0;
     if ( channel > 15 )
-    {
         AD1PCFGH &= ~(1 << (channel-16)); // Analog mode pin setup
-    }
     else
-    {
         AD1PCFGL &= ~(1 << channel); // Analog mode pin setup
-    }
+    
     AD1CON1bits.ASAM = 1;        // Auto sample
     AD1CON1bits.SSRC = 0b111;    // Auto convertion
     AD1CON1bits.AD12B = 1;       // 0 = 10 bit ADC; 1 = 12 bit ADC
@@ -31,8 +26,7 @@ int16_t ADC_res = 0;
 
 int16_t ADC_read( void )
 {	
-    if ( AD1CON1bits.DONE )
-    {
+    if ( AD1CON1bits.DONE ) {
         AD1CON1bits.DONE = 0;            // reset DONE bit
         ADC_res = ADC1BUF0;
     }

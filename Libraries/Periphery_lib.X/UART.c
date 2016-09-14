@@ -111,26 +111,26 @@ int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t
 
 void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
-    while ( U1STAbits.URXDA ) 
+    if ( U1STAbits.URXDA ) 
     {
         ub1.data_buffer[ub1.i_head_byte++] = U1RXREG;
         if ( ++ub1.n_bytes == UART_DATA_BUFFER_SIZE ) {
             ub1.overflow = true;
         }
-    }
-    _U1RXIF = 0;
+    } else
+        _U1RXIF = 0;
 }
 
 void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 {
-    while ( U2STAbits.URXDA ) 
+    if ( U2STAbits.URXDA ) 
     {
         ub2.data_buffer[ub2.i_head_byte++] = U2RXREG;
         if ( ++ub2.n_bytes == UART_DATA_BUFFER_SIZE ) {
             ub2.overflow = true;
         }
-    }
-    _U2RXIF = 0;
+    } else 
+        _U2RXIF = 0;
 }
 
 uint8_t UART_get_byte( UART_moduleNum_t module )   
