@@ -27,7 +27,7 @@ class QwtPlotter : public QObject
     Q_OBJECT
 
 public:
-    QwtPlotter( QwtPlot *plot, QVector<double> *dbPtr, QVector<double> *dbEncPtr, QVector<double> *timeVectPtr, QString angleName );
+    QwtPlotter( QwtPlot *plot, QVector<double> *dbPtr, QVector<double> *timeVectPtr, QString plotName );
     ~QwtPlotter();
     int testDataShow();
     int addPoint( QPointF *newPoint );
@@ -46,8 +46,7 @@ private:
                     *timeList = NULL;
 //    QStandardItemModel *tableModel = new QStandardItemModel( 0, 2 );
 
-    QwtPlotCurve *mainCurve,
-                 *encoderCurve;
+    QwtPlotCurve *mainCurve;
     QString plotName;
 
 

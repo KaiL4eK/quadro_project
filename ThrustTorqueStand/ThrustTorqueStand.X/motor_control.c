@@ -20,6 +20,9 @@ void set_motor_PWM( uint16_t pwm_value )
 
 void set_motor_started( void )
 {
+    if ( aMotor_armed )
+        return;
+    
     aMotor_armed = true;
     set_motor_PWM( ESC_MIN_POWER );
 }
@@ -39,9 +42,9 @@ inline uint16_t power_2_PWM( uint16_t power )
 // Always shift duty cycle << 1 if prescaler not 1:1
 void set_motor_power( int32_t power )
 {
-    if ( !aMotor_armed )
-        return;
-    
+//    if ( !aMotor_armed )
+//        return;
+//    
     uint16_t input_power = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
     
     set_motor_PWM( power_2_PWM( input_power ) );

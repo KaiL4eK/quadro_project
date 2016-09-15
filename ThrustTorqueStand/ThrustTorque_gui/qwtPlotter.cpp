@@ -1,17 +1,16 @@
 #include "qwtPlotter.h"
 #include <QApplication>
 
-QwtPlotter::QwtPlotter( QwtPlot *plot, QVector<double> *dbPtr, QVector<double> *dbEncPtr, QVector<double> *timeVectPtr, QString angleName )
+QwtPlotter::QwtPlotter( QwtPlot *plot, QVector<double> *dbPtr, QVector<double> *timeVectPtr, QString plotName )
     : qwtPlot( plot ), dataList( dbPtr ),
-      encDataList( dbEncPtr ), timeList( timeVectPtr ),
-      plotName( angleName )
+      timeList( timeVectPtr ), plotName( plotName )
 {
     // Initialize plot
     qwtPlot->setTitle( plotName + " chart" );
-    qwtPlot->setAxisTitle( QwtPlot::yLeft, "Angle" );
+    qwtPlot->setAxisTitle( QwtPlot::yLeft, "Value" );
     qwtPlot->setAxisTitle( QwtPlot::xBottom, "Time, ms" );
     qwtPlot->setAutoReplot();
-    qwtPlot->insertLegend( new QwtLegend, QwtPlot::BottomLegend );
+//    qwtPlot->insertLegend( new QwtLegend, QwtPlot::BottomLegend );
 
     QwtPlotGrid *grid = new QwtPlotGrid();
     grid->setMajorPen( QPen( Qt::gray, 1 ) );
@@ -53,15 +52,6 @@ QwtPlotter::QwtPlotter( QwtPlot *plot, QVector<double> *dbPtr, QVector<double> *
         QBrush( Qt::yellow ), QPen( Qt::blue, 1 ), QSize( 2, 2 ) );
     mainCurve->setSymbol( symbol );
     mainCurve->attach( qwtPlot );
-
-    encoderCurve = new QwtPlotCurve("Encoder " + plotName);
-    encoderCurve->setPen( Qt::red, 1 );
-    encoderCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
-
-    symbol = new QwtSymbol( QwtSymbol::Ellipse,
-        QBrush( Qt::yellow ), QPen( Qt::red, 1 ), QSize( 2, 2 ) );
-    encoderCurve->setSymbol( symbol );
-    encoderCurve->attach( qwtPlot );
 }
 
 QwtPlotter::~QwtPlotter()
@@ -94,7 +84,6 @@ QwtPlotter::~QwtPlotter()
 int QwtPlotter::renderPlot()
 {
     mainCurve->setRawSamples( timeList->data(), dataList->data(), dataList->size() );
-    encoderCurve->setRawSamples( timeList->data(), encDataList->data(), encDataList->size() );
     return( 0 );
 }
 
@@ -106,6 +95,7 @@ void QwtPlotter::refreshPlotView()
 
 void QwtPlotter::dataProcess()
 {
+    refreshPlotView();
     renderPlot();
     QCoreApplication::processEvents();
 }

@@ -33,12 +33,6 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
                     case CMD_DISCONNECT_CODE:
                         frame.command = DISCONNECT;
                         break;
-                    case CMD_DATA_START_CODE:
-                        frame.command = DATA_START;
-                        break;
-                    case CMD_DATA_STOP_CODE:
-                        frame.command = DATA_STOP;
-                        break;
                     case CMD_MOTOR_STOP:
                         frame.command = MOTOR_STOP;
                         break;

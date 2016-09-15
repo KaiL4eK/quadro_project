@@ -12,30 +12,25 @@ class SerialLink : public QObject
     Q_OBJECT
 
 public:
-    SerialLink(QVector<double> *rollDbPtr, QVector<double> *pitchDbPtr,
-               QVector<double> *encRollDbPtr, QVector<double> *encPitchDbPtr,
-               QVector<double> *timeVectPtr , QString sName, QObject *parent = 0);
+    SerialLink(QVector<double> *p_thrustData, QVector<double> *p_torqueData,
+               QVector<double> *p_currentData, QVector<double> *p_SpeedData,
+               QVector<double> *p_timeData , QString sName, QObject *parent = 0);
     ~SerialLink();
 
 private:
-    QVector<double> *rollDataList = NULL,
-                    *pitchDataList = NULL,
-                    *encRollDataList = NULL,
-                    *encPitchDataList = NULL,
+    QVector<double> *thrustList = NULL,
+                    *torqueList = NULL,
+                    *currentList = NULL,
+                    *speedList = NULL,
                     *timeList = NULL;
 
     qint64  receivedPoints = 0;
-    qint32  serialSpeed = 9600;// 460800;
+    qint32  serialSpeed = 460800;
     QString serialName;
     bool    receiveData = false,
             isRunning = false;
 
     QSerialPort *serial;
-
-    double  encoderRollCOffset = 0.0,
-            encoderPitchCOffset = 0.0;
-    quint8  calibrationCounter = 0;
-    bool    calibrationFlag = false;
 
     void clearDataBase( void );
     void initSerial( void );
@@ -58,17 +53,13 @@ signals:
     void dataReceived();
     void finished();
     void sendConnectionState(bool state);
-    void sendCalibrationReady(bool completed);
     void sendMotorStartStopFinished(bool completed);
     void error( QString, qint64 );
-    void sendMotorPowers( quint8, quint8, quint8, quint8 );
 
 public slots:
     void process();
     void stopLink();
-    void setDataCommandFlag( bool dataRcvBtnState );
     void processStartStopMotorCommand(bool startFlag, quint8 speed);
-    void calibrateSources();
 };
 
 #endif // SERIALLINK_H

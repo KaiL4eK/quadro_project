@@ -3,11 +3,11 @@
 
 #include "core.h"
 
-#define nDRDY_PIN_DIR    _TRISD6    // PTP12
-#define nRESET_PIN_DIR   _TRISE4    // PTP17
+#define nDRDY_PIN_DIR    _TRISC4
+#define nRESET_PIN_DIR   _TRISC3
 
-#define nDRDY_PIN       _RD6
-#define nRESET_PIN      _LATE4
+#define nDRDY_PIN       _RC4
+#define nRESET_PIN      _LATC3
 
 /*
  * SCLK         GND

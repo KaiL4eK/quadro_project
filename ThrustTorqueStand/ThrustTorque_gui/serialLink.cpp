@@ -4,18 +4,16 @@
 
 #include <serial_protocol.h>
 
-SerialLink::SerialLink(QVector<double> *rollDbPtr, QVector<double> *pitchDbPtr,
-                       QVector<double> *encRollDbPtr, QVector<double> *encPitchDbPtr,
-                       QVector<double> *timeVectPtr , QString sName, QObject *parent)
+SerialLink::SerialLink(QVector<double> *p_thrustData, QVector<double> *p_torqueData,
+                       QVector<double> *p_currentData, QVector<double> *p_SpeedData,
+                       QVector<double> *p_timeData , QString sName, QObject *parent)
     : QObject( parent ),
-      rollDataList( rollDbPtr ), pitchDataList( pitchDbPtr ),
-      encRollDataList( encRollDbPtr ), encPitchDataList( encPitchDbPtr ),
-      timeList( timeVectPtr ), serialName( sName ) {}
+      thrustList( p_thrustData ), torqueList( p_torqueData ),
+      currentList( p_currentData ), speedList( p_SpeedData ),
+      timeList( p_timeData ), serialName( sName ) {}
 
 SerialLink::~SerialLink()
 {
-    if ( calibrationFlag )
-        emit sendCalibrationReady(false);
     emit sendConnectionState( false );
 
     serial->close();
@@ -61,21 +59,6 @@ void SerialLink::process()
     emit finished();
 }
 
-void SerialLink::setDataCommandFlag( bool dataRcvBtnState )
-{
-    if ( dataRcvBtnState )
-    {
-        isRunning = processDataStartCommand();
-        receiveData = true;
-        clearDataBase();
-    }
-    else
-    {
-        isRunning = processDataStopCommand();
-        receiveData = false;
-    }
-}
-
 void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
 {
     bool result = false;
@@ -92,20 +75,12 @@ void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
     emit sendMotorStartStopFinished(result);
 }
 
-void SerialLink::calibrateSources()
-{
-    calibrationCounter = 20;
-    calibrationFlag = true;
-    encoderRollCOffset = encoderPitchCOffset = 0;
-    setDataCommandFlag(Qt::Checked);
-}
-
 void SerialLink::clearDataBase()
 {
-    rollDataList->clear();
-    pitchDataList->clear();
-    encRollDataList->clear();
-    encPitchDataList->clear();
+    thrustList->clear();
+    torqueList->clear();
+    currentList->clear();
+    speedList->clear();
     timeList->clear();
 }
 
@@ -146,39 +121,6 @@ QThread::msleep( 100 );
     return( true );
 }
 
-bool SerialLink::processDataStartCommand()
-{
-    QByteArray command;
-    command.append(COMMAND_PREFIX);
-    command.append(CMD_DATA_START_CODE);
-    if ( serial->write( command ) < 0 )
-    {
-        emit error( "Failed to send data start command", serial->error() );
-        return( false );
-    }
-    serial->flush();
-
-    return( true );
-}
-
-bool SerialLink::processDataStopCommand()
-{
-    QByteArray command;
-    command.append(COMMAND_PREFIX);
-    command.append(CMD_DATA_STOP_CODE);
-    if ( serial->write( command ) < 0 )
-    {
-        emit error( "Failed to send data stop command", serial->error() );
-        return( false );
-    }
-    serial->flush();
-
-//    while ( serial->bytesAvailable() > 0 )
-//        processReceiveData();
-
-    return( true );
-}
-
 bool SerialLink::processMotorStartCommand(quint8 speed)
 {
     QByteArray command;
@@ -193,6 +135,9 @@ bool SerialLink::processMotorStartCommand(quint8 speed)
         return( false );
     }
     serial->flush();
+
+    receiveData = true;
+    clearDataBase();
 
     return( true );
 }
@@ -227,7 +172,7 @@ bool SerialLink::processReceiveData()
         case DATA_PREFIX:
             if ( receiveData )
             {
-                QByteArray frameContent = frame.mid(1, DATA_FULL_FRAME_SIZE);
+                QByteArray frameContent = frame.mid(1, DATA_STAND_FRAME_SIZE);
                 parseDataFrame( frameContent );
             }
             break;
@@ -242,28 +187,20 @@ bool SerialLink::processReceiveData()
 
 struct serial_data_
 {
-    qint16  rollAngle,
-            pitchAngle,
-            timeMoment,
-            encoderRoll,
-            encoderPitch;
-    qint8   motor1_power,
-            motor2_power,
-            motor3_power,
-            motor4_power;
+    quint16  thrust,
+             torque,
+             speed,
+             time;
+    qint16   current;
 };
 
 QDataStream &operator >>(QDataStream &out, serial_data_ &any)
 {
-    out >> any.rollAngle;
-    out >> any.pitchAngle;
-    out >> any.timeMoment;
-    out >> any.motor1_power;
-    out >> any.motor2_power;
-    out >> any.motor3_power;
-    out >> any.motor4_power;
-    out >> any.encoderRoll;
-    out >> any.encoderPitch;
+    out >> any.thrust;
+    out >> any.torque;
+    out >> any.current;
+    out >> any.speed;
+    out >> any.time;
     return out;
 }
 
@@ -274,44 +211,17 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     QDataStream streamRoll( &frame, QIODevice::ReadWrite );
     streamRoll >> buffer;
 
-#define ENCODER_COEFFICIENT 100.0f
-#define ANGLES_COEFFICIENT  100.0f
+    qDebug() << buffer.thrust << "\t" << buffer.torque << "\t"
+             << buffer.time*10.0f << "\t"
+             << buffer.speed << "\t" << buffer.current;
 
-    qDebug() << buffer.rollAngle/ANGLES_COEFFICIENT << "\t" << buffer.pitchAngle/ANGLES_COEFFICIENT << "\t"
-             << buffer.timeMoment*10.0f << "\t" << buffer.encoderRoll/ENCODER_COEFFICIENT << "\t"
-             << buffer.encoderPitch/ENCODER_COEFFICIENT << "\t"
-             << buffer.motor1_power << "\t" << buffer.motor2_power << "\t"
-             << buffer.motor3_power << "\t" << buffer.motor4_power;
+    thrustList->push_back( buffer.thrust );
+    torqueList->push_back( buffer.torque );
+    currentList->push_back( buffer.current );
+    speedList->push_back( buffer.speed );
+    timeList->push_back( buffer.time*10.0f ); // milliseconds
 
-    emit sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
-
-    rollDataList->push_back( buffer.rollAngle/ANGLES_COEFFICIENT );
-    pitchDataList->push_back( buffer.pitchAngle/ANGLES_COEFFICIENT );
-    encRollDataList->push_back( buffer.encoderRoll/ENCODER_COEFFICIENT + encoderRollCOffset );
-    encPitchDataList->push_back( buffer.encoderPitch/ENCODER_COEFFICIENT + encoderPitchCOffset );
-    timeList->push_back( buffer.timeMoment*10.0f ); // milliseconds
-
-    if ( calibrationFlag )
-    {
-        if ( --calibrationCounter == 0 )
-        {
-            calibrationFlag = false;
-            setDataCommandFlag(Qt::Unchecked);
-            for ( int i = 0; i < timeList->length(); i++)
-            {
-                encoderRollCOffset += rollDataList->at(i) - encRollDataList->at(i);
-                encoderPitchCOffset += pitchDataList->at(i) - encPitchDataList->at(i);
-            }
-
-            encoderRollCOffset /= timeList->length();
-            encoderPitchCOffset /= timeList->length();
-
-            qDebug() << QString::number(encoderRollCOffset) << "\t" << QString::number(encoderPitchCOffset) << "\n";
-            emit sendCalibrationReady(true);
-        }
-    }
-    else
-        emit dataReceived();
+    emit dataReceived();
 }
 
 quint8 SerialLink::receiveFrameHead()
@@ -352,7 +262,7 @@ QByteArray SerialLink::receiveNextFrame()
             length = RESPONSE_FRAME_SIZE;
             break;
         case DATA_PREFIX:
-            length = DATA_FULL_FRAME_SIZE;
+            length = DATA_STAND_FRAME_SIZE;
             break;
         case 0:
         case COMMAND_PREFIX:

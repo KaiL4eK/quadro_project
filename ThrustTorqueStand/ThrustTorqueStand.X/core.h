@@ -17,8 +17,6 @@ typedef enum {
     UNKNOWN_COMMAND,
     CONNECT,
     DISCONNECT,
-    DATA_START,
-    DATA_STOP,
     MOTOR_START,
     MOTOR_STOP,
     MOTOR_SET_POWER
@@ -33,7 +31,7 @@ typedef struct {
 }UART_frame_t;
 
 void tacho_init ( void );
-int16_t tacho_get_round_speed ( void );
+uint16_t tacho_get_round_speed ( void );
 void tacho_start_cmd ( void );
 void tacho_stop_cmd ( void );
 

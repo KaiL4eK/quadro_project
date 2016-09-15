@@ -13,7 +13,7 @@ TARGET = ThrustTorque_gui
 TEMPLATE = app
 
 INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include \
-               ../common
+               ../
 
 LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -lqwt
 

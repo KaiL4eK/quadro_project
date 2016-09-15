@@ -21,6 +21,8 @@ int ad7705_init_setup_register ( void );
 
 static int ad7705_turnOn ( void )
 {
+    nRESET_PIN = 0;
+    delay_ms( 1 );
     nRESET_PIN = 1;
     return( 0 );
 }
@@ -127,7 +129,7 @@ int ad7705_init_clock_register ( void )
 {
     Clock_reg_t clock_reg;
     clock_reg.val = 0;
-    clock_reg.bits.FS = 0b00;   // 20 Hz
+    clock_reg.bits.FS = 0b10;   // 100 Hz
     clock_reg.bits.CLK = 0;
     clock_reg.bits.CLKDIV = 1;
     clock_reg.bits.CLKDIS = 0;
