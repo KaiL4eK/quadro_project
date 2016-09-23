@@ -226,13 +226,13 @@ void send_UART_data ( void )
 
 void __attribute__( (__interrupt__, auto_psv) ) _T4Interrupt()
 {
-    speed_data = tacho_get_round_speed();   // In Hz
+    speed_data = tacho_get_round_speed();   // In rpm
     current_data = current_sensor_read();
     
     if ( ad7705_is_data_ready() )
     {
         thrust_data = ad7705_read_data();
-        UART_write_string( UARTm1, "%06d, %06d, %06d\n", thrust_data, current_data, speed_data );
+//        UART_write_string( UARTm1, "%06d, %06d, %06d\n", thrust_data, current_data, speed_data );
     } else {
         UART_write_string( UARTm1, "No data\n" );       // Not happened
     }

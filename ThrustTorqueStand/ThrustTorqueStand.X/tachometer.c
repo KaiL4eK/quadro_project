@@ -54,7 +54,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _IC5Interrupt()
         {
             uint32_t half_round_time_us = convert_ticks_to_us( IC5BUF, timer_divider ); // last is timer scale coeff
 //            UART_write_string( UARTm1, "%ld\n", half_round_time_us );
-            round_speed = 1000000L/half_round_time_us;    // ?? TODO
+            round_speed = 30000000L/half_round_time_us;    // rpm
         } else {
             uint16_t tmp_garbage = IC5BUF;
             dummy_read = false;
