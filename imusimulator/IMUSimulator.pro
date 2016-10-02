@@ -12,19 +12,22 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = IMUSimulator
 TEMPLATE = app
 
-INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include
+QWT_PATH = /usr/local/qwt-6.1.2
 
-LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -lqwt
+INCLUDEPATH += $${QWT_PATH}/include
+
+LIBS += -L $${QWT_PATH}/lib \
+        -l qwt
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    seriallinker.cpp \
-    datastreamer.cpp
+        seriallinker.cpp \
+        datastreamer.cpp
 
 HEADERS  += mainwindow.h \
-    seriallinker.h \
-    datastreamer.h \
-    imudata.h
+            seriallinker.h \
+            datastreamer.h \
+            imudata.h
 
 FORMS    += mainwindow.ui
 

@@ -12,10 +12,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = ThrustTorque_gui
 TEMPLATE = app
 
-INCLUDEPATH += $(HOME)/Qt/qwt-6.1.2/include \
+QWT_PATH = /usr/local/qwt-6.1.2
+
+INCLUDEPATH += $${QWT_PATH}/include \
                ../
 
-LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -lqwt
+LIBS += -L $${QWT_PATH}/lib \
+        -l qwt
 
 SOURCES += main.cpp\
         mainwindow.cpp \
