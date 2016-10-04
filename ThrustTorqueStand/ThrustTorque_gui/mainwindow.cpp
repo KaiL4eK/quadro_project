@@ -3,11 +3,9 @@
 #include <QObject>
 #include <QPixmap>
 #include <QLabel>
-#include <QDebug>
 #include <QMessageBox>
 #include <QLineEdit>
 
-#include <qwt_plot.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -23,60 +21,49 @@ MainWindow::MainWindow(QWidget *parent) :
     motorSpeedFld = new QLineEdit();
     motorSpeedFld->setText("0");
 
+    QGridLayout *controlLayout = new QGridLayout();
+    controlWidget = new QWidget(this);
+    controlWidget->setLayout(controlLayout);
+    controlLayout->addWidget(connectionBtn, 0, 0);
+    controlLayout->addWidget(serialNameFld, 0, 1);
+    controlLayout->addWidget(motorControlBtn, 2, 0);
+    controlLayout->addWidget(motorSpeedFld, 2, 1, 1, 2);
+
     QPixmap LETIcrestImage("crest.png");
     QPushButton *aboutBtn = new QPushButton();
     QIcon ButtonIcon(LETIcrestImage);
     aboutBtn->setIcon(ButtonIcon);
     aboutBtn->setIconSize(QSize(80, 80));
-
-    QGridLayout *controlLayout = new QGridLayout();
-    controlLayout->addWidget(connectionBtn, 0, 0);
-    controlLayout->addWidget(serialNameFld, 0, 1);
-
-    controlLayout->addWidget(motorControlBtn, 2, 0);
-    controlLayout->addWidget(motorSpeedFld, 2, 1, 1, 2);
+    connect( aboutBtn, &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
     controlLayout->addWidget(aboutBtn, 0, 3, 3, 1, Qt::AlignBottom|Qt::AlignRight);
-
-    controlWidget = new QWidget(this);
-    controlWidget->setLayout(controlLayout);
 
     QPushButton *hideBtn = new QPushButton();
     hideBtn->setCheckable(true);
     hideBtn->setMaximumHeight(20);
 
-    QwtPlot *thrustPlot = new QwtPlot(),
-            *torquePlot = new QwtPlot(),
-            *currentPlot = new QwtPlot(),
-            *speedPlot = new QwtPlot();
-
     QGridLayout *layout = new QGridLayout;
-    layout->addWidget(thrustPlot, 0, 0);
-    layout->addWidget(torquePlot, 1, 0);
-    layout->addWidget(currentPlot, 2, 0);
-    layout->addWidget(speedPlot, 3, 0);
-    layout->addWidget(hideBtn, 4, 0);
-    layout->addWidget(controlWidget, 5, 0);
+
+    plotMgr.addPlotWidget( 0, "Thrust plot" );
+    plotMgr.addPlotWidget( 1, "Torque plot" );
+    plotMgr.addPlotWidget( 2, "Current plot" );
+    plotMgr.addPlotWidget( 3, "Speed plot" );
+    layout->addWidget( plotMgr.getWidget(), 0, 0 );
+
+    layout->addWidget(hideBtn, 1, 0);
+    layout->addWidget(controlWidget, 2, 0);
 
     QWidget *window = new QWidget();
     window->setLayout(layout);
-    window->setMinimumHeight(600);
-    window->setMinimumWidth(400);
+    window->setMinimumSize( QSize(600, 800) );
     setCentralWidget(window);
-    setWindowTitle(tr("3D Stand"));
-
-    thrustPlotter =  new QwtPlotter( thrustPlot, &thrustData, &timeData, "Thrust" );
-    torquePlotter = new QwtPlotter( torquePlot, &torqueData, &timeData, "Torque" );
-    speedPlotter =  new QwtPlotter( speedPlot, &speedData, &timeData, "Speed" );
-    currentPlotter = new QwtPlotter( currentPlot, &currentData, &timeData, "Current" );
+    setWindowTitle(tr("Thrust Stand"));
 
     setDisconnectedUIState();
 
     connect( connectionBtn,    &QPushButton::clicked, this, &MainWindow::onConnectionBtnClick );
     connect( motorControlBtn,  &QPushButton::clicked, this, &MainWindow::onMotorStartBtnClick );
-    connect( aboutBtn,         &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
+
     connect( hideBtn,          &QPushButton::clicked, this, &MainWindow::onHideBtnClicked );
-
-
 }
 
 MainWindow::~MainWindow()
@@ -88,15 +75,10 @@ MainWindow::~MainWindow()
 void MainWindow::createNewLink()
 {
     QThread *linkThread = new QThread;
-    SerialLink *serial = new SerialLink( &thrustData, &torqueData, &currentData, &speedData, &timeData, serialNameFld->text() );
+    SerialLink *serial = new SerialLink( serialNameFld->text() );
     serial->moveToThread( linkThread );
 
     connect( serial, SIGNAL(error(QString, qint64)), this, SLOT(errorHandler(QString, qint64)) );
-
-    connect( serial, &SerialLink::dataReceived, thrustPlotter, &QwtPlotter::dataProcess );
-    connect( serial, &SerialLink::dataReceived, torquePlotter, &QwtPlotter::dataProcess );
-    connect( serial, &SerialLink::dataReceived, speedPlotter, &QwtPlotter::dataProcess );
-    connect( serial, &SerialLink::dataReceived, currentPlotter, &QwtPlotter::dataProcess );
 
     connect( linkThread, SIGNAL(started()), serial, SLOT(process()) );
 

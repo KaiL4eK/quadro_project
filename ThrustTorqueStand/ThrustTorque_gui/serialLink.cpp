@@ -4,13 +4,11 @@
 
 #include <serial_protocol.h>
 
-SerialLink::SerialLink(QVector<double> *p_thrustData, QVector<double> *p_torqueData,
-                       QVector<double> *p_currentData, QVector<double> *p_SpeedData,
-                       QVector<double> *p_timeData , QString sName, QObject *parent)
-    : QObject( parent ),
-      thrustList( p_thrustData ), torqueList( p_torqueData ),
-      currentList( p_currentData ), speedList( p_SpeedData ),
-      timeList( p_timeData ), serialName( sName ) {}
+SerialLink::SerialLink(QString sName, QObject *parent)
+    : QObject( parent ), serialName( sName )
+{
+
+}
 
 SerialLink::~SerialLink()
 {
@@ -77,11 +75,11 @@ void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
 
 void SerialLink::clearDataBase()
 {
-    thrustList->clear();
-    torqueList->clear();
-    currentList->clear();
-    speedList->clear();
-    timeList->clear();
+    thrustList.clear();
+    torqueList.clear();
+    currentList.clear();
+    speedList.clear();
+    timeList.clear();
 }
 
 bool SerialLink::processConnectCommand()
@@ -215,11 +213,11 @@ void SerialLink::parseDataFrame(QByteArray &frame)
              << buffer.time*10.0f << "\t"
              << buffer.speed << "\t" << buffer.current;
 
-    thrustList->push_back( buffer.thrust );
-    torqueList->push_back( buffer.torque );
-    currentList->push_back( buffer.current );
-    speedList->push_back( buffer.speed );
-    timeList->push_back( buffer.time*10.0f ); // milliseconds
+    thrustList[current_plot].push_back( buffer.thrust );
+    torqueList[current_plot].push_back( buffer.torque );
+    currentList[current_plot].push_back( buffer.current );
+    speedList[current_plot].push_back( buffer.speed );
+    timeList[current_plot].push_back( buffer.time*10.0f ); // milliseconds
 
     emit dataReceived();
 }
@@ -309,6 +307,6 @@ bool SerialLink::waitForResponse()
                     serial->error() );
         return( false );
     }
-    qDebug() << "Received " + QString::number(replyBytes[1]);
+    qDebug() << "Received " + QString::number(replyBytes[0]) << " " + QString::number(replyBytes[1]);
     return( true );
 }

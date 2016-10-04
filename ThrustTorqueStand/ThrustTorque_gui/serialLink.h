@@ -12,23 +12,21 @@ class SerialLink : public QObject
     Q_OBJECT
 
 public:
-    SerialLink(QVector<double> *p_thrustData, QVector<double> *p_torqueData,
-               QVector<double> *p_currentData, QVector<double> *p_SpeedData,
-               QVector<double> *p_timeData , QString sName, QObject *parent = 0);
+    SerialLink(QString sName, QObject *parent = 0);
     ~SerialLink();
 
 private:
-    QVector<double> *thrustList = NULL,
-                    *torqueList = NULL,
-                    *currentList = NULL,
-                    *speedList = NULL,
-                    *timeList = NULL;
+    QVector<QVector<double>>    thrustList,
+                                torqueList,
+                                currentList,
+                                speedList,
+                                timeList;
 
-    qint64  receivedPoints = 0;
-    qint32  serialSpeed = 460800;
+    quint16 current_plot    = 0;
+    qint32  serialSpeed     = 460800;
     QString serialName;
-    bool    receiveData = false,
-            isRunning = false;
+    bool    receiveData     = false,
+            isRunning       = false;
 
     QSerialPort *serial;
 

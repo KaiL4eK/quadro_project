@@ -6,7 +6,10 @@
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QProgressBar>
-#include "qwtPlotter.h"
+#include <QLineEdit>
+#include <QDebug>
+
+#include "qwtPlotManager.h"
 
 namespace Ui {
 class MainWindow;
@@ -21,18 +24,7 @@ public:
     ~MainWindow();
 
 private:
-//    Ui::MainWindow *ui;
-
-    QwtPlotter  *torquePlotter,
-                *thrustPlotter,
-                *currentPlotter,
-                *speedPlotter;
-
-    QVector<double> torqueData,
-                    thrustData,
-                    currentData,
-                    speedData,
-                    timeData;
+    QwtPlotManager plotMgr;
 
     /** UI references **/
     QPushButton *connectionBtn,

@@ -14,6 +14,8 @@ TEMPLATE = app
 
 QWT_PATH = /usr/local/qwt-6.1.2
 
+include ( $${QWT_PATH}/features/qwt.prf )
+
 INCLUDEPATH += $${QWT_PATH}/include \
                ../
 
@@ -22,11 +24,11 @@ LIBS += -L $${QWT_PATH}/lib \
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-        qwtPlotter.cpp \
-        serialLink.cpp
+        serialLink.cpp \
+        qwtPlotManager.cpp
 
 HEADERS  += mainwindow.h \
-        qwtPlotter.h \
-        serialLink.h
+        serialLink.h \
+        qwtPlotManager.h
 
 CONFIG += c++11
