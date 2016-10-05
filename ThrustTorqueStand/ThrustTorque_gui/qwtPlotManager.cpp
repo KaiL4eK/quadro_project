@@ -20,26 +20,19 @@ QwtPlotManager::QwtPlotManager()
 //    pointsTable->setFont( *tableFont );
 
     // Curve
-//    mainCurve = new QwtPlotCurve(plotName);
-//    mainCurve->setPen( Qt::blue, 1 );
-//    mainCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
 
-//    QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
-//        QBrush( Qt::yellow ), QPen( Qt::blue, 1 ), QSize( 2, 2 ) );
-//    mainCurve->setSymbol( symbol );
-//    mainCurve->attach( qwtPlot );
 }
 
 QwtPlotManager::~QwtPlotManager()
 {
 }
 
-void QwtPlotManager::addPlotWidget(quint32 plotId, QString name, QString xAxisName, QString yAxisName)
+void QwtPlotManager::addPlotWidget(uint16_t plotId, QString name, QString xAxisName, QString yAxisName)
 {
     if ( ap_plots.contains( plotId ) )
         return;
 
-    QwtStandartPlot *newPlot = new QwtStandartPlot(name, xAxisName, yAxisName);
+    QwtStandartPlotWidget *newPlot = new QwtStandartPlotWidget(name, xAxisName, yAxisName);
 
     m_layout->addWidget( newPlot );
 
@@ -73,30 +66,34 @@ QWidget *QwtPlotManager::getWidget()
 //    return( 0 );
 //}
 
-int QwtPlotManager::renderPlot()
+void QwtPlotManager::redrawPlotIndex(uint16_t plotId)
 {
-//    mainCurve->setRawSamples( timeList->data(), dataList->data(), dataList->size() );
-//    return( 0 );
+    if ( !ap_plots.contains( plotId ) )
+        return;
+
+    ap_plots[plotId]->redraw();
 }
 
-void QwtPlotManager::refreshPlotView()
+void QwtPlotManager::redrawPlots()
 {
-//    qwtPlot->setAxisAutoScale(QwtPlot::yLeft);
-//    qwtPlot->setAxisAutoScale(QwtPlot::xBottom);
+    for ( const auto &kv : ap_plots ) {
+        kv->redraw();
+    }
 }
 
-void QwtPlotManager::dataProcess()
+void QwtPlotManager::addNewCurve(uint16_t plotId)
 {
-//    refreshPlotView();
-//    renderPlot();
-    QCoreApplication::processEvents();
+    if ( !ap_plots.contains( plotId ) )
+        return;
+
+    ap_plots[plotId]->createNewCurve();
 }
 
 /*
  *  QwtStandartPlot Methods
  */
 
-QwtStandartPlot::QwtStandartPlot(QString name, QString xAxisName, QString yAxisName)
+QwtStandartPlotWidget::QwtStandartPlotWidget(QString name, QString xAxisName, QString yAxisName)
     : QwtPlot()
 {
     QwtPlotGrid *grid       = new QwtPlotGrid();
@@ -129,7 +126,39 @@ QwtStandartPlot::QwtStandartPlot(QString name, QString xAxisName, QString yAxisN
 
 }
 
-QwtStandartPlot::~QwtStandartPlot()
+QwtStandartPlotWidget::~QwtStandartPlotWidget()
 {
 
+}
+
+void QwtStandartPlotWidget::redraw()
+{
+    setAxisAutoScale(QwtPlot::yLeft);
+    setAxisAutoScale(QwtPlot::xBottom);
+
+    if ( nCurves > data_vect->size() ||
+         nCurves > time_vect->size() ||
+         nCurves != curves_vect->size() ) {
+        // Error processing
+        return;
+    }
+
+    for ( uint16_t i = 0; i < nCurves; i++ ) {
+        curves_vect->at(i)->setRawSamples( time_vect->at(i).data(), data_vect->at(i).data(), data_vect->at(i).size() );
+    }
+}
+
+void QwtStandartPlotWidget::createNewCurve()
+{
+    QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + curves_vect->size() );
+
+    newCurve->setPen( Qt::blue + curves_vect->size(), 1 );
+    newCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
+
+    QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
+        QBrush( Qt::yellow ), QPen( Qt::blue, 1 ), QSize( 2, 2 ) );
+    newCurve->setSymbol( symbol );
+    newCurve->attach( this );
+
+    curves_vect->append( newCurve );
 }

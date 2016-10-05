@@ -23,16 +23,25 @@
 #include <qwt_plot_picker.h>
 #include <qwt_picker_machine.h>
 
-class QwtStandartPlot : public QwtPlot
+class QwtStandartPlotWidget : public QwtPlot
 {
+    Q_OBJECT
 
 public:
-    QwtStandartPlot(QString name, QString xAxisName, QString yAxisName);
-    ~QwtStandartPlot();
+    QwtStandartPlotWidget(QString name, QString xAxisName, QString yAxisName);
+    ~QwtStandartPlotWidget();
+
+    void redraw();
+
+public slots:
+    void createNewCurve();
 
 private:
-    QVector<QVector<double>> *data_vect;
-    QVector<QVector<double>> *time_vect;
+    uint16_t                    nCurves;
+
+    QVector<QVector<double>>    *data_vect;
+    QVector<QVector<double>>    *time_vect;
+    QVector<QwtPlotCurve *>     *curves_vect;
 };
 
 class QwtPlotManager : public QObject
@@ -43,7 +52,7 @@ public:
     QwtPlotManager();
     ~QwtPlotManager();
 
-    void addPlotWidget(quint32 plotId, QString name, QString xAxisName = "Time", QString yAxisName = "Value");
+    void addPlotWidget(uint16_t plotId, QString name, QString xAxisName = "Time", QString yAxisName = "Value");
 
     QWidget *getWidget();
 
@@ -54,7 +63,9 @@ public:
     void refreshPlotView();
 
 public slots:
-    void dataProcess();
+    void redrawPlots();
+    void redrawPlotIndex(uint16_t plotId);
+    void addNewCurve(uint16_t plotId);
 
 private:
     quint32                                     m_idCounter;
@@ -62,12 +73,10 @@ private:
     QVBoxLayout                                 *m_layout;
     QWidget                                     *m_widget;
 
-    QMap<quint32, QwtStandartPlot *>            ap_plots;
+    QMap<uint16_t, QwtStandartPlotWidget *>     ap_plots;
 
 //    QTableView *pointsTable = NULL;
 //    QStandardItemModel *tableModel = new QStandardItemModel( 0, 2 );
-
-//    QwtPlotCurve *mainCurve;
 };
 
 #endif // QWT_PLOTTER_H
