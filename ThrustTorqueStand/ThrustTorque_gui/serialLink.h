@@ -7,6 +7,23 @@
 #include <QtSerialPort/QSerialPort>
 #include <QDataStream>
 
+enum DataIndex
+{
+    ThrustDataIndex     = 0,
+    TorqueDataIndex     = 1,
+    CurrentDataIndex    = 2,
+    SpeedDataIndex      = 3
+};
+
+struct SerialFrame
+{
+    uint8_t     type;
+    uint8_t     length;
+    QByteArray  data;
+
+    void clear() { type = 0; data.clear(); }
+};
+
 class SerialLink : public QObject
 {
     Q_OBJECT
@@ -16,25 +33,27 @@ public:
     ~SerialLink();
 
 private:
-    QVector<QVector<double>>    thrustList,
-                                torqueList,
-                                currentList,
-                                speedList,
-                                timeList;
+    QVector<QVector<double>>    ma_thrustData,
+                                ma_torqueData,
+                                ma_currentData,
+                                ma_speedData,
+                                ma_timeData;
 
-    quint16 current_plot    = 0;
-    qint32  serialSpeed     = 460800;
-    QString serialName;
-    bool    receiveData     = false,
-            isRunning       = false;
+    uint16_t    current_plot    = 0;
+    uint32_t    serialSpeed     = 460800;
+
+    QString     serialName;
+    bool        receiveData     = false,
+                isRunning       = false;
 
     QSerialPort *serial;
+    SerialFrame frame;
 
     void clearDataBase( void );
     void initSerial( void );
 
-    quint8 receiveFrameHead();
-    QByteArray receiveNextFrame();
+    void receiveFrameHeader();
+    void receiveNextFrame();
 
     bool makeLinkToPort();
     bool processConnectCommand();
@@ -44,7 +63,7 @@ private:
     bool processMotorStartCommand(quint8 speed);
     bool processMotorStopCommand();
     bool processReceiveData();
-    bool waitForResponse();
+    bool receiveResponse();
     void parseDataFrame(QByteArray &frame);
 
 signals:
@@ -53,6 +72,7 @@ signals:
     void sendConnectionState(bool state);
     void sendMotorStartStopFinished(bool completed);
     void error( QString, qint64 );
+    void setDataSource(uint16_t plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
 
 public slots:
     void process();

@@ -43,10 +43,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QGridLayout *layout = new QGridLayout;
 
-    plotMgr.addPlotWidget( 0, "Thrust plot" );
-    plotMgr.addPlotWidget( 1, "Torque plot" );
-    plotMgr.addPlotWidget( 2, "Current plot" );
-    plotMgr.addPlotWidget( 3, "Speed plot" );
+    plotMgr.addPlotWidget( ThrustDataIndex, "Thrust plot" );
+    plotMgr.addPlotWidget( TorqueDataIndex, "Torque plot" );
+    plotMgr.addPlotWidget( CurrentDataIndex, "Current plot" );
+    plotMgr.addPlotWidget( SpeedDataIndex, "Speed plot" );
     layout->addWidget( plotMgr.getWidget(), 0, 0 );
 
     layout->addWidget(hideBtn, 1, 0);
@@ -78,15 +78,17 @@ void MainWindow::createNewLink()
     SerialLink *serial = new SerialLink( serialNameFld->text() );
     serial->moveToThread( linkThread );
 
-    connect( serial, SIGNAL(error(QString, qint64)), this, SLOT(errorHandler(QString, qint64)) );
-
-    connect( linkThread, SIGNAL(started()), serial, SLOT(process()) );
+    connect( serial, &SerialLink::error, this, &MainWindow::errorHandler );
+    connect( serial, &SerialLink::dataReceived, &plotMgr, &QwtPlotManager::redrawPlots );
+    connect( serial, &SerialLink::setDataSource, &plotMgr, &QwtPlotManager::setDataSource );
 
     connect( this, &MainWindow::stopDataLink, serial, &SerialLink::stopLink );
 
+    connect( linkThread, SIGNAL(started()), serial, SLOT(process()) );
     connect( serial, SIGNAL(finished()), linkThread, SLOT(quit()) );
     connect( serial, &SerialLink::finished, serial, &SerialLink::deleteLater );
     connect( linkThread, SIGNAL(finished()), linkThread, SLOT(deleteLater()) );
+
     connect( serial, &SerialLink::sendConnectionState, this, &MainWindow::changeConnectionState );
 
     connect( this, &MainWindow::sendStartStopMotorSignal, serial, &SerialLink::processStartStopMotorCommand );
@@ -134,17 +136,12 @@ void MainWindow::onMotorStartBtnClick(bool state)
         quint8  powerSend = power;
         emit sendStartStopMotorSignal(state, powerSend);
         if ( state )
-        {
             motorSpeedFld->setEnabled(false);
-        }
         else
-        {
             motorSpeedFld->setEnabled(true);
-        }
     }
     else
-        QMessageBox::critical(this, "Power value",
-                              "Error: Input correct power number");
+        QMessageBox::critical(this, "Power value", "Error: Input correct power number");
 }
 
 void MainWindow::motorStartStopReady(bool completed)
@@ -154,13 +151,10 @@ void MainWindow::motorStartStopReady(bool completed)
 
 void MainWindow::changeConnectionState( bool state )
 {
-    if ( state ) // Now connected
-    {
+    if ( state ) { // Now connected
         connectionBtn->setText( "Disconnect" );
         setConnectedUIState();
-    }
-    else // Now disconnected
-    {
+    } else { // Now disconnected
         connectionBtn->setText( "Connect" );
         setDisconnectedUIState();
     }
@@ -171,18 +165,13 @@ void MainWindow::changeConnectionState( bool state )
 void MainWindow::onConnectionBtnClick(bool state)
 {
     connectionBtn->setEnabled( false );
-    if ( state )
-    {   // Was Disconnected
+    if ( state ) // Was Disconnected
         createNewLink();
-    }
-    else
-    {   // Was Connected
+    else // Was Connected
         emit stopDataLink();
-    }
 }
 
 void MainWindow::errorHandler(QString errMsg, qint64 errCode)
 {
-    QMessageBox::critical(this, "Error " + QString::number(errCode),
-                          errMsg);
+    QMessageBox::critical(this, "Error " + QString::number(errCode), errMsg);
 }

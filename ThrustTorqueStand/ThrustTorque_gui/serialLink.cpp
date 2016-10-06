@@ -22,6 +22,7 @@ void SerialLink::stopLink()
 {
     qDebug() << "Stop link signal emmited";
     processDisconnectCommand();
+    QThread::msleep( 100 );
     isRunning = false;
 }
 
@@ -45,6 +46,11 @@ void SerialLink::process()
 {
     if ( makeLinkToPort() && processConnectCommand() )
     {
+        emit setDataSource(ThrustDataIndex, &ma_thrustData, &ma_timeData);
+        emit setDataSource(TorqueDataIndex, &ma_torqueData, &ma_timeData);
+        emit setDataSource(CurrentDataIndex, &ma_currentData, &ma_timeData);
+        emit setDataSource(SpeedDataIndex, &ma_speedData, &ma_timeData);
+
         emit sendConnectionState( true );
         isRunning = true;
         while( isRunning )
@@ -62,24 +68,23 @@ void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
     bool result = false;
     if ( startFlag )
     {
-        qDebug() << "Send command to start motors with speed " +
-                    QString::number(speed);
+        qDebug() << "Send command to start motors with speed " + QString::number(speed);
         result = processMotorStartCommand(speed);
     } else {
         qDebug() << "Send command to stop motors";
         result = processMotorStopCommand();
     }
-    isRunning = result;  // Can`t send = serial error
+    isRunning = result;  // Can`t send == serial error
     emit sendMotorStartStopFinished(result);
 }
 
 void SerialLink::clearDataBase()
 {
-    thrustList.clear();
-    torqueList.clear();
-    currentList.clear();
-    speedList.clear();
-    timeList.clear();
+    ma_thrustData.clear();
+    ma_torqueData.clear();
+    ma_currentData.clear();
+    ma_speedData.clear();
+    ma_timeData.clear();
 }
 
 bool SerialLink::processConnectCommand()
@@ -97,7 +102,7 @@ bool SerialLink::processConnectCommand()
     }
     serial->flush();
 
-    return( waitForResponse() );
+    return( receiveResponse() );
 }
 
 bool SerialLink::processDisconnectCommand()
@@ -114,8 +119,6 @@ bool SerialLink::processDisconnectCommand()
         return( false );
     }
     serial->flush();
-QThread::msleep( 100 );
-
     return( true );
 }
 
@@ -145,8 +148,7 @@ bool SerialLink::processMotorStopCommand()
     QByteArray command;
     command.append(COMMAND_PREFIX);
     command.append(CMD_MOTOR_STOP);
-    if ( serial->write( command ) < 0 )
-    {
+    if ( serial->write( command ) < 0 ) {
         emit error( "Failed to send motor stop command", serial->error() );
         return( false );
     }
@@ -157,27 +159,23 @@ bool SerialLink::processMotorStopCommand()
 
 bool SerialLink::processReceiveData()
 {
-    QByteArray frame = receiveNextFrame();
-    if ( frame.isEmpty() )
-        return( false );
+    receiveNextFrame();
 
-    switch ( frame[0] )
+    switch ( frame.type )
     {
         case RESPONSE_PREFIX:
-            if ( frame[1] == RESP_ENDDATA )
+            if ( frame.data[0] == RESP_ENDDATA )
                 receiveData = false;
             break;
         case DATA_PREFIX:
             if ( receiveData )
-            {
-                QByteArray frameContent = frame.mid(1, DATA_STAND_FRAME_SIZE);
-                parseDataFrame( frameContent );
-            }
+                parseDataFrame( frame.data );
             break;
         case 0:
         case COMMAND_PREFIX:
         default:
-            break;
+            qDebug() << "Broken serial link frame received";
+            return( false );
     }
 
     return( true );
@@ -213,100 +211,89 @@ void SerialLink::parseDataFrame(QByteArray &frame)
              << buffer.time*10.0f << "\t"
              << buffer.speed << "\t" << buffer.current;
 
-    thrustList[current_plot].push_back( buffer.thrust );
-    torqueList[current_plot].push_back( buffer.torque );
-    currentList[current_plot].push_back( buffer.current );
-    speedList[current_plot].push_back( buffer.speed );
-    timeList[current_plot].push_back( buffer.time*10.0f ); // milliseconds
+    ma_thrustData[current_plot].push_back( buffer.thrust );
+    ma_torqueData[current_plot].push_back( buffer.torque );
+    ma_currentData[current_plot].push_back( buffer.current );
+    ma_speedData[current_plot].push_back( buffer.speed );
+    ma_timeData[current_plot].push_back( buffer.time*10.0f ); // milliseconds
 
     emit dataReceived();
 }
 
-quint8 SerialLink::receiveFrameHead()
+void SerialLink::receiveFrameHeader()
 {
+    frame.clear();
+
     while ( serial->bytesAvailable() < 1 )  // Receive frame type
     {
         if ( !serial->waitForReadyRead( 1000 ) )
         {
             if ( serial->error() != QSerialPort::TimeoutError )
-                emit error( "Failed to receive frame type [serial error]",
-                            serial->error() );
+                emit error( "Failed to receive frame type [serial error]", serial->error() );
             else
-                emit error( "Failed to receive frame type [timeout]",
-                            serial->error() );
+                emit error( "Failed to receive frame type [timeout]", serial->error() );
 
-            return( 0 );
+            return;
         }
     }
-    char frameHead;
-    if ( serial->read(&frameHead, 1) < 0 )
-    {
-        emit error( "Failed to receive frame type [serial error]",
-                    serial->error() );
-        return( 0 );
-    }
 
-    return( frameHead );
+    if ( serial->read((char *)&frame.type, 1) < 0 ) {
+        emit error( "Failed to receive frame type [serial error]", serial->error() );
+        frame.type = 0;
+    }
 }
 
-QByteArray SerialLink::receiveNextFrame()
+void SerialLink::receiveNextFrame()
 {
-    QByteArray result;
-    quint8 type = receiveFrameHead();
-    quint8 length = 0;
-    switch( type )
+    receiveFrameHeader();
+
+    switch( frame.type )
     {
         case RESPONSE_PREFIX:
-            length = RESPONSE_FRAME_SIZE;
+            frame.length = RESPONSE_FRAME_SIZE;
             break;
         case DATA_PREFIX:
-            length = DATA_STAND_FRAME_SIZE;
+            frame.length = DATA_STAND_FRAME_SIZE;
             break;
         case 0:
         case COMMAND_PREFIX:
         default:
-            return( result );
+            return;
     }
-    while ( serial->bytesAvailable() < length )
-    {
+
+    while ( serial->bytesAvailable() < frame.length ) {
         if ( !serial->waitForReadyRead( 500 ) )
         {
             if ( serial->error() != QSerialPort::TimeoutError )
-                emit error( "Failed to receive frame type [serial error]",
-                            serial->error() );
+                emit error( "Failed to receive frame type [serial error]", serial->error() );
             else
-                emit error( "Failed to receive frame type [timeout]",
-                            serial->error() );
-            result.clear();
-            return( result );
+                emit error( "Failed to receive frame type [timeout]", serial->error() );
+
+            frame.type = 0;
+            return;
         }
     }
-    result = serial->read(length);
-    if ( result.length() != length )
-    {
-        emit error( "Failed to receive frame content [serial error]",
-                    serial->error() );
-        result.clear();
+
+    frame.data += serial->read(frame.length);
+    if ( frame.data.length() != frame.length ) {
+        emit error( "Failed to receive frame content [serial error]", serial->error() );
+
+        frame.type = 0;
     }
-    else
-    {
-        result.insert(0, (char)type);
-    }
-    return( result );
 }
 
-bool SerialLink::waitForResponse()
+bool SerialLink::receiveResponse()
 {
-    QByteArray replyBytes = receiveNextFrame();
-    if ( replyBytes.isEmpty() )
+    receiveNextFrame();
+
+    if ( frame.type == 0 )
         return( false );
 
-    if ( replyBytes[0] != RESPONSE_PREFIX || replyBytes[1] != RESP_NOERROR )
+    if ( frame.type != RESPONSE_PREFIX || frame.data[0] != RESP_NOERROR )
     {
-        emit error( "Received response with code: " + QString::number(replyBytes[1]),
-                    serial->error() );
+        emit error( "Received response with code: " + QString::number(frame.data[0]), serial->error() );
         return( false );
     }
-    qDebug() << "Received " + QString::number(replyBytes[0]) << " " + QString::number(replyBytes[1]);
+    qDebug() << "Received " + QString::number(frame.type) << " " + QString::number(frame.data[0]);
     return( true );
 }

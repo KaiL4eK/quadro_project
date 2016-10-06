@@ -32,8 +32,7 @@ public:
     ~QwtStandartPlotWidget();
 
     void redraw();
-
-public slots:
+    void setDataSource(QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
     void createNewCurve();
 
 private:
@@ -41,7 +40,7 @@ private:
 
     QVector<QVector<double>>    *data_vect;
     QVector<QVector<double>>    *time_vect;
-    QVector<QwtPlotCurve *>     *curves_vect;
+    QVector<QwtPlotCurve *>     curves_vect;
 };
 
 class QwtPlotManager : public QObject
@@ -66,6 +65,7 @@ public slots:
     void redrawPlots();
     void redrawPlotIndex(uint16_t plotId);
     void addNewCurve(uint16_t plotId);
+    void setDataSource(uint16_t plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
 
 private:
     quint32                                     m_idCounter;

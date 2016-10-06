@@ -89,6 +89,14 @@ void QwtPlotManager::addNewCurve(uint16_t plotId)
     ap_plots[plotId]->createNewCurve();
 }
 
+void QwtPlotManager::setDataSource(uint16_t plotId, QVector<QVector<double> > *data_vect, QVector<QVector<double> > *time_vect)
+{
+    if ( !ap_plots.contains( plotId ) )
+        return;
+
+    ap_plots[plotId]->setDataSource(data_vect, time_vect);
+}
+
 /*
  *  QwtStandartPlot Methods
  */
@@ -138,21 +146,27 @@ void QwtStandartPlotWidget::redraw()
 
     if ( nCurves > data_vect->size() ||
          nCurves > time_vect->size() ||
-         nCurves != curves_vect->size() ) {
+         nCurves != curves_vect.size() ) {
         // Error processing
         return;
     }
 
     for ( uint16_t i = 0; i < nCurves; i++ ) {
-        curves_vect->at(i)->setRawSamples( time_vect->at(i).data(), data_vect->at(i).data(), data_vect->at(i).size() );
+        curves_vect[i]->setRawSamples( time_vect->at(i).data(), data_vect->at(i).data(), data_vect->at(i).size() );
     }
+}
+
+void QwtStandartPlotWidget::setDataSource(QVector<QVector<double> > *data_vect, QVector<QVector<double> > *time_vect)
+{
+    this->data_vect = data_vect;
+    this->time_vect = time_vect;
 }
 
 void QwtStandartPlotWidget::createNewCurve()
 {
-    QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + curves_vect->size() );
+    QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + curves_vect.size() );
 
-    newCurve->setPen( Qt::blue + curves_vect->size(), 1 );
+    newCurve->setPen( Qt::blue + curves_vect.size(), 1 );
     newCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
 
     QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
@@ -160,5 +174,7 @@ void QwtStandartPlotWidget::createNewCurve()
     newCurve->setSymbol( symbol );
     newCurve->attach( this );
 
-    curves_vect->append( newCurve );
+    curves_vect.append( newCurve );
+
+    ++nCurves;
 }
