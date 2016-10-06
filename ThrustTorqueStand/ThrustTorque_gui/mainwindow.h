@@ -51,6 +51,7 @@ public slots:
     void onHideBtnClicked(bool state);
     void onAboutBtnClicked();
     void onMotorStartBtnClick(bool state);
+    void onClearPlotsBtnClicked();
     void motorStartStopReady(bool completed);
     void onConnectionBtnClick(bool state);
     void changeConnectionState(bool state);

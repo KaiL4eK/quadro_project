@@ -2,10 +2,8 @@
 #include <QApplication>
 
 QwtPlotManager::QwtPlotManager()
-    : m_idCounter( 0 ), m_widgetStringCounter( 0 )
+    : m_layout( new QVBoxLayout() ), m_widget( new QWidget() )
 {
-    m_widget = new QWidget();
-    m_layout = new QVBoxLayout();
     m_widget->setLayout( m_layout );
 
     // Initialize table
@@ -18,25 +16,22 @@ QwtPlotManager::QwtPlotManager()
 //    QFont *tableFont = new QFont( "Arial" );
 //    tableFont->setPixelSize( 15 );
 //    pointsTable->setFont( *tableFont );
-
-    // Curve
-
 }
 
 QwtPlotManager::~QwtPlotManager()
 {
 }
 
-void QwtPlotManager::addPlotWidget(uint16_t plotId, QString name, QString xAxisName, QString yAxisName)
+void QwtPlotManager::addPlotWidget(quint16 plotId, QString name, QString xAxisName, QString yAxisName)
 {
-    if ( ap_plots.contains( plotId ) )
+    if ( mpa_plot_widgets.contains( plotId ) )
         return;
 
     QwtStandartPlotWidget *newPlot = new QwtStandartPlotWidget(name, xAxisName, yAxisName);
 
     m_layout->addWidget( newPlot );
 
-    ap_plots.insert( plotId, newPlot );
+    mpa_plot_widgets.insert( plotId, newPlot );
 }
 
 QWidget *QwtPlotManager::getWidget()
@@ -44,57 +39,40 @@ QWidget *QwtPlotManager::getWidget()
     return( m_widget );
 }
 
-//int qwtPlotter::testDataShow( void )
-//{
-//    addPoint( new QPointF( 1.0, 1.0 ) );
-//    addPoint( new QPointF( 1.5, 2.0 ) );
-//    addPoint( new QPointF( 3.0, 2.0 ) );
-//    addPoint( new QPointF( 3.5, 3.0 ) );
-//    addPoint( new QPointF( 5.0, 3.0 ) );
-
-//    return( 0 );
-//}
-
-//int qwtPlotter::addPoint( QPointF *newPoint )
-//{
-//    dataList.push_back( *newPoint );
-//    int rowAddIndex = tableModel->rowCount();
-//    tableModel->setItem( rowAddIndex, 0, new QStandardItem( QString::number( newPoint->x() ) ) );
-//    tableModel->setItem( rowAddIndex, 1, new QStandardItem( QString::number( newPoint->y() ) ) );
-//    pointsTable->setRowHeight( rowAddIndex, 20 );
-
-//    return( 0 );
-//}
-
-void QwtPlotManager::redrawPlotIndex(uint16_t plotId)
+void QwtPlotManager::redrawPlotIndex(quint16 plotId)
 {
-    if ( !ap_plots.contains( plotId ) )
+    if ( !mpa_plot_widgets.contains( plotId ) )
         return;
 
-    ap_plots[plotId]->redraw();
+    mpa_plot_widgets[plotId]->redraw();
 }
 
 void QwtPlotManager::redrawPlots()
 {
-    for ( const auto &kv : ap_plots ) {
-        kv->redraw();
-    }
+    for( auto key: mpa_plot_widgets.keys() )
+        mpa_plot_widgets.value( key )->redraw();
 }
 
-void QwtPlotManager::addNewCurve(uint16_t plotId)
+void QwtPlotManager::addNewCurve(quint16 plotId)
 {
-    if ( !ap_plots.contains( plotId ) )
+    if ( !mpa_plot_widgets.contains( plotId ) )
         return;
 
-    ap_plots[plotId]->createNewCurve();
+    mpa_plot_widgets[plotId]->createNewCurve();
 }
 
-void QwtPlotManager::setDataSource(uint16_t plotId, QVector<QVector<double> > *data_vect, QVector<QVector<double> > *time_vect)
+void QwtPlotManager::setDataSource(quint16 plotId, QVector<QVector<double> > *data_vect, QVector<QVector<double> > *time_vect)
 {
-    if ( !ap_plots.contains( plotId ) )
+    if ( !mpa_plot_widgets.contains( plotId ) )
         return;
 
-    ap_plots[plotId]->setDataSource(data_vect, time_vect);
+    mpa_plot_widgets[plotId]->setDataSource(data_vect, time_vect);
+}
+
+void QwtPlotManager::clearPlots()
+{
+    for( auto key: mpa_plot_widgets.keys() )
+        mpa_plot_widgets.value( key )->clearPlotData();
 }
 
 /*
@@ -102,7 +80,7 @@ void QwtPlotManager::setDataSource(uint16_t plotId, QVector<QVector<double> > *d
  */
 
 QwtStandartPlotWidget::QwtStandartPlotWidget(QString name, QString xAxisName, QString yAxisName)
-    : QwtPlot()
+    : QwtPlot(), nCurves( 0 )
 {
     QwtPlotGrid *grid       = new QwtPlotGrid();
 
@@ -131,12 +109,10 @@ QwtStandartPlotWidget::QwtStandartPlotWidget(QString name, QString xAxisName, QS
     d_picker->setRubberBandPen( QColor( Qt::red ) );
     d_picker->setTrackerPen( QColor( Qt::black ) );
     d_picker->setStateMachine( new QwtPickerDragPointMachine() );
-
 }
 
 QwtStandartPlotWidget::~QwtStandartPlotWidget()
 {
-
 }
 
 void QwtStandartPlotWidget::redraw()
@@ -147,13 +123,24 @@ void QwtStandartPlotWidget::redraw()
     if ( nCurves > data_vect->size() ||
          nCurves > time_vect->size() ||
          nCurves != curves_vect.size() ) {
-        // Error processing
+        qDebug() << "S-t bad in redraw function";
+
+        QCoreApplication::processEvents();
         return;
     }
 
-    for ( uint16_t i = 0; i < nCurves; i++ ) {
+    if ( !data_vect || !time_vect ) {
+        qDebug() << "Null pointers in redraw function";
+
+        QCoreApplication::processEvents();
+        return;
+    }
+
+    for ( quint16 i = 0; i < nCurves; i++ ) {
         curves_vect[i]->setRawSamples( time_vect->at(i).data(), data_vect->at(i).data(), data_vect->at(i).size() );
     }
+
+    QCoreApplication::processEvents();
 }
 
 void QwtStandartPlotWidget::setDataSource(QVector<QVector<double> > *data_vect, QVector<QVector<double> > *time_vect)
@@ -164,7 +151,7 @@ void QwtStandartPlotWidget::setDataSource(QVector<QVector<double> > *data_vect, 
 
 void QwtStandartPlotWidget::createNewCurve()
 {
-    QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + curves_vect.size() );
+    QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + QString::number(curves_vect.size()) );
 
     newCurve->setPen( Qt::blue + curves_vect.size(), 1 );
     newCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
@@ -177,4 +164,15 @@ void QwtStandartPlotWidget::createNewCurve()
     curves_vect.append( newCurve );
 
     ++nCurves;
+}
+
+void QwtStandartPlotWidget::clearPlotData()
+{
+    for( auto it = curves_vect.begin(); it != curves_vect.end(); it++) {
+        (*it)->detach();
+        delete *it;
+    }
+
+    curves_vect.clear();
+    nCurves = 0;
 }

@@ -21,6 +21,16 @@ MainWindow::MainWindow(QWidget *parent) :
     motorSpeedFld = new QLineEdit();
     motorSpeedFld->setText("0");
 
+    QPixmap LETIcrestImage("crest.png");
+    QPushButton *aboutBtn = new QPushButton();
+    QIcon ButtonIcon(LETIcrestImage);
+    aboutBtn->setIcon(ButtonIcon);
+    aboutBtn->setIconSize(QSize(80, 80));
+    connect( aboutBtn, &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
+
+//    QPushButton *clearPlotsBtn = new QPushButton(tr("Clear plots"));
+//    connect( clearPlotsBtn, &QPushButton::clicked, this, &MainWindow::onClearPlotsBtnClicked );
+
     QGridLayout *controlLayout = new QGridLayout();
     controlWidget = new QWidget(this);
     controlWidget->setLayout(controlLayout);
@@ -28,14 +38,8 @@ MainWindow::MainWindow(QWidget *parent) :
     controlLayout->addWidget(serialNameFld, 0, 1);
     controlLayout->addWidget(motorControlBtn, 2, 0);
     controlLayout->addWidget(motorSpeedFld, 2, 1, 1, 2);
-
-    QPixmap LETIcrestImage("crest.png");
-    QPushButton *aboutBtn = new QPushButton();
-    QIcon ButtonIcon(LETIcrestImage);
-    aboutBtn->setIcon(ButtonIcon);
-    aboutBtn->setIconSize(QSize(80, 80));
-    connect( aboutBtn, &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
     controlLayout->addWidget(aboutBtn, 0, 3, 3, 1, Qt::AlignBottom|Qt::AlignRight);
+//    controlLayout->addWidget(clearPlotsBtn, 0, 4, Qt::AlignBottom|Qt::AlignRight);
 
     QPushButton *hideBtn = new QPushButton();
     hideBtn->setCheckable(true);
@@ -51,6 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     layout->addWidget(hideBtn, 1, 0);
     layout->addWidget(controlWidget, 2, 0);
+
 
     QWidget *window = new QWidget();
     window->setLayout(layout);
@@ -81,6 +86,7 @@ void MainWindow::createNewLink()
     connect( serial, &SerialLink::error, this, &MainWindow::errorHandler );
     connect( serial, &SerialLink::dataReceived, &plotMgr, &QwtPlotManager::redrawPlots );
     connect( serial, &SerialLink::setDataSource, &plotMgr, &QwtPlotManager::setDataSource );
+    connect( serial, &SerialLink::addNewCurve, &plotMgr, &QwtPlotManager::addNewCurve );
 
     connect( this, &MainWindow::stopDataLink, serial, &SerialLink::stopLink );
 
@@ -144,6 +150,11 @@ void MainWindow::onMotorStartBtnClick(bool state)
         QMessageBox::critical(this, "Power value", "Error: Input correct power number");
 }
 
+void MainWindow::onClearPlotsBtnClicked()
+{
+
+}
+
 void MainWindow::motorStartStopReady(bool completed)
 {
 
@@ -165,10 +176,12 @@ void MainWindow::changeConnectionState( bool state )
 void MainWindow::onConnectionBtnClick(bool state)
 {
     connectionBtn->setEnabled( false );
-    if ( state ) // Was Disconnected
+    if ( state ) { // Was Disconnected
         createNewLink();
-    else // Was Connected
+    } else { // Was Connected
         emit stopDataLink();
+        plotMgr.clearPlots();
+    }
 }
 
 void MainWindow::errorHandler(QString errMsg, qint64 errCode)

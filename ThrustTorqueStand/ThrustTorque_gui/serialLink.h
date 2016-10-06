@@ -39,8 +39,8 @@ private:
                                 ma_speedData,
                                 ma_timeData;
 
-    uint16_t    current_plot    = 0;
-    uint32_t    serialSpeed     = 460800;
+    qint16      current_plot;
+    uint32_t    serialSpeed;
 
     QString     serialName;
     bool        receiveData     = false,
@@ -49,7 +49,7 @@ private:
     QSerialPort *serial;
     SerialFrame frame;
 
-    void clearDataBase( void );
+    void resizeDatabase( void );
     void initSerial( void );
 
     void receiveFrameHeader();
@@ -72,7 +72,8 @@ signals:
     void sendConnectionState(bool state);
     void sendMotorStartStopFinished(bool completed);
     void error( QString, qint64 );
-    void setDataSource(uint16_t plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
+    void addNewCurve(quint16 plotId);
+    void setDataSource(quint16 plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
 
 public slots:
     void process();

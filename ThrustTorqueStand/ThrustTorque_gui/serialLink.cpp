@@ -5,7 +5,8 @@
 #include <serial_protocol.h>
 
 SerialLink::SerialLink(QString sName, QObject *parent)
-    : QObject( parent ), serialName( sName )
+    : QObject( parent ), serialName( sName ), current_plot( -1 ),
+      serialSpeed( 460800 )
 {
 
 }
@@ -78,13 +79,18 @@ void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
     emit sendMotorStartStopFinished(result);
 }
 
-void SerialLink::clearDataBase()
+void SerialLink::resizeDatabase()
 {
-    ma_thrustData.clear();
-    ma_torqueData.clear();
-    ma_currentData.clear();
-    ma_speedData.clear();
-    ma_timeData.clear();
+    emit addNewCurve(ThrustDataIndex);
+    emit addNewCurve(TorqueDataIndex);
+    emit addNewCurve(CurrentDataIndex);
+    emit addNewCurve(SpeedDataIndex);
+
+    ma_thrustData.resize(current_plot+1);
+    ma_torqueData.resize(current_plot+1);
+    ma_currentData.resize(current_plot+1);
+    ma_speedData.resize(current_plot+1);
+    ma_timeData.resize(current_plot+1);
 }
 
 bool SerialLink::processConnectCommand()
@@ -138,7 +144,8 @@ bool SerialLink::processMotorStartCommand(quint8 speed)
     serial->flush();
 
     receiveData = true;
-    clearDataBase();
+    ++current_plot;
+    resizeDatabase();
 
     return( true );
 }

@@ -34,9 +34,10 @@ public:
     void redraw();
     void setDataSource(QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
     void createNewCurve();
+    void clearPlotData();
 
 private:
-    uint16_t                    nCurves;
+    quint16                    nCurves;
 
     QVector<QVector<double>>    *data_vect;
     QVector<QVector<double>>    *time_vect;
@@ -51,29 +52,23 @@ public:
     QwtPlotManager();
     ~QwtPlotManager();
 
-    void addPlotWidget(uint16_t plotId, QString name, QString xAxisName = "Time", QString yAxisName = "Value");
+    void addPlotWidget(quint16 plotId, QString name, QString xAxisName = "Time", QString yAxisName = "Value");
 
     QWidget *getWidget();
 
-    int testDataShow();
-    int addPoint( QPointF *newPoint );
-    int renderPlot();
-
-    void refreshPlotView();
+    void clearPlots();
 
 public slots:
     void redrawPlots();
-    void redrawPlotIndex(uint16_t plotId);
-    void addNewCurve(uint16_t plotId);
-    void setDataSource(uint16_t plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
+    void redrawPlotIndex(quint16 plotId);
+    void addNewCurve(quint16 plotId);
+    void setDataSource(quint16 plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
 
 private:
-    quint32                                     m_idCounter;
-    quint16                                     m_widgetStringCounter;
     QVBoxLayout                                 *m_layout;
     QWidget                                     *m_widget;
 
-    QMap<uint16_t, QwtStandartPlotWidget *>     ap_plots;
+    QMap<quint16, QwtStandartPlotWidget *>      mpa_plot_widgets;
 
 //    QTableView *pointsTable = NULL;
 //    QStandardItemModel *tableModel = new QStandardItemModel( 0, 2 );
