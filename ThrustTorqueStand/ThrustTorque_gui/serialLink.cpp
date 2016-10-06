@@ -218,11 +218,11 @@ void SerialLink::parseDataFrame(QByteArray &frame)
              << buffer.time*10.0f << "\t"
              << buffer.speed << "\t" << buffer.current;
 
-    ma_thrustData[current_plot].push_back( buffer.thrust );
-    ma_torqueData[current_plot].push_back( buffer.torque );
-    ma_currentData[current_plot].push_back( buffer.current );
-    ma_speedData[current_plot].push_back( buffer.speed );
-    ma_timeData[current_plot].push_back( buffer.time*10.0f ); // milliseconds
+    ma_thrustData[current_plot].push_back( buffer.thrust/24.0f );               // g
+    ma_torqueData[current_plot].push_back( buffer.torque );                     // Nm - Now is zero
+    ma_currentData[current_plot].push_back( buffer.current*1000.0f/81.8f );     // mA
+    ma_speedData[current_plot].push_back( buffer.speed );                       // rpm
+    ma_timeData[current_plot].push_back( buffer.time*10.0f );                   // milliseconds
 
     emit dataReceived();
 }

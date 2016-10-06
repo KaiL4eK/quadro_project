@@ -149,16 +149,25 @@ void QwtStandartPlotWidget::setDataSource(QVector<QVector<double> > *data_vect, 
     this->time_vect = time_vect;
 }
 
+QColor plotColors[] = { Qt::blue,
+                        Qt::black,
+                        Qt::red, Qt::darkRed,
+                        Qt::green,
+                        Qt::cyan, Qt::darkCyan,
+                        Qt::magenta, Qt::darkMagenta,
+                        Qt::yellow, Qt::darkYellow,
+                        Qt::gray };
+
 void QwtStandartPlotWidget::createNewCurve()
 {
     QwtPlotCurve *newCurve = new QwtPlotCurve( title().text() + " " + QString::number(curves_vect.size()) );
 
-    newCurve->setPen( Qt::blue + curves_vect.size(), 1 );
+    QColor color = plotColors[curves_vect.size()%(sizeof(plotColors)/sizeof(QColor))];
+
+    newCurve->setPen( color, 1 );
     newCurve->setRenderHint( QwtPlotItem::RenderAntialiased, true );
 
-    QwtSymbol *symbol = new QwtSymbol( QwtSymbol::Ellipse,
-        QBrush( Qt::yellow ), QPen( Qt::blue, 1 ), QSize( 2, 2 ) );
-    newCurve->setSymbol( symbol );
+    newCurve->setSymbol( new QwtSymbol( QwtSymbol::Ellipse, QBrush( Qt::yellow ), QPen( color, 1 ), QSize( 2, 2 ) ) );
     newCurve->attach( this );
 
     curves_vect.append( newCurve );

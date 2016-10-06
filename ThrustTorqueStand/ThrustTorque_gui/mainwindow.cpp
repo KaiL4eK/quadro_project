@@ -47,10 +47,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QGridLayout *layout = new QGridLayout;
 
-    plotMgr.addPlotWidget( ThrustDataIndex, "Thrust plot" );
-    plotMgr.addPlotWidget( TorqueDataIndex, "Torque plot" );
-    plotMgr.addPlotWidget( CurrentDataIndex, "Current plot" );
-    plotMgr.addPlotWidget( SpeedDataIndex, "Speed plot" );
+    plotMgr.addPlotWidget( ThrustDataIndex, "Thrust plot", "Time, ms", "Value, g" );
+    plotMgr.addPlotWidget( TorqueDataIndex, "Torque plot", "Time, ms", "Value, Nm" );
+    plotMgr.addPlotWidget( CurrentDataIndex, "Current plot", "Time, ms", "Value, mA" );
+    plotMgr.addPlotWidget( SpeedDataIndex, "Speed plot", "Time, ms", "Value, rpm" );
     layout->addWidget( plotMgr.getWidget(), 0, 0 );
 
     layout->addWidget(hideBtn, 1, 0);
