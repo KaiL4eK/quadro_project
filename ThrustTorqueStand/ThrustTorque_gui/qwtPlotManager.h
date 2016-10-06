@@ -35,6 +35,7 @@ public:
     void setDataSource(QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
     void createNewCurve();
     void clearPlotData();
+    void saveCurvesData(QString directory);
 
 private:
     quint16                    nCurves;
@@ -57,6 +58,7 @@ public:
     QWidget *getWidget();
 
     void clearPlots();
+    void saveDataToDirectory(QString headDir);
 
 public slots:
     void redrawPlots();

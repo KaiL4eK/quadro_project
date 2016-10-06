@@ -1,5 +1,8 @@
 #include "qwtPlotManager.h"
 #include <QApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QMessageBox>
 
 QwtPlotManager::QwtPlotManager()
     : m_layout( new QVBoxLayout() ), m_widget( new QWidget() )
@@ -67,6 +70,18 @@ void QwtPlotManager::setDataSource(quint16 plotId, QVector<QVector<double> > *da
         return;
 
     mpa_plot_widgets[plotId]->setDataSource(data_vect, time_vect);
+}
+
+void QwtPlotManager::saveDataToDirectory(QString headDir)
+{
+    QString dirToSave = headDir + "/ThrustStand_" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+
+    QDir dir = QDir();
+    if ( !dir.mkpath(dirToSave) )
+        return;
+
+    for( auto key: mpa_plot_widgets.keys() )
+        mpa_plot_widgets.value( key )->saveCurvesData(dirToSave);
 }
 
 void QwtPlotManager::clearPlots()
@@ -184,4 +199,25 @@ void QwtStandartPlotWidget::clearPlotData()
 
     curves_vect.clear();
     nCurves = 0;
+}
+
+void QwtStandartPlotWidget::saveCurvesData(QString directory)
+{
+    for ( quint16 i = 0; i < nCurves; i++ ) {
+        QString fname = directory + "/" + curves_vect[i]->title().text() + ".txt";
+        QFile file(fname);
+
+        if (!file.open(QIODevice::WriteOnly)) {
+            QMessageBox::information(this, tr("Unable to open file"), file.errorString());
+            return;
+        }
+        QDataStream out(&file);
+
+        for ( qint32 ind = 0; ind < time_vect->at(i).size(); ind++ ) {
+            file.write( QString(QString::number(time_vect->at(i)[ind]) + "\t" + QString::number(data_vect->at(i)[ind]) + "\n").toUtf8() );
+//            qDebug() << "Writing " + QString::number(time_vect->at(i)[ind]);
+        }
+
+        file.close();
+    }
 }

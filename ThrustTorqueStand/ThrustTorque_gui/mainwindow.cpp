@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QLineEdit>
-
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -21,25 +21,25 @@ MainWindow::MainWindow(QWidget *parent) :
     motorSpeedFld = new QLineEdit();
     motorSpeedFld->setText("0");
 
-    QPixmap LETIcrestImage("crest.png");
-    QPushButton *aboutBtn = new QPushButton();
-    QIcon ButtonIcon(LETIcrestImage);
-    aboutBtn->setIcon(ButtonIcon);
-    aboutBtn->setIconSize(QSize(80, 80));
+//    QPixmap LETIcrestImage("../Assets/crest.png");
+    QPushButton *aboutBtn = new QPushButton(tr("About"));
+//    QIcon ButtonIcon(LETIcrestImage);
+//    aboutBtn->setIcon(ButtonIcon);
+//    aboutBtn->setIconSize(QSize(80, 80));
     connect( aboutBtn, &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
 
-//    QPushButton *clearPlotsBtn = new QPushButton(tr("Clear plots"));
-//    connect( clearPlotsBtn, &QPushButton::clicked, this, &MainWindow::onClearPlotsBtnClicked );
+    QPushButton *saveFileBtn = new QPushButton(tr("Save plots"));
+    connect( saveFileBtn, &QPushButton::clicked, this, &MainWindow::onSaveFileBtnClicked );
 
     QGridLayout *controlLayout = new QGridLayout();
     controlWidget = new QWidget(this);
     controlWidget->setLayout(controlLayout);
     controlLayout->addWidget(connectionBtn, 0, 0);
     controlLayout->addWidget(serialNameFld, 0, 1);
-    controlLayout->addWidget(motorControlBtn, 2, 0);
-    controlLayout->addWidget(motorSpeedFld, 2, 1, 1, 2);
-    controlLayout->addWidget(aboutBtn, 0, 3, 3, 1, Qt::AlignBottom|Qt::AlignRight);
-//    controlLayout->addWidget(clearPlotsBtn, 0, 4, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(motorControlBtn, 1, 0);
+    controlLayout->addWidget(motorSpeedFld, 1, 1);
+    controlLayout->addWidget(aboutBtn, 1, 2, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(saveFileBtn, 1, 3, Qt::AlignBottom|Qt::AlignRight);
 
     QPushButton *hideBtn = new QPushButton();
     hideBtn->setCheckable(true);
@@ -150,9 +150,11 @@ void MainWindow::onMotorStartBtnClick(bool state)
         QMessageBox::critical(this, "Power value", "Error: Input correct power number");
 }
 
-void MainWindow::onClearPlotsBtnClicked()
+void MainWindow::onSaveFileBtnClicked()
 {
-
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"), "/home/alexey",
+                                                    QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    plotMgr.saveDataToDirectory( dir );
 }
 
 void MainWindow::motorStartStopReady(bool completed)
