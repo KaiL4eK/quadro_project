@@ -150,7 +150,6 @@ typedef union
 int mpu6050_dmpGetEuler(euler_angles_t *a);
 void mpu6050_get_euler( euler_angles_t *angles );
 
-#define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
 #define RADIANS_TO_DEGREES          57.295779513f
 
 #endif	/* MPU6050_H_ */

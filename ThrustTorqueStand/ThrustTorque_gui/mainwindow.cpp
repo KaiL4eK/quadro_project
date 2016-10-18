@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "serialLink.h"
+
 #include <QObject>
 #include <QPixmap>
 #include <QLabel>
@@ -13,33 +13,54 @@ MainWindow::MainWindow(QWidget *parent) :
     connectionBtn = new QPushButton(tr("Connect"));
 //    connectionBtn->setMinimumHeight(55);
     connectionBtn->setCheckable(true);
+    connect( connectionBtn,    &QPushButton::clicked, this, &MainWindow::onConnectionBtnClick );
 
-    motorControlBtn = new QPushButton("Motor start");
-    motorControlBtn->setCheckable(true);
+    startMeasureBtn = new QPushButton("Start measure");
+    startMeasureBtn->setCheckable(true);
+    connect( startMeasureBtn,  &QPushButton::clicked, this, &MainWindow::onMeasureStartBtnClick );
+
     serialNameFld = new QLineEdit();
     serialNameFld->setText(tr("/dev/ttyUSB0"));
-    motorSpeedFld = new QLineEdit();
-    motorSpeedFld->setText("0");
+    motorPowerStart = new QLineEdit();
+//    motorPowerStart->setText("0");
+    motorPowerStart->setPlaceholderText(QString("Set start power, %"));
+    motorPowerEnd = new QLineEdit();
+//    motorPowerEnd->setText("0");
+    motorPowerEnd->setPlaceholderText(QString("Set end power, %"));
+    timeMeasureDeltaMs = new QLineEdit();
+//    timeMeasureDeltaMs->setText(tr("1000"));
+    timeMeasureDeltaMs->setPlaceholderText(QString("Set full measure time, ms"));
+    timeMeasureStartMs = new QLineEdit();
+//    timeMeasureStartMs->setText(tr("1000"));
+    timeMeasureStartMs->setPlaceholderText(QString("Set time offset, ms"));
+    timeStepMs = new QLineEdit();
+//    timeStepMs->setText("0");
+    timeStepMs->setPlaceholderText(QString("Set time to change power, ms"));
 
-//    QPixmap LETIcrestImage("../Assets/crest.png");
     QPushButton *aboutBtn = new QPushButton(tr("About"));
-//    QIcon ButtonIcon(LETIcrestImage);
-//    aboutBtn->setIcon(ButtonIcon);
-//    aboutBtn->setIconSize(QSize(80, 80));
     connect( aboutBtn, &QPushButton::clicked, this, &MainWindow::onAboutBtnClicked );
 
-    QPushButton *saveFileBtn = new QPushButton(tr("Save plots"));
+    saveFileBtn = new QPushButton(tr("Save plots"));
     connect( saveFileBtn, &QPushButton::clicked, this, &MainWindow::onSaveFileBtnClicked );
+
+    setParamsBtn = new QPushButton(tr("Set params"));
+    connect( setParamsBtn, &QPushButton::clicked, this, &MainWindow::onSetParamsBtnClicked );
 
     QGridLayout *controlLayout = new QGridLayout();
     controlWidget = new QWidget(this);
     controlWidget->setLayout(controlLayout);
     controlLayout->addWidget(connectionBtn, 0, 0);
-    controlLayout->addWidget(serialNameFld, 0, 1);
-    controlLayout->addWidget(motorControlBtn, 1, 0);
-    controlLayout->addWidget(motorSpeedFld, 1, 1);
-    controlLayout->addWidget(aboutBtn, 1, 2, Qt::AlignBottom|Qt::AlignRight);
-    controlLayout->addWidget(saveFileBtn, 1, 3, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(serialNameFld, 0, 1, 1, 5);
+    controlLayout->addWidget(aboutBtn, 0, 6, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(saveFileBtn, 0, 7, Qt::AlignBottom|Qt::AlignRight);
+
+    controlLayout->addWidget(startMeasureBtn, 1, 0);
+    controlLayout->addWidget(motorPowerStart, 1, 1);
+    controlLayout->addWidget(motorPowerEnd, 1, 2);
+    controlLayout->addWidget(timeMeasureStartMs, 1, 3);
+    controlLayout->addWidget(timeStepMs, 1, 4);
+    controlLayout->addWidget(timeMeasureDeltaMs, 1, 5);
+    controlLayout->addWidget(setParamsBtn, 1, 6);
 
     QPushButton *hideBtn = new QPushButton();
     hideBtn->setCheckable(true);
@@ -64,9 +85,6 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle(tr("Thrust Stand"));
 
     setDisconnectedUIState();
-
-    connect( connectionBtn,    &QPushButton::clicked, this, &MainWindow::onConnectionBtnClick );
-    connect( motorControlBtn,  &QPushButton::clicked, this, &MainWindow::onMotorStartBtnClick );
 
     connect( hideBtn,          &QPushButton::clicked, this, &MainWindow::onHideBtnClicked );
 }
@@ -97,7 +115,8 @@ void MainWindow::createNewLink()
 
     connect( serial, &SerialLink::sendConnectionState, this, &MainWindow::changeConnectionState );
 
-    connect( this, &MainWindow::sendStartStopMotorSignal, serial, &SerialLink::processStartStopMotorCommand );
+    connect( this, &MainWindow::sendMeasureStartSignal, serial, &SerialLink::processStartStopMotorCommand );
+    connect( this, &MainWindow::sendSetParamsSignal, serial, &SerialLink::processSetParametersCommand );
     connect( serial, &SerialLink::sendMotorStartStopFinished, this, &MainWindow::motorStartStopReady );
 
     linkThread->start();
@@ -107,17 +126,31 @@ void MainWindow::setConnectedUIState()
 {
     connectionBtn->setChecked(true);
     serialNameFld->setEnabled(false);
-    motorControlBtn->setEnabled(true);
-    motorSpeedFld->setEnabled(true);
+    startMeasureBtn->setEnabled(true);
+    setParamsBtn->setEnabled(true);
+    saveFileBtn->setEnabled(true);
+
+    motorPowerStart->setEnabled(true);
+    motorPowerEnd->setEnabled(true);
+    timeMeasureDeltaMs->setEnabled(true);
+    timeStepMs->setEnabled(true);
+    timeMeasureStartMs->setEnabled(true);
 }
 
 void MainWindow::setDisconnectedUIState()
 {
     connectionBtn->setChecked(false);
     serialNameFld->setEnabled(true);
-    motorControlBtn->setEnabled(false);
-    motorSpeedFld->setEnabled(false);
-    motorControlBtn->setChecked(false);
+    startMeasureBtn->setEnabled(false);
+    startMeasureBtn->setChecked(false);
+    setParamsBtn->setEnabled(false);
+    saveFileBtn->setEnabled(false);
+
+    motorPowerStart->setEnabled(false);
+    motorPowerEnd->setEnabled(false);
+    timeMeasureDeltaMs->setEnabled(false);
+    timeStepMs->setEnabled(false);
+    timeMeasureStartMs->setEnabled(false);
 }
 
 void MainWindow::onHideBtnClicked(bool state)
@@ -134,20 +167,13 @@ void MainWindow::onAboutBtnClicked()
                              "2016");
 }
 
-void MainWindow::onMotorStartBtnClick(bool state)
+void MainWindow::onMeasureStartBtnClick(bool state)
 {
-    int power = motorSpeedFld->text().toShort();
-    if ( power >= 0 && power <= 100 )
-    {
-        quint8  powerSend = power;
-        emit sendStartStopMotorSignal(state, powerSend);
-        if ( state )
-            motorSpeedFld->setEnabled(false);
-        else
-            motorSpeedFld->setEnabled(true);
-    }
+    emit sendMeasureStartSignal(state);
+    if ( state )
+        startMeasureBtn->setEnabled(false);
     else
-        QMessageBox::critical(this, "Power value", "Error: Input correct power number");
+        startMeasureBtn->setEnabled(true);
 }
 
 void MainWindow::onSaveFileBtnClicked()
@@ -157,9 +183,30 @@ void MainWindow::onSaveFileBtnClicked()
     plotMgr.saveDataToDirectory( dir );
 }
 
-void MainWindow::motorStartStopReady(bool completed)
+void MainWindow::onSetParamsBtnClicked()
 {
+    if ( motorPowerStart->text().isEmpty()      ||
+         motorPowerEnd->text().isEmpty()        ||
+         timeStepMs->text().isEmpty()           ||
+         timeMeasureStartMs->text().isEmpty()   ||
+         timeMeasureDeltaMs->text().isEmpty() ) {
+        errorHandler( "Parameters are not set", -1 );
+    }
 
+    MeasureParams str;
+
+    str.motor_power_start       = motorPowerStart->text().toShort();
+    str.motor_power_stop        = motorPowerEnd->text().toShort();
+    str.time_step_moment_ms     = timeStepMs->text().toInt();
+    str.time_measure_start_ms   = timeMeasureStartMs->text().toInt();
+    str.time_measure_ms         = timeMeasureDeltaMs->text().toInt();
+
+    emit sendSetParamsSignal( str );
+}
+
+void MainWindow::motorStartStopReady()
+{
+    startMeasureBtn->setEnabled(false);
 }
 
 void MainWindow::changeConnectionState( bool state )

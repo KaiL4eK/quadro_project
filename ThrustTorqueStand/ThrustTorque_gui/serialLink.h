@@ -7,6 +7,17 @@
 #include <QtSerialPort/QSerialPort>
 #include <QDataStream>
 
+#include <serial_protocol.h>
+
+struct MeasureParams
+{
+    uint8_t     motor_power_start;
+    uint8_t     motor_power_stop;
+    uint16_t    time_measure_start_ms;
+    uint16_t    time_measure_ms;
+    uint16_t    time_step_moment_ms;
+};
+
 enum DataIndex
 {
     ThrustDataIndex     = 0,
@@ -39,12 +50,12 @@ private:
                                 ma_speedData,
                                 ma_timeData;
 
-    qint16      current_plot;
-    uint32_t    serialSpeed;
-
     QString     serialName;
     bool        receiveData     = false,
                 isRunning       = false;
+
+    qint16      current_plot;
+    uint32_t    serialSpeed;
 
     QSerialPort *serial;
     SerialFrame frame;
@@ -60,8 +71,8 @@ private:
     bool processDisconnectCommand();
     bool processDataStartCommand();
     bool processDataStopCommand();
-    bool processMotorStartCommand(quint8 speed);
-    bool processMotorStopCommand();
+    bool processMeasureStartCommand();
+    bool processMeasureStopCommand();
     bool processReceiveData();
     bool receiveResponse();
     void parseDataFrame(QByteArray &frame);
@@ -70,7 +81,7 @@ signals:
     void dataReceived();
     void finished();
     void sendConnectionState(bool state);
-    void sendMotorStartStopFinished(bool completed);
+    void sendMotorStartStopFinished();
     void error( QString, qint64 );
     void addNewCurve(quint16 plotId);
     void setDataSource(quint16 plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);
@@ -78,7 +89,8 @@ signals:
 public slots:
     void process();
     void stopLink();
-    void processStartStopMotorCommand(bool startFlag, quint8 speed);
+    void processStartStopMotorCommand(bool startFlag);
+    void processSetParametersCommand(MeasureParams);
 };
 
 #endif // SERIALLINK_H

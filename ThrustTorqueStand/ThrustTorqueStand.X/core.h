@@ -11,6 +11,8 @@
 #include <xc.h>
 #include "per_proto.h"
 
+#include "serial_protocol.h"
+
 typedef enum {
     
     NO_COMMAND,
@@ -19,14 +21,18 @@ typedef enum {
     DISCONNECT,
     MOTOR_START,
     MOTOR_STOP,
-    MOTOR_SET_POWER
+    MEASURE_SET_PARAMS
     
 }UART_commands_e;
 
 typedef struct {
  
     UART_commands_e command;
-    uint8_t         motorPower;
+    uint8_t         motorPowerStart;
+    uint8_t         motorPowerEnd;
+    uint16_t        timeMeasureStartMs;
+    uint16_t        timeMeasureDeltaMs;
+    uint16_t        timeStepMomentMs;
     // Not ready
 }UART_frame_t;
 
@@ -40,8 +46,9 @@ int init_square ( uint16_t lowLevel, uint16_t highLevel, uint16_t halfTime );
 uint16_t get_next_signal_value ( void );
 uint16_t get_signal_zero_lvl ( void );
 
+void cmdProcessor_init ( UART_moduleNum_t module );
 UART_frame_t *cmdProcessor_rcvFrame ( void );
-void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
+void cmdProcessor_response ( uint8_t code );
 
 #endif	/* CORE_H_ */
 

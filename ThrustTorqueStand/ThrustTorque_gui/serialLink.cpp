@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 
-#include <serial_protocol.h>
+
 
 SerialLink::SerialLink(QString sName, QObject *parent)
     : QObject( parent ), serialName( sName ), current_plot( -1 ),
@@ -64,19 +64,18 @@ void SerialLink::process()
     emit finished();
 }
 
-void SerialLink::processStartStopMotorCommand(bool startFlag, quint8 speed)
+void SerialLink::processStartStopMotorCommand(bool startFlag)
 {
     bool result = false;
     if ( startFlag )
     {
-        qDebug() << "Send command to start motors with speed " + QString::number(speed);
-        result = processMotorStartCommand(speed);
+        qDebug() << "Send command to start motors";
+        result = processMeasureStartCommand();
     } else {
         qDebug() << "Send command to stop motors";
-        result = processMotorStopCommand();
+        result = processMeasureStopCommand();
     }
     isRunning = result;  // Can`t send == serial error
-    emit sendMotorStartStopFinished(result);
 }
 
 void SerialLink::resizeDatabase()
@@ -117,6 +116,7 @@ bool SerialLink::processDisconnectCommand()
 //        serial->clear();
 
     qDebug() << "Send disconnect cmd";
+
     QByteArray command;
     command.append(COMMAND_PREFIX);
     command.append(CMD_DISCONNECT_CODE);
@@ -125,19 +125,45 @@ bool SerialLink::processDisconnectCommand()
         return( false );
     }
     serial->flush();
+
     return( true );
 }
 
-bool SerialLink::processMotorStartCommand(quint8 speed)
+
+void SerialLink::processSetParametersCommand(MeasureParams params)
+{
+    qDebug() << "Send parameters cmd";
+
+    QByteArray command;
+    QDataStream streamRoll( &command, QIODevice::ReadWrite );
+
+    streamRoll << (uint8_t)PARAMETERS_PREFIX;
+    streamRoll << params.motor_power_start;
+    streamRoll << params.motor_power_stop;
+    streamRoll << params.time_measure_start_ms;
+    streamRoll << params.time_measure_ms;
+    streamRoll << params.time_step_moment_ms;
+
+    if ( command.size() != PARAMETER_FRAME_SIZE + 1 ) {
+        emit error( "Incorrect parameters frame size", -1 );
+    }
+
+    if ( serial->write( command ) < 0 ) {
+        emit error( "Failed to send parameters command", serial->error() );
+    }
+    serial->flush();
+
+    if( !receiveResponse() ) {
+        emit error( "Bad response after parameters set", -9 );
+    }
+}
+
+bool SerialLink::processMeasureStartCommand()
 {
     QByteArray command;
-    command.append(PARAMETER_PREFIX);
-    command.append(PARAM_MOTOR_POWER);
-    command.append(speed);
     command.append(COMMAND_PREFIX);
     command.append(CMD_MOTOR_START);
-    if ( serial->write( command ) < 0 )
-    {
+    if ( serial->write( command ) < 0 ) {
         emit error( "Failed to send motor start command", serial->error() );
         return( false );
     }
@@ -150,7 +176,7 @@ bool SerialLink::processMotorStartCommand(quint8 speed)
     return( true );
 }
 
-bool SerialLink::processMotorStopCommand()
+bool SerialLink::processMeasureStopCommand()
 {
     QByteArray command;
     command.append(COMMAND_PREFIX);

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <xc.h>
 
+#define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
 #define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL = 0x1fff; }
 
 #define FOSC        32000000ULL

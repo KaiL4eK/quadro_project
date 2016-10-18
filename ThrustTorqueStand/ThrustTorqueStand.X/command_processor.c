@@ -1,5 +1,4 @@
 #include "core.h"
-#include "serial_protocol.h"
 
 UART_moduleNum_t m_module = -1;
 
@@ -44,21 +43,20 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
                 }
                 prefix_byte = 0;
             }
-        } else if ( prefix_byte == PARAMETER_PREFIX ) {
+        } else if ( prefix_byte == PARAMETERS_PREFIX ) {
             if ( UART_bytes_available( m_module ) >= PARAMETER_FRAME_SIZE ) 
             {
-                uint8_t parameter_byte = UART_get_byte( m_module );
-                uint8_t value_byte     = UART_get_byte( m_module );
-
-                switch( parameter_byte )
-                {
-                    case PARAM_MOTOR_POWER:
-                        frame.command = MOTOR_SET_POWER;
-                        frame.motorPower = value_byte;
-                        break;
-                    default:
-                        frame.command = UNKNOWN_COMMAND;
-                }
+                uint8_t buffer[PARAMETER_FRAME_SIZE];
+                
+                UART_get_bytes( m_module, buffer, PARAMETER_FRAME_SIZE );
+// Redo for universal QT-MPLAB interface
+                frame.command               = MEASURE_SET_PARAMS;
+                frame.motorPowerStart       = buffer[0];
+                frame.motorPowerEnd         = buffer[1];
+                frame.timeMeasureStartMs    = (uint16_t)buffer[2] << 8 | buffer[3];
+                frame.timeMeasureDeltaMs    = (uint16_t)buffer[4] << 8 | buffer[5];
+                frame.timeStepMomentMs      = (uint16_t)buffer[6] << 8 | buffer[7];
+                
                 prefix_byte = 0;
             }
         } else
@@ -68,8 +66,8 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
     return( &frame );
 }
 
-void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code )
+void cmdProcessor_response ( uint8_t code )
 {
-    uint16_t sendCommand = (uint16_t)prefix << 8 | code;
-    UART_write_words( module, &sendCommand, 1 );
+    uint16_t sendCommand = (uint16_t)RESPONSE_PREFIX << 8 | code;
+    UART_write_words( m_module, &sendCommand, 1 );
 }

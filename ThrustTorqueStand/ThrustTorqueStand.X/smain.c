@@ -119,14 +119,15 @@ uint16_t voltage_sensor_read( void )
 
 /*** MAIN PROGRAMM ***/
 
+void process_uninitialized_error_UART_frame();
 void process_UART_frame( void );
 void init_control_system_interrupt ( void );
 void start_control_system_interrupt ( void );
 
-volatile bool        stop_motors = false;
-volatile bool        start_motors = false;
-volatile uint32_t    motorPower = 0;
-uint16_t    timeMoments = 0;
+volatile bool       stop_motors = false;
+volatile bool       start_motors = false;
+volatile uint32_t   motorPower = 0;
+uint16_t            timeMoments = 0;
 
 #define DEBUG_UART      UARTm1
 #define INTERFACE_UART  UARTm2
@@ -146,10 +147,10 @@ int main ( void ) {
     
     spi_init();
     int res = 0;
-    if ( ( res = ad7705_init() ) < 0 )
-    {
+    if ( ( res = ad7705_init() ) < 0 ) {
         UART_write_string( DEBUG_UART, "AD7705 initialization failed, %d\n", res );
-        while ( 1 );
+        while ( 1 )
+            process_uninitialized_error_UART_frame();
     }
     spi_set_speed( SPI_PRIM_1, SPI_SEC_2 );
     UART_write_string( DEBUG_UART, "AD7705 initialized and calibrate\n" );
@@ -160,11 +161,6 @@ int main ( void ) {
     
     while ( 1 )
     {
-//        delay_ms( 100 );
-
-//        current_data = ADC_read();
-//        process_UART_input_command2( UART_get_last_received_command() );
-
         process_UART_frame();
         Nop();
     }
@@ -244,6 +240,13 @@ void __attribute__( (__interrupt__, auto_psv) ) _T4Interrupt()
     _T4IF = 0;
 }
 
+void process_uninitialized_error_UART_frame()
+{
+    UART_frame_t *frame = cmdProcessor_rcvFrame();
+    if ( frame->command != NO_COMMAND && frame->command != UNKNOWN_COMMAND )
+        cmdProcessor_response( RESP_UNINITIALIZED );
+}
+
 void process_UART_frame( void )
 {
     UART_frame_t *frame = cmdProcessor_rcvFrame();
@@ -253,7 +256,7 @@ void process_UART_frame( void )
         case UNKNOWN_COMMAND:
             break;
         case CONNECT:
-            cmdProcessor_write_cmd( INTERFACE_UART, RESPONSE_PREFIX, RESP_NOERROR );
+            cmdProcessor_response( RESP_NOERROR );
             stop_system();
             UART_write_string( DEBUG_UART, "Connect\n" );
             break;
@@ -269,9 +272,16 @@ void process_UART_frame( void )
             stop_system();
             UART_write_string( DEBUG_UART, "MStop\n" );
             break;
-        case MOTOR_SET_POWER:
-            motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
+        case MEASURE_SET_PARAMS:
+            UART_write_string( DEBUG_UART, "Params: %d, %d, %d, %d, %d\n", 
+                                            frame->motorPowerStart,
+                                            frame->motorPowerEnd,
+                                            frame->timeMeasureStartMs,
+                                            frame->timeMeasureDeltaMs,
+                                            frame->timeStepMomentMs );
+//            motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
             UART_write_string( DEBUG_UART, "MSetPower\n" );
+            cmdProcessor_response( RESP_NOERROR );
             break;
     }
 }

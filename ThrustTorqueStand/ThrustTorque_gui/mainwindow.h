@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QDebug>
 
+#include "serialLink.h"
 #include "qwtPlotManager.h"
 
 namespace Ui {
@@ -28,10 +29,16 @@ private:
 
     /** UI references **/
     QPushButton *connectionBtn,
-                *motorControlBtn;
+                *startMeasureBtn,
+                *setParamsBtn,
+                *saveFileBtn;
 
     QLineEdit   *serialNameFld,
-                *motorSpeedFld;
+                *motorPowerStart,
+                *motorPowerEnd,
+                *timeMeasureDeltaMs,
+                *timeStepMs,
+                *timeMeasureStartMs;
 
     QWidget     *controlWidget;
 
@@ -45,14 +52,16 @@ signals:
     void stopDataLink();
     void callCalibration();
     void sendDataProcessingSignal(bool);
-    void sendStartStopMotorSignal(bool, int);
+    void sendMeasureStartSignal(bool);
+    void sendSetParamsSignal(MeasureParams);
 
 public slots:
     void onHideBtnClicked(bool state);
     void onAboutBtnClicked();
-    void onMotorStartBtnClick(bool state);
+    void onMeasureStartBtnClick(bool state);
     void onSaveFileBtnClicked();
-    void motorStartStopReady(bool completed);
+    void onSetParamsBtnClicked();
+    void motorStartStopReady();
     void onConnectionBtnClick(bool state);
     void changeConnectionState(bool state);
     void errorHandler(QString errMsg, qint64 errCode);
