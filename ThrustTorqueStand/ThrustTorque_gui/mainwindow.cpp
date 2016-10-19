@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     startMeasureBtn = new QPushButton("Start measure");
     startMeasureBtn->setCheckable(true);
-    connect( startMeasureBtn,  &QPushButton::clicked, this, &MainWindow::onMeasureStartBtnClick );
+    connect( startMeasureBtn,  &QPushButton::clicked, this, &MainWindow::onMeasureStartStopBtnClick );
 
     serialNameFld = new QLineEdit();
     serialNameFld->setText(tr("/dev/ttyUSB0"));
@@ -50,17 +50,18 @@ MainWindow::MainWindow(QWidget *parent) :
     controlWidget = new QWidget(this);
     controlWidget->setLayout(controlLayout);
     controlLayout->addWidget(connectionBtn, 0, 0);
-    controlLayout->addWidget(serialNameFld, 0, 1, 1, 5);
-    controlLayout->addWidget(aboutBtn, 0, 6, Qt::AlignBottom|Qt::AlignRight);
-    controlLayout->addWidget(saveFileBtn, 0, 7, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(serialNameFld, 0, 1, 1, 6);
+    controlLayout->addWidget(aboutBtn, 0, 7, Qt::AlignBottom|Qt::AlignRight);
+    controlLayout->addWidget(saveFileBtn, 0, 8, Qt::AlignBottom|Qt::AlignRight);
 
     controlLayout->addWidget(startMeasureBtn, 1, 0);
-    controlLayout->addWidget(motorPowerStart, 1, 1);
-    controlLayout->addWidget(motorPowerEnd, 1, 2);
-    controlLayout->addWidget(timeMeasureStartMs, 1, 3);
-    controlLayout->addWidget(timeStepMs, 1, 4);
-    controlLayout->addWidget(timeMeasureDeltaMs, 1, 5);
-    controlLayout->addWidget(setParamsBtn, 1, 6);
+    controlLayout->addWidget(setParamsBtn, 1, 1);
+    controlLayout->addWidget(motorPowerStart, 1, 2);
+    controlLayout->addWidget(motorPowerEnd, 1, 3);
+    controlLayout->addWidget(timeMeasureStartMs, 1, 4);
+    controlLayout->addWidget(timeStepMs, 1, 5);
+    controlLayout->addWidget(timeMeasureDeltaMs, 1, 6);
+
 
     QPushButton *hideBtn = new QPushButton();
     hideBtn->setCheckable(true);
@@ -117,7 +118,7 @@ void MainWindow::createNewLink()
 
     connect( this, &MainWindow::sendMeasureStartSignal, serial, &SerialLink::processStartStopMotorCommand );
     connect( this, &MainWindow::sendSetParamsSignal, serial, &SerialLink::processSetParametersCommand );
-    connect( serial, &SerialLink::sendMotorStartStopFinished, this, &MainWindow::motorStartStopReady );
+    connect( serial, &SerialLink::sendDataReceiveFinished, this, &MainWindow::processDaraReceiveFinished );
 
     linkThread->start();
 }
@@ -167,13 +168,11 @@ void MainWindow::onAboutBtnClicked()
                              "2016");
 }
 
-void MainWindow::onMeasureStartBtnClick(bool state)
+void MainWindow::onMeasureStartStopBtnClick(bool state)
 {
+    qDebug() << (state ? "true" : "false");
+
     emit sendMeasureStartSignal(state);
-    if ( state )
-        startMeasureBtn->setEnabled(false);
-    else
-        startMeasureBtn->setEnabled(true);
 }
 
 void MainWindow::onSaveFileBtnClicked()
@@ -191,22 +190,34 @@ void MainWindow::onSetParamsBtnClicked()
          timeMeasureStartMs->text().isEmpty()   ||
          timeMeasureDeltaMs->text().isEmpty() ) {
         errorHandler( "Parameters are not set", -1 );
+        return;
     }
 
     MeasureParams str;
 
     str.motor_power_start       = motorPowerStart->text().toShort();
     str.motor_power_stop        = motorPowerEnd->text().toShort();
+
     str.time_step_moment_ms     = timeStepMs->text().toInt();
     str.time_measure_start_ms   = timeMeasureStartMs->text().toInt();
     str.time_measure_ms         = timeMeasureDeltaMs->text().toInt();
 
+    if ( str.motor_power_start > 100 || str.motor_power_stop > 100 ) {
+        errorHandler( "Incorrect power parameter", -1 );
+        return;
+    }
+
+    if ( str.time_step_moment_ms >= str.time_measure_ms ) {
+        errorHandler( "Incorrect time valuse ( step >= full time )", -1 );
+        return;
+    }
+
     emit sendSetParamsSignal( str );
 }
 
-void MainWindow::motorStartStopReady()
+void MainWindow::processDaraReceiveFinished()
 {
-    startMeasureBtn->setEnabled(false);
+    startMeasureBtn->setChecked(false);
 }
 
 void MainWindow::changeConnectionState( bool state )

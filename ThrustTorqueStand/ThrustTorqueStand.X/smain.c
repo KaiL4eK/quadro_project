@@ -126,34 +126,32 @@ void start_control_system_interrupt ( void );
 
 volatile bool       stop_motors = false;
 volatile bool       start_motors = false;
-volatile uint32_t   motorPower = 0;
-uint16_t            timeMoments = 0;
 
-#define DEBUG_UART      UARTm1
-#define INTERFACE_UART  UARTm2
+#define UART_DEBUG      UARTm1
+#define UART_INTERFACE  UARTm2
 
 int main ( void ) {
     OFF_ALL_ANALOG_INPUTS;
     
     current_sensor_init( 5 );
     
-    UART_init( DEBUG_UART, UART_460800, INT_PRIO_MID ); // Debug
-    UART_init( INTERFACE_UART, UART_460800, INT_PRIO_HIGHEST );     // Interface
-    UART_write_string( DEBUG_UART, "UART initialized\n" );
+    UART_init( UART_DEBUG, UART_460800, INT_PRIO_MID ); // Debug
+    UART_init( UART_INTERFACE, UART_460800, INT_PRIO_HIGHEST );     // Interface
+    UART_write_string( UART_DEBUG, "UART initialized\n" );
 
-    cmdProcessor_init( INTERFACE_UART );
+    cmdProcessor_init( UART_INTERFACE );
     
     tacho_init();
     
     spi_init();
     int res = 0;
     if ( ( res = ad7705_init() ) < 0 ) {
-        UART_write_string( DEBUG_UART, "AD7705 initialization failed, %d\n", res );
+        UART_write_string( UART_DEBUG, "AD7705 initialization failed, %d\n", res );
         while ( 1 )
             process_uninitialized_error_UART_frame();
     }
     spi_set_speed( SPI_PRIM_1, SPI_SEC_2 );
-    UART_write_string( DEBUG_UART, "AD7705 initialized and calibrate\n" );
+    UART_write_string( UART_DEBUG, "AD7705 initialized and calibrate\n" );
     
     init_control_system_interrupt();
     
@@ -168,13 +166,13 @@ int main ( void ) {
     return( 0 );
 }
 
-#define INTERRUPT_FREQ 100L
+#define INTERRUPT_FREQ_HZ 100L
 
 void init_control_system_interrupt( void )
 {
     T4CONbits.TON = 0;
     T4CONbits.TCKPS = TIMER_DIV_8;
-    PR4 = FCY / 8 / INTERRUPT_FREQ;
+    PR4 = FCY / 8 / INTERRUPT_FREQ_HZ;
     _T4IP = INT_PRIO_MID_HIGH;
     _T4IE = 1;
     _T4IF = 0;
@@ -197,13 +195,32 @@ uint16_t    voltage_data;
 uint16_t    current_data;
 uint16_t    speed_data;
 
+volatile uint16_t    motor_power_start      = 0;
+volatile uint16_t    motor_power_end        = 0;
+
+volatile uint16_t    time_measure_offset    = 0;
+volatile uint16_t    time_measure           = 0;
+volatile uint16_t    time_step_moment       = 0;
+
+uint16_t    time_period_counter             = 0;
+bool        send_data                       = false;
+bool        power_changed                    = false;
+
 void start_system ( void )
 {
+    if ( time_measure_offset == 0 ||
+         time_measure        == 0 || 
+         time_step_moment    == 0 ) {
+         cmdProcessor_response( RESP_ENDDATA );
+         return;
+    }
+    
     tacho_start_cmd();
-    timeMoments = 0;
+    time_period_counter = 0;
+    send_data           = false;
+    power_changed        = false;
+    set_motor_power( motor_power_start );
     start_control_system_interrupt();
-//    set_motor_started();
-    set_motor_power( motorPower );
 }
 
 void stop_system ( void )
@@ -211,16 +228,38 @@ void stop_system ( void )
     set_motor_stopped();
     stop_control_system_interrupt();
     tacho_stop_cmd();
+    cmdProcessor_response( RESP_ENDDATA );
 }
 
 #define ROTOR_DATA_COUNT (sizeof(send_rotor_array)/sizeof(send_rotor_array[0]))
 
 void send_UART_data ( void )
 {
-    uint16_t send_rotor_array[] = { thrust_data, torque_data, current_data, speed_data, timeMoments++ };
-    UART_write_byte( INTERFACE_UART, DATA_PREFIX );
-    UART_write_words( INTERFACE_UART, send_rotor_array, ROTOR_DATA_COUNT );
+    if ( !send_data && time_period_counter >= time_measure_offset ) {
+        send_data = true;
+        time_period_counter = 0;
+    }
+    
+    if ( send_data ) {
+        uint16_t send_rotor_array[] = { thrust_data, torque_data, current_data, speed_data, time_period_counter };
+        UART_write_byte( UART_INTERFACE, DATA_PREFIX );
+        UART_write_words( UART_INTERFACE, send_rotor_array, ROTOR_DATA_COUNT );
+    }
+    
+    if ( !power_changed && send_data && time_period_counter >= time_step_moment ) {
+        power_changed = true;
+        set_motor_power( motor_power_end );
+        UART_write_string( UART_DEBUG, "Power changed\n" );
+    }
+    
+    if ( send_data && time_period_counter >= time_measure ) {
+        stop_system();
+    }
 }
+
+/**
+ * Main Interrupt processing
+ */
 
 void __attribute__( (__interrupt__, auto_psv) ) _T4Interrupt()
 {
@@ -230,12 +269,13 @@ void __attribute__( (__interrupt__, auto_psv) ) _T4Interrupt()
     if ( ad7705_is_data_ready() )
     {
         thrust_data = ad7705_read_data();
-//        UART_write_string( DEBUG_UART, "%06d, %06d, %06d\n", thrust_data, current_data, speed_data );
+//        UART_write_string( UART_DEBUG, "%06d, %06d, %06d\n", thrust_data, current_data, speed_data );
     } else {
-        UART_write_string( DEBUG_UART, "No data\n" );       // Not happened
+        UART_write_string( UART_DEBUG, "No data\n" );       // Not happened
     }
     
     send_UART_data();
+    time_period_counter++;
     
     _T4IF = 0;
 }
@@ -258,29 +298,36 @@ void process_UART_frame( void )
         case CONNECT:
             cmdProcessor_response( RESP_NOERROR );
             stop_system();
-            UART_write_string( DEBUG_UART, "Connect\n" );
+            UART_write_string( UART_DEBUG, "Connect\n" );
             break;
         case DISCONNECT:
             stop_system();
-            UART_write_string( DEBUG_UART, "Disconnect\n" );
+            UART_write_string( UART_DEBUG, "Disconnect\n" );
             break;
-        case MOTOR_START:
+        case MEASURE_START:
             start_system();
-            UART_write_string( DEBUG_UART, "MStart\n" );
+            UART_write_string( UART_DEBUG, "MStart\n" );
             break;
-        case MOTOR_STOP:
+        case MEASURE_STOP:
             stop_system();
-            UART_write_string( DEBUG_UART, "MStop\n" );
+            UART_write_string( UART_DEBUG, "MStop\n" );
             break;
         case MEASURE_SET_PARAMS:
-            UART_write_string( DEBUG_UART, "Params: %d, %d, %d, %d, %d\n", 
-                                            frame->motorPowerStart,
-                                            frame->motorPowerEnd,
-                                            frame->timeMeasureStartMs,
-                                            frame->timeMeasureDeltaMs,
-                                            frame->timeStepMomentMs );
-//            motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
-            UART_write_string( DEBUG_UART, "MSetPower\n" );
+
+            motor_power_start   = PERCENTS_2_INPUT( frame->motorPowerStart );
+            motor_power_end     = PERCENTS_2_INPUT( frame->motorPowerEnd );
+            time_measure_offset = frame->timeMeasureOffsetMs;
+            time_measure        = frame->timeMeasureTimeMs;
+            time_step_moment    = frame->timeStepMomentMs;
+            
+            UART_write_string( UART_DEBUG, "Params: %d, %d, %d, %d, %d\n", 
+                                            motor_power_start,
+                                            motor_power_end,
+                                            time_measure_offset,
+                                            time_step_moment,                        
+                                            time_measure );
+            
+            UART_write_string( UART_DEBUG, "MSetPower\n" );
             cmdProcessor_response( RESP_NOERROR );
             break;
     }

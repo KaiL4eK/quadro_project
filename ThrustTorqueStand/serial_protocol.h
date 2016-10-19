@@ -29,4 +29,6 @@
 #define PARAM_TIME_MEASURE_STOP     'g'
 */
 
+#define MEASURE_PERIOD_MS           10.0f
+
 #endif // SERIAL_PROTOCOL_H_

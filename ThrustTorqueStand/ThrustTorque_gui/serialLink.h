@@ -52,7 +52,8 @@ private:
 
     QString     serialName;
     bool        receiveData     = false,
-                isRunning       = false;
+                isRunning       = false,
+                parametersSent  = false;
 
     qint16      current_plot;
     uint32_t    serialSpeed;
@@ -81,7 +82,7 @@ signals:
     void dataReceived();
     void finished();
     void sendConnectionState(bool state);
-    void sendMotorStartStopFinished();
+    void sendDataReceiveFinished();
     void error( QString, qint64 );
     void addNewCurve(quint16 plotId);
     void setDataSource(quint16 plotId, QVector<QVector<double>> *data_vect, QVector<QVector<double>> *time_vect);

@@ -140,9 +140,9 @@ void SerialLink::processSetParametersCommand(MeasureParams params)
     streamRoll << (uint8_t)PARAMETERS_PREFIX;
     streamRoll << params.motor_power_start;
     streamRoll << params.motor_power_stop;
-    streamRoll << params.time_measure_start_ms;
-    streamRoll << params.time_measure_ms;
-    streamRoll << params.time_step_moment_ms;
+    streamRoll << (uint16_t)(params.time_measure_start_ms/MEASURE_PERIOD_MS);
+    streamRoll << (uint16_t)(params.time_measure_ms/MEASURE_PERIOD_MS);
+    streamRoll << (uint16_t)(params.time_step_moment_ms/MEASURE_PERIOD_MS);
 
     if ( command.size() != PARAMETER_FRAME_SIZE + 1 ) {
         emit error( "Incorrect parameters frame size", -1 );
@@ -156,10 +156,18 @@ void SerialLink::processSetParametersCommand(MeasureParams params)
     if( !receiveResponse() ) {
         emit error( "Bad response after parameters set", -9 );
     }
+
+    parametersSent = true;
 }
 
 bool SerialLink::processMeasureStartCommand()
 {
+    if ( !parametersSent ) {
+        emit error( "Send parameters first", -7 );
+        emit sendDataReceiveFinished();
+        return( true ); // Let`s thinks it`s not error =)
+    }
+
     QByteArray command;
     command.append(COMMAND_PREFIX);
     command.append(CMD_MOTOR_START);
@@ -197,8 +205,11 @@ bool SerialLink::processReceiveData()
     switch ( frame.type )
     {
         case RESPONSE_PREFIX:
-            if ( frame.data[0] == RESP_ENDDATA )
+            if ( frame.data[0] == RESP_ENDDATA ) {
                 receiveData = false;
+                emit sendDataReceiveFinished();
+                qDebug() << "Received data end response";
+            }
             break;
         case DATA_PREFIX:
             if ( receiveData )
@@ -241,14 +252,14 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     streamRoll >> buffer;
 
     qDebug() << buffer.thrust << "\t" << buffer.torque << "\t"
-             << buffer.time*10.0f << "\t"
+             << buffer.time*MEASURE_PERIOD_MS << "\t"
              << buffer.speed << "\t" << buffer.current;
 
     ma_thrustData[current_plot].push_back( buffer.thrust/24.0f );               // g
     ma_torqueData[current_plot].push_back( buffer.torque );                     // Nm - Now is zero
     ma_currentData[current_plot].push_back( buffer.current*1000.0f/81.8f );     // mA
     ma_speedData[current_plot].push_back( buffer.speed );                       // rpm
-    ma_timeData[current_plot].push_back( buffer.time*10.0f );                   // milliseconds
+    ma_timeData[current_plot].push_back( buffer.time*MEASURE_PERIOD_MS );
 
     emit dataReceived();
 }

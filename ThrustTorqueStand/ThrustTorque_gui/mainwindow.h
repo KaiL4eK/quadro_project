@@ -58,10 +58,10 @@ signals:
 public slots:
     void onHideBtnClicked(bool state);
     void onAboutBtnClicked();
-    void onMeasureStartBtnClick(bool state);
+    void onMeasureStartStopBtnClick(bool state);
     void onSaveFileBtnClicked();
     void onSetParamsBtnClicked();
-    void motorStartStopReady();
+    void processDaraReceiveFinished();
     void onConnectionBtnClick(bool state);
     void changeConnectionState(bool state);
     void errorHandler(QString errMsg, qint64 errCode);

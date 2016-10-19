@@ -33,10 +33,10 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
                         frame.command = DISCONNECT;
                         break;
                     case CMD_MOTOR_STOP:
-                        frame.command = MOTOR_STOP;
+                        frame.command = MEASURE_STOP;
                         break;
                     case CMD_MOTOR_START:
-                        frame.command = MOTOR_START;
+                        frame.command = MEASURE_START;
                         break;
                     default:
                         frame.command = UNKNOWN_COMMAND;
@@ -53,8 +53,8 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
                 frame.command               = MEASURE_SET_PARAMS;
                 frame.motorPowerStart       = buffer[0];
                 frame.motorPowerEnd         = buffer[1];
-                frame.timeMeasureStartMs    = (uint16_t)buffer[2] << 8 | buffer[3];
-                frame.timeMeasureDeltaMs    = (uint16_t)buffer[4] << 8 | buffer[5];
+                frame.timeMeasureOffsetMs    = (uint16_t)buffer[2] << 8 | buffer[3];
+                frame.timeMeasureTimeMs    = (uint16_t)buffer[4] << 8 | buffer[5];
                 frame.timeStepMomentMs      = (uint16_t)buffer[6] << 8 | buffer[7];
                 
                 prefix_byte = 0;

@@ -19,8 +19,8 @@ typedef enum {
     UNKNOWN_COMMAND,
     CONNECT,
     DISCONNECT,
-    MOTOR_START,
-    MOTOR_STOP,
+    MEASURE_START,
+    MEASURE_STOP,
     MEASURE_SET_PARAMS
     
 }UART_commands_e;
@@ -30,8 +30,8 @@ typedef struct {
     UART_commands_e command;
     uint8_t         motorPowerStart;
     uint8_t         motorPowerEnd;
-    uint16_t        timeMeasureStartMs;
-    uint16_t        timeMeasureDeltaMs;
+    uint16_t        timeMeasureOffsetMs;
+    uint16_t        timeMeasureTimeMs;
     uint16_t        timeStepMomentMs;
     // Not ready
 }UART_frame_t;
