@@ -29,7 +29,7 @@
 #define PARAM_TIME_MEASURE_STOP     'g'
 */
 
-#define MEASURE_PERIOD_MS           4.0f
-#define INTERRUPT_FREQ_HZ           250L
+#define MEASURE_PERIOD_MS           2.0f
+#define INTERRUPT_FREQ_HZ           500L
 
 #endif // SERIAL_PROTOCOL_H_

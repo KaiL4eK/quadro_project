@@ -129,7 +129,7 @@ int ad7705_init_clock_register ( void )
 {
     Clock_reg_t clock_reg;
     clock_reg.val = 0;
-    clock_reg.bits.FS = 0b10;   // 0b10 - 250Hz / 0b01 - 60 Hz
+    clock_reg.bits.FS = 0b11;   // 0b11 - 500Hz / 0b10 - 250Hz / 0b01 - 60 Hz
     clock_reg.bits.CLK = 1;     // 2.4576/4.9152MHz - 1
     clock_reg.bits.CLKDIV = 0;  // 2.4576/1MHz      - 0
     clock_reg.bits.CLKDIS = 0;

@@ -83,7 +83,8 @@ for data_source in data_source_dict.values():
 
 				time_vector.append( time_moment )
 				value_vector.append( value )
-				plt.plot( time_vector, value_vector )
+			
+			plt.plot( time_vector, value_vector )
 
 			if saveDataMat:
 				data_to_mat_file[data_source_title].append( value_vector )
