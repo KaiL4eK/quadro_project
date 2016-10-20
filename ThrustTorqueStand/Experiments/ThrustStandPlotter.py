@@ -88,7 +88,7 @@ for data_source in data_source_dict.values():
 			if saveDataMat:
 				data_to_mat_file[data_source_title].append( value_vector )
 
-# plt.show()
+plt.show()
 
 if saveDataMat:
 	# print data_to_mat_file
