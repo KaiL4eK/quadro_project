@@ -166,13 +166,11 @@ int main ( void ) {
     return( 0 );
 }
 
-#define INTERRUPT_FREQ_HZ 100L
-
 void init_control_system_interrupt( void )
 {
     T4CONbits.TON = 0;
-    T4CONbits.TCKPS = TIMER_DIV_8;
-    PR4 = FCY / 8 / INTERRUPT_FREQ_HZ;
+    T4CONbits.TCKPS = TIMER_DIV_1;
+    PR4 = FCY / INTERRUPT_FREQ_HZ;
     _T4IP = INT_PRIO_MID_HIGH;
     _T4IE = 1;
     _T4IF = 0;
