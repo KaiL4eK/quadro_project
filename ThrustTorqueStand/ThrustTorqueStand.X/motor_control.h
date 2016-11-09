@@ -10,7 +10,7 @@ void set_motor_power( int32_t power );
 
 #define PERCENTS_2_INPUT( x )   (((x) * INPUT_POWER_MAX)/100L)
 
-#define INPUT_POWER_MAX 2800L // ESC_MAX_POWER - ESC_MIN_POWER
+#define INPUT_POWER_MAX 3200L // ESC_MAX_POWER - ESC_MIN_POWER
 #define INPUT_POWER_MIN 0L
 
 #endif	/* MOTOR_CONTROL_H_ */

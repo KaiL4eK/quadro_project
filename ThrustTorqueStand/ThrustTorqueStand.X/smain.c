@@ -266,7 +266,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _T4Interrupt()
     
     if ( ad7705_is_data_ready() )
     {
-        thrust_data = ad7705_read_data();
+        thrust_data = ad7705_read_data( CHANNEL_1 );
 //        UART_write_string( UART_DEBUG, "%06d, %06d, %06d\n", thrust_data, current_data, speed_data );
     } else {
         UART_write_string( UART_DEBUG, "No data\n" );       // Not happened

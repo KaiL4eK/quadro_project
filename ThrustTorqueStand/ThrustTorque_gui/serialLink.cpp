@@ -255,7 +255,7 @@ void SerialLink::parseDataFrame(QByteArray &frame)
              << buffer.time*MEASURE_PERIOD_MS << "\t"
              << buffer.speed << "\t" << buffer.current;
 
-    ma_thrustData[current_plot].push_back( buffer.thrust/24.0f );               // g
+    ma_thrustData[current_plot].push_back( buffer.thrust/10.0f );               // g
     ma_torqueData[current_plot].push_back( buffer.torque );                     // Nm - Now is zero
     ma_currentData[current_plot].push_back( buffer.current*1000.0f/81.8f );     // mA
     ma_speedData[current_plot].push_back( buffer.speed );                       // rpm

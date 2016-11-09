@@ -6,7 +6,7 @@
 
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2
 
-#define ESC_MAX_POWER   7599L // USEC_2_PWM(1900)
+#define ESC_MAX_POWER   7999L // USEC_2_PWM(2000)
 #define ESC_MIN_POWER   4799L // USEC_2_PWM(1200)
 #define ESC_STOP_POWER  3599L // USEC_2_PWM(900)
 

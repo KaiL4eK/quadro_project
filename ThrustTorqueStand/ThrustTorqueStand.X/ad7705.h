@@ -33,13 +33,27 @@ typedef enum
 
 }AD7705_reg;
 
+#define CHANNEL_MASK        0b11
+
 #define CHANNEL_1           0b00
+#define CHANNEL_2           0b01
 
 #define SETUP_INITIAL_VAL   0x01
 #define CLOCK_INITIAL_VAL   0x05
 #define TEST_INITIAL_VAL    0x00
 #define OFFSET_INITIAL_VAL  0x1f4000
 #define GAIN_INITIAL_VAL    0x5761ab
+
+#define GAIN_MASK           0b111
+
+#define GAIN_VAL_1          0b000
+#define GAIN_VAL_2          0b001
+#define GAIN_VAL_4          0b010
+#define GAIN_VAL_8          0b011
+#define GAIN_VAL_16         0b100
+#define GAIN_VAL_32         0b101
+#define GAIN_VAL_64         0b110
+#define GAIN_VAL_128        0b111
 
 // Communication register |!DRDY|RS2|RS1|RS0|R/!W|STBY|CH1|CHO|
 
@@ -96,10 +110,10 @@ typedef enum
 }Error_t;
 
 int ad7705_init ( void );
-uint32_t ad7705_read_register ( AD7705_reg register_addr );
-int ad7705_write_register ( AD7705_reg register_addr, uint8_t value );
+uint32_t ad7705_read_register ( AD7705_reg register_addr, uint8_t channel );
+int ad7705_write_register ( AD7705_reg register_addr, uint8_t channel, uint8_t value );
 bool ad7705_is_data_ready( void );
-uint16_t ad7705_read_data( void );
+uint16_t ad7705_read_data( uint8_t channel );
 
 #endif	/* AD7705_H_ */
 
