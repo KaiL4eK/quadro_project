@@ -41,12 +41,15 @@ bool SerialLink::makeLinkToPort()
     if ( serial->open( QIODevice::ReadWrite ) )
         return( true );
 
+    qDebug() << "makeLinkToPort() failed";
+
     emit error( "Failed to connect to serial port: " + serial->portName(), serial->error() );
     return( false );
 }
 
 void SerialLink::process()
 {
+    qDebug() << "SerialLink process()";
     if ( makeLinkToPort() && processConnectCommand() )
     {
         emit sendConnectionState( true );
@@ -114,6 +117,8 @@ bool SerialLink::processConnectCommand()
 //    if ( serial->isOpen() )
 //        serial->clear();
 
+    qDebug() << "processConnectCommand() start";
+
     QByteArray command;
     command.append(COMMAND_PREFIX);
     command.append(CMD_CONNECT_CODE);
@@ -123,6 +128,8 @@ bool SerialLink::processConnectCommand()
         return( false );
     }
     serial->flush();
+
+    qDebug() << "processConnectCommand() wait for response";
 
     return( waitForResponse() );
 }
@@ -316,6 +323,8 @@ void SerialLink::parseDataFrame(QByteArray &frame)
 
 quint8 SerialLink::receiveFrameHead()
 {
+    qDebug() << "receiveFrameHead() start";
+
     while ( serial->bytesAvailable() < 1 )  // Receive frame type
     {
         if ( !serial->waitForReadyRead( 1000 ) )
@@ -330,6 +339,9 @@ quint8 SerialLink::receiveFrameHead()
             return( 0 );
         }
     }
+
+    qDebug() << "receiveFrameHead() s-t in serial";
+
     char frameHead;
     if ( serial->read(&frameHead, 1) < 0 )
     {
@@ -338,11 +350,15 @@ quint8 SerialLink::receiveFrameHead()
         return( 0 );
     }
 
+    qDebug() << "receiveFrameHead() return";
+
     return( frameHead );
 }
 
 QByteArray SerialLink::receiveNextFrame()
 {
+    qDebug() << "receiveNextFrame() start";
+
     QByteArray result;
     quint8 type = receiveFrameHead();
     quint8 length = 0;
@@ -357,6 +373,7 @@ QByteArray SerialLink::receiveNextFrame()
         case 0:
         case COMMAND_PREFIX:
         default:
+            qDebug() << "receiveNextFrame() incorrect prefix: " << type;
             return( result );
     }
     while ( serial->bytesAvailable() < length )
@@ -389,6 +406,8 @@ QByteArray SerialLink::receiveNextFrame()
 
 bool SerialLink::waitForResponse()
 {
+    qDebug() << "waitForResponse() start";
+
     QByteArray replyBytes = receiveNextFrame();
     if ( replyBytes.isEmpty() )
         return( false );

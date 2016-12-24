@@ -24,6 +24,7 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
         qwtPlotter.h \
-        serialLink.h
+        serialLink.h \
+    ../common/serial_protocol.h
 
 CONFIG += c++11
