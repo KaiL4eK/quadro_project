@@ -30,6 +30,7 @@ int main ( void )
     
     command_translator_init( UARTm1, UARTm2 );
     UART_write_string( UARTm1, "Start!\n" );
+    
 #ifdef ENCODERS_ENABLED 
     _TRISD9 = _TRISD8 = _TRISD10 = _TRISD11 = 1;
     

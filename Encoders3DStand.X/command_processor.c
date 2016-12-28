@@ -10,10 +10,10 @@ void command_translator_init ( UART_moduleNum_t module_from, UART_moduleNum_t mo
     m_module_to   = module_to;
 }
 
-uint8_t         cmd_prefix_byte = 0;
-
 void command_translator ( void )
 {    
+    static uint8_t cmd_prefix_byte = 0;
+    
     if ( UART_bytes_available( m_module_from ) > 0 )
     {
         if ( !cmd_prefix_byte )
@@ -48,11 +48,13 @@ void command_translator ( void )
 
 //------------------------------------------------------------------------------------------
 
-uint8_t     data_resp_prefix_byte = 0;
-uint16_t    full_buffer[DATA_FULL_FRAME_SIZE/2];
+
 
 void data_translator ( int32_t encoder_roll, int32_t encoder_pitch )
 {
+    static uint8_t     data_resp_prefix_byte = 0;
+    static uint16_t    full_buffer[DATA_FULL_FRAME_SIZE/2];
+    
     if ( UART_bytes_available( m_module_to ) > 0 )
     {
         if ( !data_resp_prefix_byte )
@@ -65,22 +67,22 @@ void data_translator ( int32_t encoder_roll, int32_t encoder_pitch )
 
                 UART_get_bytes( m_module_to, buffer, DATA_QUADRO_FRAME_SIZE );
 
-                full_buffer[0] = (uint16_t)buffer[0] << 8 | buffer[1];
-                full_buffer[1] = (uint16_t)buffer[2] << 8 | buffer[3];
-                full_buffer[2] = (uint16_t)buffer[4] << 8 | buffer[5];
-                full_buffer[3] = (uint16_t)buffer[6] << 8 | buffer[7];
-                full_buffer[4] = (uint16_t)buffer[8] << 8 | buffer[9];
+//                full_buffer[0] = (uint16_t)buffer[0] << 8 | buffer[1];
+//                full_buffer[1] = (uint16_t)buffer[2] << 8 | buffer[3];
+//                full_buffer[2] = (uint16_t)buffer[4] << 8 | buffer[5];
+//                full_buffer[3] = (uint16_t)buffer[6] << 8 | buffer[7];
+//                full_buffer[4] = (uint16_t)buffer[8] << 8 | buffer[9];
 
+                memcpy( full_buffer, buffer, DATA_QUADRO_FRAME_SIZE );
+                
                 // encoder: 180 degree = 1000 points
 #define DEGREE_PER_100_POINTS 18
-
-                full_buffer[5] = (encoder_roll * DEGREE_PER_100_POINTS);  // angle * 100
+                
+                full_buffer[5] = (encoder_roll  * DEGREE_PER_100_POINTS);  // angle * 100
                 full_buffer[6] = (encoder_pitch * DEGREE_PER_100_POINTS);
 
                 UART_write_byte( m_module_from, data_resp_prefix_byte );
                 UART_write_words( m_module_from, full_buffer, DATA_FULL_FRAME_SIZE/2 );
-
-    //            memcpy( rcvBuffer, &u2_buffer[dataBShift + 1], DATA_FRAME_SIZE - 1 );
 
                 data_resp_prefix_byte = 0;
             }

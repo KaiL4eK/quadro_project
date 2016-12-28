@@ -39,7 +39,11 @@ int main ( void )
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UARTm1, UART_115200, INT_PRIO_HIGH );
     UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
+    
+    UART_write_set_endian( UARTm2, UART_little_endian );
+    
     cmdProcessor_init( UARTm2 );
+    
     UART_write_string( UARTm1, "/------------------------/\n" );
     UART_write_string( UARTm1, "UART initialized\n" );
 #ifndef TEST_WO_MODULES 
@@ -108,6 +112,7 @@ int main ( void )
         file_process_tasks();
         process_UART_frame();
 //        delay_ms( 500 );
+
     }
     
     return( 0 );
@@ -379,13 +384,19 @@ void process_UART_frame( void )
 
 euler_angles_t angles;
 
+//#define DIRECT_LINK
+
 void process_sending_UART_data( void )
 {
-    if ( dataSend && ++counterSend == 4 )
+    if ( dataSend && ++counterSend == 12 )
     {
 //        quadrotor_state.roll = quadrotor_state.pitch = 
 //                45*ANGLES_COEFF*sin(timeMoments/100.0);
-        uint16_t sendBuffer[5];
+#ifdef DIRECT_LINK
+        uint16_t sendBuffer[DATA_FULL_FRAME_SIZE/2];
+#else
+        uint16_t sendBuffer[DATA_QUADRO_FRAME_SIZE/2];
+#endif   
         // angle * 100
         sendBuffer[0] = quadrotor_state.roll;
         sendBuffer[1] = quadrotor_state.pitch;
@@ -398,8 +409,11 @@ void process_sending_UART_data( void )
         sendBuffer[4] |= POWER_2_PERCENT(quadrotor_state.motor4_power);
         
         UART_write_byte( UARTm2, DATA_PREFIX );
+#ifdef DIRECT_LINK
+        UART_write_words( UARTm2, sendBuffer, DATA_FULL_FRAME_SIZE/2 );
+#else
         UART_write_words( UARTm2, sendBuffer, DATA_QUADRO_FRAME_SIZE/2 );
-
+#endif  
         if ( ++timeMoments == UINT16_MAX )
         {
             cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_ENDDATA );
@@ -508,7 +522,7 @@ void control_system_timer_init( void )
     T4CONbits.TON = 1;
 }
 
-//#define MEASURE_INT_TIME
+#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
