@@ -8,35 +8,29 @@
 
 #define UART_DATA_BUFFER_SIZE 256
 
-typedef struct uart_buffer_
-{
-
-    
-}UART_buffer_t;
-
 typedef struct
 {
-    bool                initialized;
+    bool                    initialized;
     
-    UART_write_endian_t write_endian_mode;
-    uint8_t             write_buffer[UART_DATA_BUFFER_SIZE];
-    uint8_t             i_write_head_byte;
-    uint8_t             i_write_tail_byte;
-    uint8_t             n_write_bytes_available;
-    bool                write_overflow;
+    UART_write_endian_t     write_endian_mode;
+    uint8_t                 write_buffer[UART_DATA_BUFFER_SIZE];
+    uint8_t                 i_write_head_byte;
+    uint8_t                 i_write_tail_byte;
+    uint8_t                 n_write_bytes_available;
+    bool                    write_overflow;
     
-    uint8_t             read_buffer[UART_DATA_BUFFER_SIZE];
-    uint8_t             i_read_head_byte;
-    uint8_t             i_read_tail_byte;
-    uint8_t             n_read_bytes_available;
-    bool                read_overflow;
+    uint8_t                 read_buffer[UART_DATA_BUFFER_SIZE];
+    uint8_t                 i_read_head_byte;
+    uint8_t                 i_read_tail_byte;
+    uint8_t                 n_read_bytes_available;
+    bool                    read_overflow;
     
 }UART_module_fd;
 
-volatile UART_module_fd  uart_fd[] = {  {   .initialized = false, 
+volatile UART_module_fd  uart_fd[] = {  {   .initialized = false,
                                             .write_endian_mode = UART_big_endian, .i_write_head_byte = 0, .i_write_tail_byte = 0, .n_write_bytes_available = 0, .write_overflow = false, 
                                                                                   .i_read_head_byte = 0,  .i_read_tail_byte = 0,  .n_read_bytes_available = 0,  .read_overflow = false },
-                                        {   .initialized = false, 
+                                        {   .initialized = false,
                                             .write_endian_mode = UART_big_endian, .i_write_head_byte = 0, .i_write_tail_byte = 0, .n_write_bytes_available = 0, .write_overflow = false, 
                                                                                   .i_read_head_byte = 0,  .i_read_tail_byte = 0,  .n_read_bytes_available = 0,  .read_overflow = false }    };
 

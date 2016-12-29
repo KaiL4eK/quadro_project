@@ -3,23 +3,21 @@
 
 #include "core.h"
 
-void motors_init();
-void set_motor_power( uint8_t nMotor, int32_t power );
+typedef enum {
+    MOTOR_1 = 0,
+    MOTOR_2,
+    MOTOR_3,
+    MOTOR_4
+} motor_num_t;
 
-void set_motors_started( uint8_t motor_nums );
-void set_motors_stopped();
+void motor_control_init( void );
+void motor_control_set_motor_power( motor_num_t nMotor, int16_t power );
+void motor_control_set_motor_powers( int16_t powers[4] );
 
-#define MOTOR_1 ( 1 << 0 )
-#define MOTOR_2 ( 1 << 1 )
-#define MOTOR_3 ( 1 << 2 )
-#define MOTOR_4 ( 1 << 3 )
-#define MOTORS_ALL ( MOTOR_1 | MOTOR_2 | MOTOR_3 | MOTOR_4 )
-
-//#define USEC_2_PWM(x)   ((x)*4 - 1)     // ((FCY/1000000L)*(x)/PWM_PRESCALE - 1)
-
-#define ESC_MAX_POWER   7599L // USEC_2_PWM(1900)
-#define ESC_MIN_POWER   4799L // USEC_2_PWM(1200)
-#define ESC_STOP_POWER  3599L // USEC_2_PWM(900)
+void motor_control_set_motor_started( motor_num_t nMotor );
+void motor_control_set_motor_stopped( motor_num_t nMotor );
+void motor_control_set_motors_started( void );
+void motor_control_set_motors_stopped( void );
 
 #define INPUT_POWER_MAX 2800L // ESC_MAX_POWER - ESC_MIN_POWER
 #define INPUT_POWER_MIN 0L

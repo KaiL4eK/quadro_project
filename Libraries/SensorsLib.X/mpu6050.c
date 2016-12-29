@@ -75,13 +75,16 @@ void mpu6050_get_euler_angles( euler_angles_t *angles )
     gyro_accel_data_t *c_d = &raw_gyr_acc;
     
     // Just for one of arguments for atan2 be not zero
-    int32_t acc_x = c_d->value.x_accel == 0 ? 1 : c_d->value.x_accel,
-            acc_y = c_d->value.y_accel == 0 ? 1 : c_d->value.y_accel,
-            acc_z = c_d->value.z_accel;
+    float   acc_x       = c_d->value.x_accel,
+            acc_y       = c_d->value.y_accel,
+            acc_z       = c_d->value.z_accel;
     
-    float gyr_delta_x = (c_d->value.x_gyro/GYR_COEF) * SENS_TIME;
-    float gyr_delta_y = (c_d->value.y_gyro/GYR_COEF) * SENS_TIME;
-    float gyr_delta_z = (c_d->value.z_gyro/GYR_COEF) * SENS_TIME;
+    float   gyr_delta_x = (c_d->value.x_gyro/GYR_COEF) * SENS_TIME;
+    float   gyr_delta_y = (c_d->value.y_gyro/GYR_COEF) * SENS_TIME;
+    float   gyr_delta_z = (c_d->value.z_gyro/GYR_COEF) * SENS_TIME;
+    
+    if ( acc_x == 0 && acc_y == 0 )
+        acc_x = 1;
     
     angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) 
                             + (complementary_filter_rate_b * (atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES));

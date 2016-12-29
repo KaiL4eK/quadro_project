@@ -564,7 +564,7 @@ void mpu6050_dmp_get_euler_angles(euler_angles_t *a)
     
 //    UART_write_string( UARTm1, "Angles: %.2f, %.2f, %.2f\n", a->roll, a->pitch, a->yaw );
     
-    return 0;
+    return;
 }
 
 int mpu6050_dmpGetEuler_2(euler_angles_t *a) 

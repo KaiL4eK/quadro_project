@@ -6,13 +6,13 @@
                    projectFiles="true">
       <itemPath>core.h</itemPath>
       <itemPath>motor_control.h</itemPath>
-      <itemPath>input_control.h</itemPath>
       <itemPath>HMC5883L.h</itemPath>
       <itemPath>BMP180.h</itemPath>
       <itemPath>FAT32.h</itemPath>
       <itemPath>file_io.h</itemPath>
       <itemPath>SDcard.h</itemPath>
       <itemPath>error_.h</itemPath>
+      <itemPath>remote_control.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -23,7 +23,6 @@
                    projectFiles="true">
       <itemPath>qmain.c</itemPath>
       <itemPath>motor_control.c</itemPath>
-      <itemPath>input_control.c</itemPath>
       <itemPath>bmp180.c</itemPath>
       <itemPath>hmc5883l.c</itemPath>
       <itemPath>FAT32.c</itemPath>
@@ -31,6 +30,8 @@
       <itemPath>file_io.c</itemPath>
       <itemPath>error.c</itemPath>
       <itemPath>command_processor.c</itemPath>
+      <itemPath>PID_control_system.c</itemPath>
+      <itemPath>remote_control.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

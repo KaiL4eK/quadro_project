@@ -1,5 +1,52 @@
-#include "input_control.h"
+#include "remote_control.h"
 #include "per_proto.h"
+
+/* Input capture defines */
+
+#define IC_TIMER_2                  1
+#define IC_TIMER_3                  0
+
+#define IC_CE_MODE_DISABLED         0b000
+#define IC_CE_MODE_EDGE             0b001
+#define IC_CE_MODE_FALLING_EDGE     0b010
+#define IC_CE_MODE_RISING_EDGE      0b011
+#define IC_CE_MODE_4TH_RISE_EDGE    0b100
+#define IC_CE_MODE_16TH_RISE_EDGE   0b101
+
+#define IC_INT_MODE_1ST_CE          0b00
+#define IC_INT_MODE_2ND_CE          0b01
+#define IC_INT_MODE_3RD_CE          0b10
+#define IC_INT_MODE_4TH_CE          0b11
+
+#define TWO_POS_SWITCH_ON           1
+#define TWO_POS_SWITCH_OFF          0
+
+typedef struct
+{
+    int32_t    min, 
+               max, 
+               mid;
+}Channel_t;
+
+typedef struct
+{
+    Channel_t   channel_1,
+                channel_2,
+                channel_3,
+                channel_4,
+                channel_5;
+}Calibrated_control_t;
+
+typedef struct
+{
+    int32_t     channel_1,
+                channel_2,
+                channel_3,
+                channel_4,
+                channel_5;
+}Control_t;
+
+/********** RC FUNCTIONS **********/
 
 static Control_t            control_raw;
 static Calibrated_control_t clbr_control_raw = { { 16683, 29979, 23331 },   //Roll
@@ -10,7 +57,7 @@ static Calibrated_control_t clbr_control_raw = { { 16683, 29979, 23331 },   //Ro
                                                 };
 static Control_values_t     dir_values;
 static uint8_t              // calibration_flag = 0,
-                            input_control_online = 0,
+                            remote_control_online = 0,
                             init_flag = 0;
 
 /* Prototypes */
@@ -27,13 +74,13 @@ static void init_channel_5();
 #define TRIS_LOSS_L     _TRISA3
 #define LOSS_LIGHT_LOST     0
 #define LOSS_LIGHT_FOUND    1
-#define WD_TIMER_RESET {TMR3 = 0; input_control_online = 1; LOSS_LIGHT = LOSS_LIGHT_FOUND;}
+#define WD_TIMER_RESET {TMR3 = 0; remote_control_online = 1; LOSS_LIGHT = LOSS_LIGHT_FOUND;}
 
-void ic_find_control()
+void remote_control_find_controller()
 {
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
     memset( &control_raw, 0, sizeof(control_raw) );
-    while( !input_control_online ) {
+    while( !remote_control_online ) {
         LOSS_LIGHT = LOSS_LIGHT_LOST;
     }
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
@@ -56,11 +103,11 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
 {
     // Processing losing signal from transmitter
     LOSS_LIGHT = LOSS_LIGHT_LOST;
-    input_control_online = 0;
+    remote_control_online = 0;
     _T3IF = 0;
 }
 
-Control_values_t *ic_init( void )
+Control_values_t *remote_control_init( void )
 {
     T2CONbits.TON = 0;
     T2CONbits.TCKPS = TIMER_DIV_1;
@@ -108,7 +155,7 @@ turn_off_timer1_time_measurement()
 }
 
 // Change this after going to 80 MHz!!!
-void ic_make_calibration()
+void remote_control_make_calibration()
 {
     _TRISA5 = 0;
     _LATA5 = 0;
@@ -121,7 +168,7 @@ void ic_make_calibration()
     clbr_control_raw.channel_4.min = UINT16_MAX;
     clbr_control_raw.channel_5.min = UINT16_MAX;
     turn_on_timer1_time_measurement();
-    while( input_control_online != 1 );
+    while( remote_control_online != 1 );
     delay_ms(500);
     while( elapsed_seconds < CLBR_TIME )
     {
@@ -148,9 +195,9 @@ void ic_make_calibration()
 //    calibration_flag = 1;
 }
 
-void send_UART_calibration_data( void )
+void remote_control_send_UART_calibration_data( UART_moduleNum_t module )
 {
-    UART_write_string( UARTm1, "\nMin:%05ld, %05ld, %05ld, %05ld, %05ld\nMax:%05ld, %05ld, %05ld, %05ld, %05ld\nMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
+    UART_write_string( module, "\nMin:%05ld, %05ld, %05ld, %05ld, %05ld\nMax:%05ld, %05ld, %05ld, %05ld, %05ld\nMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
                         clbr_control_raw.channel_1.min, clbr_control_raw.channel_2.min, clbr_control_raw.channel_3.min, clbr_control_raw.channel_4.min, clbr_control_raw.channel_5.min,
                         clbr_control_raw.channel_1.max, clbr_control_raw.channel_2.max, clbr_control_raw.channel_3.max, clbr_control_raw.channel_4.max, clbr_control_raw.channel_5.max,
                         clbr_control_raw.channel_1.mid, clbr_control_raw.channel_2.mid, clbr_control_raw.channel_3.mid, clbr_control_raw.channel_4.mid, clbr_control_raw.channel_5.mid
@@ -166,13 +213,13 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()
 /********************************/
 /*  CHANNELS PARAMETERS OUTPUT  */
 /********************************/
-int get_control_values( void )
+int remote_control_update_control_values( void )
 {
     int16_t res = 0;
     Control_t tmp_count_cntrl_raw;
     
     memcpy( &tmp_count_cntrl_raw, &control_raw, sizeof( control_raw ) );
-    if ( !input_control_online || !init_flag )
+    if ( !remote_control_online || !init_flag )
     {
         tmp_count_cntrl_raw.channel_1 = clbr_control_raw.channel_1.mid;
         tmp_count_cntrl_raw.channel_2 = clbr_control_raw.channel_2.mid;
@@ -203,15 +250,15 @@ int get_control_values( void )
     return( 0 );
 }
 
-void send_UART_control_values( void )
+void remote_control_send_UART_control_values( UART_moduleNum_t module )
 {
-    UART_write_string( UARTm1, "In: %04d, %04d, %04d, %04d, %01d\n", 
+    UART_write_string( module, "In: %04d, %04d, %04d, %04d, %01d\n", 
             dir_values.throttle, dir_values.rudder, dir_values.roll, dir_values.pitch, dir_values.two_pos_switch );
 }
 
-void send_UART_control_raw_data( void )
+void remote_control_send_UART_control_raw_data( UART_moduleNum_t module )
 {
-    UART_write_string( UARTm1, "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
+    UART_write_string( module, "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
             control_raw.channel_3, control_raw.channel_4, control_raw.channel_1, control_raw.channel_2, control_raw.channel_5 );
 }
 /********************************/

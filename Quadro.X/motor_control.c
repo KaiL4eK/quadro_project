@@ -6,78 +6,33 @@
 
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2
 
-bool        aMotor_armed[4]    = {false, false, false, false};
-uint16_t    aMotor_PWM[4];
+//#define USEC_2_PWM(x)   ((x)*4 - 1)     // ((FCY/1000000L)*(x)/PWM_PRESCALE - 1)
+#define MOTOR_ESC_MAX_PWM   7599L // USEC_2_PWM(1900)
+#define MOTOR_ESC_MIN_PWM   4799L // USEC_2_PWM(1200)
+#define MOTOR_ESC_STOP_PWM  3599L // USEC_2_PWM(900)
 
-void set_motor_PWM( uint8_t nChannel, uint16_t pwm_value )
-{
-    switch( nChannel ) {
-        case 1:
-            PDC1 = pwm_value << 1;
-            break;
-            
-        case 2:
-            PDC2 = pwm_value << 1;
-            break;
-            
-        case 3:
-            PDC3 = pwm_value << 1;
-            break;
-            
-        case 4:
-            PDC4 = pwm_value << 1;
-            break;
-            
-        default:
-            break;
-    }
-}
+volatile unsigned int *aMotor_power_reg[]   = { &PDC1, &PDC2, &PDC3, &PDC4 };
+bool        aMotor_armed[]                  = { false, false, false, false };
+uint16_t    aMotor_PWM[]                    = { 0, 0, 0, 0 };
 
-void set_motors_started( uint8_t motor_nums )
-{
-    if ( motor_nums & MOTOR_1 ) {
-        aMotor_armed[0] = true;
-        set_motor_PWM( 1, ESC_MIN_POWER );
-    }
-    
-    if ( motor_nums & MOTOR_2 ) {
-        aMotor_armed[1] = true;
-        set_motor_PWM( 2, ESC_MIN_POWER );
-    }
-    
-    if ( motor_nums & MOTOR_3 ) {
-        aMotor_armed[2] = true;
-        set_motor_PWM( 3, ESC_MIN_POWER );
-    }
-    
-    if ( motor_nums & MOTOR_4 ) {
-        aMotor_armed[3] = true;
-        set_motor_PWM( 4, ESC_MIN_POWER );
-    }
-}
-
-void set_motors_stopped()
-{
-    aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = false;
-    set_motor_PWM( 1, ESC_STOP_POWER );
-    set_motor_PWM( 2, ESC_STOP_POWER );
-    set_motor_PWM( 3, ESC_STOP_POWER );
-    set_motor_PWM( 4, ESC_STOP_POWER );
-}
-
-inline uint16_t power_2_PWM( uint16_t power )
+inline uint16_t power_2_PWM( motor_power_t power )
 {
 //    return( val * (esc_max_power - esc_min_power)/INPUT_POWER_MAX + esc_min_power );
-    return( power + ESC_MIN_POWER );
+    return( power + MOTOR_ESC_MIN_PWM );
+}
+
+static void set_motor_PWM( uint8_t nChannel, uint16_t pwm_value )
+{
+    *(aMotor_power_reg[nChannel]) = pwm_value << 1;
 }
 
 // Always shift duty cycle << 1 if prescaler not 1:1
-void set_motor_power( uint8_t nMotor, int32_t power )
+void motor_control_set_motor_power( motor_num_t nMotor, motor_power_t power )
 {
-    if ( nMotor > 4 )
+    if ( nMotor >= 4 )
         return;
     
-    if ( !aMotor_armed[nMotor-1] )
+    if ( !aMotor_armed[nMotor] )
         return;
     
     uint16_t input_power = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
@@ -85,9 +40,50 @@ void set_motor_power( uint8_t nMotor, int32_t power )
     set_motor_PWM( nMotor, power_2_PWM( input_power ) );
 }
 
+void motor_control_set_motor_powers( motor_power_t powers[4] )
+{
+    uint8_t i;
+    for ( i = 0; i < 4; i++ ) 
+    {
+        uint16_t input_power = clip_value( powers[i], INPUT_POWER_MIN, INPUT_POWER_MAX );
+        
+        set_motor_PWM( i, power_2_PWM( input_power ) );
+    }
+}
+
+void motor_control_set_motor_started( motor_num_t nMotor )
+{
+    aMotor_armed[nMotor] = true;
+    set_motor_PWM( nMotor, MOTOR_ESC_MIN_PWM );
+}
+
+void motor_control_set_motor_stopped( motor_num_t nMotor )
+{
+    aMotor_armed[nMotor] = false;
+    set_motor_PWM( nMotor, MOTOR_ESC_STOP_PWM );
+}
+
+void motor_control_set_motors_started( void )
+{
+    aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = true;
+    set_motor_PWM( 0, MOTOR_ESC_MIN_PWM );
+    set_motor_PWM( 1, MOTOR_ESC_MIN_PWM );
+    set_motor_PWM( 2, MOTOR_ESC_MIN_PWM );
+    set_motor_PWM( 3, MOTOR_ESC_MIN_PWM );
+}
+
+void motor_control_set_motors_stopped( void )
+{
+    aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = false;
+    set_motor_PWM( 0, MOTOR_ESC_STOP_PWM );
+    set_motor_PWM( 1, MOTOR_ESC_STOP_PWM );
+    set_motor_PWM( 2, MOTOR_ESC_STOP_PWM );
+    set_motor_PWM( 3, MOTOR_ESC_STOP_PWM );
+}
+
 #define PWM_PERIOD      9999 //((FCY/FREQ_CONTROL_SYSTEM/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767
 
-void motors_init()
+void motor_control_init( void )
 {
     _TRISE0 = _TRISE2 = _TRISE4 = _TRISE6 = 0;
     _RE0 = _RE2 = _RE4 = _RE6 = 0;
@@ -108,7 +104,7 @@ void motors_init()
     
     P1TPERbits.PTPER = PWM_PERIOD;
     
-    set_motors_stopped();
+    motor_control_set_motors_stopped();
     
     P1TCONbits.PTEN = 1; 
 }
