@@ -5,14 +5,14 @@ static bool                 initialized = false,
                             m_dmp_use   = false;
        gyro_accel_data_t    raw_gyr_acc;
 
-gyro_accel_data_t *mpu6050_init ( void )
+int mpu6050_init ( void )
 {
     if ( !mpu6050_test_connection() )
-        return( NULL );
+        return( -1 );
 
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
-    mpu6050_set_DLPF( MPU6050_DLPF_BW_42 );
+    mpu6050_set_DLPF( MPU6050_DLPF_BW_98 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
@@ -28,6 +28,11 @@ gyro_accel_data_t *mpu6050_init ( void )
     
     initialized = true;
     
+    return( 0 );
+}
+
+gyro_accel_data_t *mpu6050_get_raw_data ( void )
+{
     return( &raw_gyr_acc );
 }
 
@@ -50,22 +55,22 @@ int mpu6050_receive_gyro_accel_raw_data ( void )
     return( 0 );
 }
 
-void send_UART_mpu6050_data ( UART_moduleNum_t mod )
-{
-    UART_write_string( mod, "#G:%06d,%06d,%06d#A:%06d,%06d,%06d\n",
-                raw_gyr_acc.value.x_gyro, 
-                raw_gyr_acc.value.y_gyro, 
-                raw_gyr_acc.value.z_gyro,
-                raw_gyr_acc.value.x_accel, 
-                raw_gyr_acc.value.y_accel, 
-                raw_gyr_acc.value.z_accel );  
-}
+static float complementary_filter_rate_a = 0.95f;
+static float complementary_filter_rate_b = 0.05f;
 
-#define COMPLIMENTARY_COEFFICIENT   0.9f
 #define SENS_TIME                   0.0025f     // 2500L/1000000
 #define GYR_COEF                    131.0f      // = 65535/2/250
 
-void mpu6050_get_euler( euler_angles_t *angles )
+void mpu6050_set_complementary_filter_rate( float rate_a )
+{
+    if ( rate_a >= 1.0f )
+        return;
+    
+    complementary_filter_rate_a = rate_a;
+    complementary_filter_rate_b = 1.0f - rate_a;
+}
+
+void mpu6050_get_euler_angles( euler_angles_t *angles )
 {    
     gyro_accel_data_t *c_d = &raw_gyr_acc;
     
@@ -73,19 +78,16 @@ void mpu6050_get_euler( euler_angles_t *angles )
     int32_t acc_x = c_d->value.x_accel == 0 ? 1 : c_d->value.x_accel,
             acc_y = c_d->value.y_accel == 0 ? 1 : c_d->value.y_accel,
             acc_z = c_d->value.z_accel;
-
-    float acc_x_ = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
-    float acc_y_ = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES;
     
     float gyr_delta_x = (c_d->value.x_gyro/GYR_COEF) * SENS_TIME;
     float gyr_delta_y = (c_d->value.y_gyro/GYR_COEF) * SENS_TIME;
-//    float gyr_delta_z = (c_d->value.z_gyro/GYR_COEF) * SENS_TIME;
+    float gyr_delta_z = (c_d->value.z_gyro/GYR_COEF) * SENS_TIME;
     
-    angles->pitch = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_x + angles->pitch)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * acc_x_;
-    angles->roll  = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_y + angles->roll)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * acc_y_;
-//    angles->yaw   = gyr_delta_z + angles->yaw;
+    angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) 
+                            + (complementary_filter_rate_b * (atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES));
+    angles->roll  = (complementary_filter_rate_a * (gyr_delta_y + angles->roll)) 
+                            + (complementary_filter_rate_b * (atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES));
+    angles->yaw   = gyr_delta_z + angles->yaw;
 }
 
 uint8_t mpu6050_get_id ( void )
@@ -354,7 +356,6 @@ void mpu6050_calibration ( void )
         gy_offset=-mean_gy/4;
         gz_offset=-mean_gz/4;
         while (1){
-            send_UART_mpu6050_data( UARTm1 );
             int ready=0;
             mpu6050_setXAccelOffset(ax_offset);
             mpu6050_setYAccelOffset(ay_offset);

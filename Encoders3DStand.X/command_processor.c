@@ -48,8 +48,6 @@ void command_translator ( void )
 
 //------------------------------------------------------------------------------------------
 
-
-
 void data_translator ( int32_t encoder_roll, int32_t encoder_pitch )
 {
     static uint8_t     data_resp_prefix_byte = 0;
