@@ -42,8 +42,9 @@ typedef union
   } value;
 }gyro_accel_data_t;
 
-gyro_accel_data_t *mpu6050_init ( void );
-void send_UART_mpu6050_data ( UART_moduleNum_t mod );
+int mpu6050_init ( void );
+gyro_accel_data_t *mpu6050_get_raw_data ( void );
+
 int mpu6050_receive_gyro_accel_raw_data ( void );
 void mpu6050_set_DLPF ( uint8_t value );
 void mpu6050_set_sleep_bit ( uint8_t value );
@@ -79,8 +80,8 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 
 // DMP
 
-bool mpu6050_dmpPacketAvailable();
-int mpu6050_dmpInitialize();
+bool mpu6050_dmp_packet_available();
+int mpu6050_dmp_init();
 
 typedef struct
 {
@@ -147,8 +148,8 @@ typedef union
     } value;
 }mpu_fifo_frame_t;
 
-int mpu6050_dmpGetEuler(euler_angles_t *a);
-void mpu6050_get_euler( euler_angles_t *angles );
+void mpu6050_dmp_get_euler_angles(euler_angles_t *a);
+void mpu6050_get_euler_angles( euler_angles_t *angles );
 
 #define RADIANS_TO_DEGREES          57.295779513f
 

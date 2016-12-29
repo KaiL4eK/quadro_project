@@ -44,9 +44,15 @@ typedef enum
 
 typedef enum
 {
-    UARTm1,
+    UARTm1 = 0,
     UARTm2
 } UART_moduleNum_t;
+
+typedef enum
+{
+    UART_little_endian,
+    UART_big_endian
+} UART_write_endian_t;
 
 typedef enum
 {
@@ -65,8 +71,8 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
 void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
-//int UART_receive_byte( UART_moduleNum_t module, uint8_t *received_byte1, uint8_t *received_byte2 );
-//void UART_set_receive_mode ( UART_moduleNum_t module, UART_receiveMode_t mode, Interrupt_priority_lvl_t priority );
+
+void UART_write_set_endian ( UART_moduleNum_t module, UART_write_endian_t mode );
 
 uint8_t UART_bytes_available( UART_moduleNum_t module );
 uint8_t UART_get_byte( UART_moduleNum_t module );

@@ -12,11 +12,9 @@
 
 typedef struct
 {
-    int32_t     roll,
+    int32_t     roll,           // Multiplyed by 100
                 pitch,
                 yaw;
-    int32_t     acc_x,
-                acc_y;
     int16_t     motor1_power,
                 motor2_power,
                 motor3_power,

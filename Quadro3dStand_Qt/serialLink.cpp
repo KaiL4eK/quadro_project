@@ -41,12 +41,15 @@ bool SerialLink::makeLinkToPort()
     if ( serial->open( QIODevice::ReadWrite ) )
         return( true );
 
+    qDebug() << "makeLinkToPort() failed";
+
     emit error( "Failed to connect to serial port: " + serial->portName(), serial->error() );
     return( false );
 }
 
 void SerialLink::process()
 {
+    qDebug() << "SerialLink process()";
     if ( makeLinkToPort() && processConnectCommand() )
     {
         emit sendConnectionState( true );
@@ -114,6 +117,8 @@ bool SerialLink::processConnectCommand()
 //    if ( serial->isOpen() )
 //        serial->clear();
 
+    qDebug() << "processConnectCommand() start";
+
     QByteArray command;
     command.append(COMMAND_PREFIX);
     command.append(CMD_CONNECT_CODE);
@@ -123,6 +128,8 @@ bool SerialLink::processConnectCommand()
         return( false );
     }
     serial->flush();
+
+    qDebug() << "processConnectCommand() wait for response";
 
     return( waitForResponse() );
 }
@@ -274,14 +281,17 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     QDataStream streamRoll( &frame, QIODevice::ReadWrite );
     streamRoll >> buffer;
 
-#define ENCODER_COEFFICIENT 100.0f
-#define ANGLES_COEFFICIENT  100.0f
+#define ENCODER_COEFFICIENT     100.0f
+#define ANGLES_COEFFICIENT      100.0f
+#define TIME_RATE_MS_PER_TICK   30.0f
 
+#if 1
     qDebug() << buffer.rollAngle/ANGLES_COEFFICIENT << "\t" << buffer.pitchAngle/ANGLES_COEFFICIENT << "\t"
-             << buffer.timeMoment*10.0f << "\t" << buffer.encoderRoll/ENCODER_COEFFICIENT << "\t"
+             << buffer.timeMoment*TIME_RATE_MS_PER_TICK << "\t" << buffer.encoderRoll/ENCODER_COEFFICIENT << "\t"
              << buffer.encoderPitch/ENCODER_COEFFICIENT << "\t"
              << buffer.motor1_power << "\t" << buffer.motor2_power << "\t"
              << buffer.motor3_power << "\t" << buffer.motor4_power;
+#endif
 
     emit sendMotorPowers( buffer.motor1_power, buffer.motor2_power, buffer.motor3_power, buffer.motor4_power );
 
@@ -289,7 +299,7 @@ void SerialLink::parseDataFrame(QByteArray &frame)
     pitchDataList->push_back( buffer.pitchAngle/ANGLES_COEFFICIENT );
     encRollDataList->push_back( buffer.encoderRoll/ENCODER_COEFFICIENT + encoderRollCOffset );
     encPitchDataList->push_back( buffer.encoderPitch/ENCODER_COEFFICIENT + encoderPitchCOffset );
-    timeList->push_back( buffer.timeMoment*10.0f ); // milliseconds
+    timeList->push_back( buffer.timeMoment*TIME_RATE_MS_PER_TICK ); // milliseconds
 
     if ( calibrationFlag )
     {
@@ -321,15 +331,14 @@ quint8 SerialLink::receiveFrameHead()
         if ( !serial->waitForReadyRead( 1000 ) )
         {
             if ( serial->error() != QSerialPort::TimeoutError )
-                emit error( "Failed to receive frame type [serial error]",
-                            serial->error() );
+                emit error( "Failed to receive frame type [serial error]", serial->error() );
             else
-                emit error( "Failed to receive frame type [timeout]",
-                            serial->error() );
+                emit error( "Failed to receive frame type [timeout]", serial->error() );
 
             return( 0 );
         }
     }
+
     char frameHead;
     if ( serial->read(&frameHead, 1) < 0 )
     {
@@ -357,6 +366,7 @@ QByteArray SerialLink::receiveNextFrame()
         case 0:
         case COMMAND_PREFIX:
         default:
+            qDebug() << "receiveNextFrame() incorrect prefix: " << type;
             return( result );
     }
     while ( serial->bytesAvailable() < length )
@@ -399,6 +409,5 @@ bool SerialLink::waitForResponse()
                     serial->error() );
         return( false );
     }
-    qDebug() << "Received " + QString::number(replyBytes[1]);
     return( true );
 }

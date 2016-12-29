@@ -318,7 +318,7 @@ inline void write_next_update()
     mpu6050_writeMemoryBlock( p_dmp_update + 3, dmp_update_length, dmp_update_bank, dmp_update_address );
 }
 
-int mpu6050_dmpInitialize() 
+int mpu6050_dmp_init() 
 {
     // reset device
     DEBUG_PRINTLN( "\nResetting MPU6050..." );
@@ -523,11 +523,11 @@ int mpu6050_dmpInitialize()
     return 0; // success
 }
 
-bool mpu6050_dmpPacketAvailable() {
+bool mpu6050_dmp_packet_available() {
     return mpu6050_getFIFOCount() >= dmpPacketSize;
 }
 
-int mpu6050_dmpGetEuler(euler_angles_t *a) 
+void mpu6050_dmp_get_euler_angles(euler_angles_t *a) 
 {
     quaternion_t internal_data;
     quaternion_t *q = &internal_data;

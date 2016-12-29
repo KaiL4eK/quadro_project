@@ -5,5 +5,9 @@
 void error_process ( const char *err_str )
 {
     SET_ERR_L;
-    while ( 1 ) { UART_write_string( UARTm1, "Err %s\n", err_str ); }
+    while ( 1 ) 
+    { 
+        UART_write_string( UARTm1, "Error: %s\n", err_str ); 
+        delay_ms( 500 ); 
+    };
 }

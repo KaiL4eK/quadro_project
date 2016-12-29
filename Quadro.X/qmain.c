@@ -16,6 +16,9 @@ void process_UART_frame( void );
 #define PROGRAM_INPUT
 #define PID_tuning
 //#define TEST_WO_MODULES
+//#define MPU6050_DMP
+
+// Optimize DMP - TODO
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -30,16 +33,19 @@ static int32_t      bmp180_altitude = 0;
 
 quadrotor_state_t    quadrotor_state;
 Control_values_t     *control_values;
-gyro_accel_data_t    *gyro_accel_data;
 
 int main ( void ) 
 {
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-    UART_init( UARTm1, UART_115200, INT_PRIO_HIGH );
+    UART_init( UARTm1, UART_115200, INT_PRIO_MID );
     UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
+    
+    UART_write_set_endian( UARTm2, UART_little_endian );
+    
     cmdProcessor_init( UARTm2 );
+    
     UART_write_string( UARTm1, "/------------------------/\n" );
     UART_write_string( UARTm1, "UART initialized\n" );
 #ifndef TEST_WO_MODULES 
@@ -66,12 +72,14 @@ int main ( void )
 #endif /* SD_CARD */
     i2c_init( 400000 );
     UART_write_string( UARTm1, "I2C initialized\n" );
-    
-    if ( (gyro_accel_data = mpu6050_init()) == NULL )
-    {
-        UART_write_string( UARTm1, "Failed MPU init\n" );
+
+#ifndef MPU6050_DMP
+    if ( mpu6050_init() < 0 )
         error_process( "MPU6050 initialization" );
-    }
+#else
+    if ( mpu6050_dmp_init() < 0 )
+        error_process( "MPU6050 DMP initialization" );
+#endif
     UART_write_string( UARTm1, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration();
@@ -108,6 +116,7 @@ int main ( void )
         file_process_tasks();
         process_UART_frame();
 //        delay_ms( 500 );
+
     }
     
     return( 0 );
@@ -377,15 +386,19 @@ void process_UART_frame( void )
     }
 }
 
-euler_angles_t angles;
+//#define DIRECT_LINK
 
 void process_sending_UART_data( void )
 {
-    if ( dataSend && ++counterSend == 4 )
+    if ( dataSend && ++counterSend == 12 )
     {
 //        quadrotor_state.roll = quadrotor_state.pitch = 
 //                45*ANGLES_COEFF*sin(timeMoments/100.0);
-        uint16_t sendBuffer[5];
+#ifdef DIRECT_LINK
+        uint16_t sendBuffer[DATA_FULL_FRAME_SIZE/2];
+#else
+        uint16_t sendBuffer[DATA_QUADRO_FRAME_SIZE/2];
+#endif   
         // angle * 100
         sendBuffer[0] = quadrotor_state.roll;
         sendBuffer[1] = quadrotor_state.pitch;
@@ -398,8 +411,11 @@ void process_sending_UART_data( void )
         sendBuffer[4] |= POWER_2_PERCENT(quadrotor_state.motor4_power);
         
         UART_write_byte( UARTm2, DATA_PREFIX );
+#ifdef DIRECT_LINK
+        UART_write_words( UARTm2, sendBuffer, DATA_FULL_FRAME_SIZE/2 );
+#else
         UART_write_words( UARTm2, sendBuffer, DATA_QUADRO_FRAME_SIZE/2 );
-
+#endif  
         if ( ++timeMoments == UINT16_MAX )
         {
             cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_ENDDATA );
@@ -471,28 +487,27 @@ inline void bmp180_rcv_filtered_data ( void )
 
 #define GYR_COEF                    131.0f      // = 65535/2/250
 #define SENS_TIME                   0.0025f     // 2500L/1000000
-#define COMPLIMENTARY_COEFFICIENT   0.9f
+#define COMPLIMENTARY_COEFFICIENT   0.95f
+#define ANGLES_COEFF                100L        // each float is represented as integer *100 (2 decimals after point)
 
+// Maybe should be replaced to MPU6050 module? - TODO
 static void process_counts()
 {
-    gyro_accel_data_t *c_d = gyro_accel_data;
+    gyro_accel_data_t *c_d = mpu6050_get_raw_data();
     
     // Just for one of arguments for atan2 be not zero
     int32_t acc_x = c_d->value.x_accel == 0 ? 1 : c_d->value.x_accel,
             acc_y = c_d->value.y_accel == 0 ? 1 : c_d->value.y_accel,
             acc_z = c_d->value.z_accel;
-
-    quadrotor_state.acc_x = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF,
-    quadrotor_state.acc_y = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF;
     
     int32_t gyr_delta_x = (c_d->value.x_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
     int32_t gyr_delta_y = (c_d->value.y_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
     int32_t gyr_delta_z = (c_d->value.z_gyro*ANGLES_COEFF/GYR_COEF) * SENS_TIME;
     
     quadrotor_state.pitch = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_x + quadrotor_state.pitch)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * quadrotor_state.acc_x;
+                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * (atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF);
     quadrotor_state.roll  = (COMPLIMENTARY_COEFFICIENT * (gyr_delta_y + quadrotor_state.roll)) 
-                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * quadrotor_state.acc_y;
+                            + (1.0f-COMPLIMENTARY_COEFFICIENT) * (atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES * ANGLES_COEFF);
     quadrotor_state.yaw   = gyr_delta_z + quadrotor_state.yaw;
 }
 
@@ -508,17 +523,21 @@ void control_system_timer_init( void )
     T4CONbits.TON = 1;
 }
 
-//#define MEASURE_INT_TIME
+#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
+    static euler_angles_t euler_angles = {0, 0, 0}; 
+    
 #ifdef MEASURE_INT_TIME
     timer_start();
 #endif
 #ifndef TEST_WO_MODULES
 
+#ifndef MPU6050_DMP
     if ( mpu6050_receive_gyro_accel_raw_data() )
         return;
+#endif
     
 //    send_UART_mpu6050_data( UARTm1 );
     
@@ -528,10 +547,16 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
 //    get_control_values();
     
-    process_counts();
-//    mpu6050_get_euler( &angles );
-//    quadrotor_state.pitch = angles.pitch * ANGLES_COEFF;
-//    quadrotor_state.roll  = angles.roll * ANGLES_COEFF;
+//    process_counts();
+#ifndef MPU6050_DMP
+    mpu6050_get_euler_angles( &euler_angles );
+#else
+    if ( mpu6050_dmp_packet_available() )
+        mpu6050_dmp_get_euler_angles( &euler_angles );
+#endif
+    
+    quadrotor_state.pitch = euler_angles.pitch * ANGLES_COEFF;
+    quadrotor_state.roll  = euler_angles.roll  * ANGLES_COEFF;
     
 //    UART_write_string( UARTm1, "R %ld, P %ld\n", quadrotor_state.roll, quadrotor_state.pitch );
     
