@@ -82,6 +82,8 @@ void remote_control_find_controller()
     memset( &control_raw, 0, sizeof(control_raw) );
     while( !remote_control_online ) {
         LOSS_LIGHT = LOSS_LIGHT_LOST;
+        delay_ms( 500 );
+        UART_write_string( UARTm1, "Searching for RC\n" );
     }
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
 }

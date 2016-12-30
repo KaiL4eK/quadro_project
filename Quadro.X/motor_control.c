@@ -11,9 +11,9 @@
 #define MOTOR_ESC_MIN_PWM   4799L // USEC_2_PWM(1200)
 #define MOTOR_ESC_STOP_PWM  3599L // USEC_2_PWM(900)
 
-volatile unsigned int *aMotor_power_reg[]   = { &PDC1, &PDC2, &PDC3, &PDC4 };
-bool        aMotor_armed[]                  = { false, false, false, false };
-uint16_t    aMotor_PWM[]                    = { 0, 0, 0, 0 };
+volatile unsigned int   *aMotor_power_reg[]   = { &PDC1, &PDC2, &PDC3, &PDC4 };
+bool                    aMotor_armed[]        = { false, false, false, false };
+uint16_t                aMotor_PWM[]          = { 0, 0, 0, 0 };
 
 inline uint16_t power_2_PWM( motor_power_t power )
 {
@@ -21,17 +21,15 @@ inline uint16_t power_2_PWM( motor_power_t power )
     return( power + MOTOR_ESC_MIN_PWM );
 }
 
-static void set_motor_PWM( uint8_t nChannel, uint16_t pwm_value )
+// Always shift duty cycle << 1 if prescaler not 1:1
+static void set_motor_PWM( motor_num_t n_motor, uint16_t pwm_value )
 {
-    *(aMotor_power_reg[nChannel]) = pwm_value << 1;
+    *aMotor_power_reg[n_motor] = pwm_value << 1;
 }
 
-// Always shift duty cycle << 1 if prescaler not 1:1
+
 void motor_control_set_motor_power( motor_num_t nMotor, motor_power_t power )
 {
-    if ( nMotor >= 4 )
-        return;
-    
     if ( !aMotor_armed[nMotor] )
         return;
     
@@ -85,8 +83,9 @@ void motor_control_set_motors_stopped( void )
 
 void motor_control_init( void )
 {
-    _TRISE0 = _TRISE2 = _TRISE4 = _TRISE6 = 0;
-    _RE0 = _RE2 = _RE4 = _RE6 = 0;
+//    _TRISE0 = _TRISE2 = _TRISE4 = _TRISE6 = 0;
+//    _RE0 = _RE2 = _RE4 = _RE6 = 0;
+    
     /* PWM period = Tcy * prescale * PTPER */
     /* PTPER = Fcy / Fpwm / prescale - 1 */
     P1TCONbits.PTCKPS = 0b01;   //<<<Prescale 1:4

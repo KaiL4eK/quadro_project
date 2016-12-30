@@ -12,7 +12,7 @@ int mpu6050_init ( void )
 
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
-    mpu6050_set_DLPF( MPU6050_DLPF_BW_98 );
+    mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
@@ -55,8 +55,8 @@ int mpu6050_receive_gyro_accel_raw_data ( void )
     return( 0 );
 }
 
-static float complementary_filter_rate_a = 0.95f;
-static float complementary_filter_rate_b = 0.05f;
+static float complementary_filter_rate_a = 0.97f;
+static float complementary_filter_rate_b = 0.03f;
 
 #define SENS_TIME                   0.0025f     // 2500L/1000000
 #define GYR_COEF                    131.0f      // = 65535/2/250

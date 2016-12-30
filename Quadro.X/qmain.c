@@ -17,8 +17,7 @@ void process_UART_frame( void );
 #define PID_tuning
 //#define TEST_WO_MODULES
 //#define MPU6050_DMP
-
-// Optimize DMP - TODO
+        // Optimize DMP - TODO
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -57,11 +56,11 @@ int main ( void )
 #endif /* SD_CARD */
 
     control_values = remote_control_init();
-    UART_write_string( UARTm1, "IC initialized\n" );
-//#ifndef PROGRAM_INPUT
-//    remote_control_find_controller();
-//    UART_write_string( UARTm1, "RC found\n" );
-//#endif // PROGRAM_INPUT
+    UART_write_string( UARTm1, "RC initialized\n" );
+
+    remote_control_find_controller();
+    UART_write_string( UARTm1, "RC found\n" );
+
 //    remote_control_make_calibration();
 //    UART_write_string( UARTm1, "RC calibrated\n");
 #ifdef SD_CARD
@@ -109,11 +108,13 @@ int main ( void )
     
     control_system_timer_init();
     UART_write_string( UARTm1, "Let`s begin!\n" );
-    ERR_LIGHT = ERR_LIGHT_NO_ERR;
+//    ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
     while( 1 ) {
 //        UART_write_string( UARTm1, "Hello\n" );
+#ifdef SD_CARD
         file_process_tasks();
+#endif
         process_UART_frame();
 //        delay_ms( 500 );
 
@@ -181,6 +182,18 @@ static void process_UART_PID_tuning()
         case 'v':
             pitch_rates.diff--;
             break;
+            
+        case '1':
+            control_values->pitch = 1000;
+            break;
+            
+        case '2':
+            control_values->pitch = -1000;
+            break;
+            
+        case '0':
+            control_values->pitch = 0;
+            break;
     }
     UART_write_string( UARTm1, "R: P%d D%d I%d | P: P%d D%d I%d\n", roll_rates.prop_rev, roll_rates.diff, roll_rates.integr_rev, 
                                                                     pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
@@ -228,8 +241,7 @@ inline void process_control_system ( void )
         {
             PID_controller_reset_integral_sums();
             motor_control_set_motors_started();
-            UART_write_string( UARTm1, 
-                    "All motors started with power %d\n", motorPower );
+            UART_write_string( UARTm1, "All motors started with power %d\n", motorPower );
             motors_armed = true;
         }
         start_motors = false;
@@ -247,33 +259,35 @@ inline void process_control_system ( void )
 #ifndef PROGRAM_INPUT
         }
 #endif
-        
     // Each angle presents as integer, ex. 30.25 = 3025
     // control pitch [-1000 --- 1000]
-    int32_t power = 0;
+    
     memset( quadrotor_state.motor_power, 0, sizeof( quadrotor_state.motor_power ) );
     
     if ( motors_armed )
     {
-//        control_values.throttle = motorPower;
+        int32_t power = 0;
+        motorPower = control_values->throttle;
 #ifndef PROGRAM_INPUT
         if ( control_values.throttle >= THROTTLE_OFF_LIMIT )
         {
 #endif // PROGRAM_INPUT
             int32_t pitch_control = PID_controller_generate_pitch_control( CONTROL_2_ANGLE(control_values->pitch) - quadrotor_state.pitch );
-            int32_t roll_control  = PID_controller_generate_roll_control( CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll );
+            int32_t roll_control  = 0; //PID_controller_generate_roll_control( CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll );
             
             power = motorPower + pitch_control - roll_control;
-            quadrotor_state.motor_power[0] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+            quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
             power = motorPower + pitch_control + roll_control;
-            quadrotor_state.motor_power[1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+            quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
             power = motorPower - pitch_control + roll_control;
-            quadrotor_state.motor_power[2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+            quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
             power = motorPower - pitch_control - roll_control;
-            quadrotor_state.motor_power[3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+            quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+            
+            motor_control_set_motor_powers( quadrotor_state.motor_power );
 #ifndef PROGRAM_INPUT
             stop_counter = 0;
         }
@@ -291,9 +305,9 @@ inline void process_control_system ( void )
 
 #include "serial_protocol.h"
 
-volatile bool         dataSend        = false;
-volatile uint8_t      send_timer_divider_count     = 0;
-volatile uint16_t     time_tick_2ms5_count     = 0;
+volatile bool         dataSend                  = false;
+volatile uint8_t      send_timer_divider_count  = 0;
+volatile uint16_t     time_tick_2ms5_count      = 0;
 
 void process_UART_frame( void )
 {
@@ -351,7 +365,7 @@ void process_sending_UART_data( void )
         uint16_t sendBuffer[DATA_FULL_FRAME_SIZE/2];
 #else
         uint16_t sendBuffer[DATA_QUADRO_FRAME_SIZE/2];
-#endif   
+#endif
         // angle * 100
         sendBuffer[0] = quadrotor_state.roll;
         sendBuffer[1] = quadrotor_state.pitch;
@@ -448,7 +462,7 @@ void control_system_timer_init( void )
 
 #define ANGLES_COEFF                100L        // each float is represented as integer *100 (2 decimals after point)
 
-#define MEASURE_INT_TIME
+//#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
@@ -470,9 +484,6 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     int16_t angle_deg = hmc5883l_get_yaw_angle();
 #endif
     
-//    get_control_values();
-    
-//    process_counts();
 #ifndef MPU6050_DMP
     mpu6050_get_euler_angles( &euler_angles );
 #else
@@ -494,8 +505,8 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
 #endif // TEST_WO_MODULES
     
+    remote_control_update_control_values();
     process_control_system();
-    motor_control_set_motor_powers( quadrotor_state.motor_power );
     
 #ifdef SD_CARD
     process_saving_data();
