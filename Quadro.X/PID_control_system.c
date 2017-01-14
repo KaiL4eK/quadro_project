@@ -7,8 +7,8 @@
 
 #include "core.h"
 
-PID_rates_t roll_rates  = { .prop_rev = 10, .integr_rev = 10000, .diff = 8 },
-            pitch_rates = { .prop_rev = 10, .integr_rev = 10000, .diff = 8 };
+PID_rates_t roll_rates  = { .prop_rev = 15, .integr_rev = 10000, .diff = 1 },
+            pitch_rates = { .prop_rev = 15, .integr_rev = 10000, .diff = 1 };
 
 static int64_t  integr_sum_pitch = 0;
 static int64_t  integr_sum_roll  = 0;

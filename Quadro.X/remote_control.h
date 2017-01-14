@@ -21,11 +21,10 @@ typedef struct
 }Control_values_t;
 
 Control_values_t *remote_control_init( void );
-void remote_control_make_calibration();
+void remote_control_make_calibration( UART_moduleNum_t module );
 void remote_control_find_controller();
 int remote_control_update_control_values( void );
 
-void remote_control_send_UART_calibration_data( UART_moduleNum_t module );
 void remote_control_send_UART_control_raw_data( UART_moduleNum_t module );
 void remote_control_send_UART_control_values( UART_moduleNum_t module );
 

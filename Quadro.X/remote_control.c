@@ -49,11 +49,11 @@ typedef struct
 /********** RC FUNCTIONS **********/
 
 static Control_t            control_raw;
-static Calibrated_control_t clbr_control_raw = { { 16683, 29979, 23331 },   //Roll
-                                                 { 16731, 30042, 23386 },   //Pitch
-                                                 { 16829, 30074, 23451 },   //Throttle
-                                                 { 16750, 29976, 23363 },   //Yaw
-                                                 { 16728, 30024, 23376 }
+static Calibrated_control_t clbr_control_raw = { { 16754, 29989, 23371 },   //Roll
+                                                 { 16832, 30036, 23434 },   //Pitch
+                                                 { 16832, 30068, 23450 },   //Throttle
+                                                 { 16752, 29991, 23371 },   //Yaw
+                                                 { 16736, 30020, 233786 }
                                                 };
 static Control_values_t     dir_values;
 static uint8_t              // calibration_flag = 0,
@@ -131,9 +131,9 @@ Control_values_t *remote_control_init( void )
 /********************************/
 /*        CALLIBRATION          */
 /********************************/
-#define CLBR_TIME   10
+#define CLBR_TIME   30
 #define CLBR_LIGHT  _RA5
-static uint8_t  elapsed_seconds = 0;
+volatile static uint8_t  elapsed_seconds = 0;
 
 static void 
 turn_on_timer1_time_measurement()
@@ -157,7 +157,7 @@ turn_off_timer1_time_measurement()
 }
 
 // Change this after going to 80 MHz!!!
-void remote_control_make_calibration()
+void remote_control_make_calibration( UART_moduleNum_t module )
 {
     _TRISA5 = 0;
     _LATA5 = 0;
@@ -171,7 +171,9 @@ void remote_control_make_calibration()
     clbr_control_raw.channel_5.min = UINT16_MAX;
     turn_on_timer1_time_measurement();
     while( remote_control_online != 1 );
-    delay_ms(500);
+    
+    delay_ms( 500 );
+    
     while( elapsed_seconds < CLBR_TIME )
     {
         CLBR_LIGHT = 0;
@@ -185,7 +187,9 @@ void remote_control_make_calibration()
         clbr_control_raw.channel_4.min = min( clbr_control_raw.channel_4.min, control_raw.channel_4 );
         clbr_control_raw.channel_5.max = max( clbr_control_raw.channel_5.max, control_raw.channel_5 );
         clbr_control_raw.channel_5.min = min( clbr_control_raw.channel_5.min, control_raw.channel_5 );
-        UART_write_string( UARTm1, "Calibration\n" );
+        delay_ms( 500 );
+        remote_control_send_UART_control_raw_data( module );
+//        UART_write_string( module, "Calibration\n" );
     }
     turn_off_timer1_time_measurement();
     clbr_control_raw.channel_1.mid = (clbr_control_raw.channel_1.max + clbr_control_raw.channel_1.min)/2;
@@ -194,16 +198,18 @@ void remote_control_make_calibration()
     clbr_control_raw.channel_4.mid = (clbr_control_raw.channel_4.max + clbr_control_raw.channel_4.min)/2;
     clbr_control_raw.channel_5.mid = (clbr_control_raw.channel_5.max + clbr_control_raw.channel_5.min)/2;
     CLBR_LIGHT = 1;
-//    calibration_flag = 1;
-}
+    
+    while ( 1 )
+    {
+        UART_write_string( module, "\nCh1: %05ld, %05ld, %05ld\n", clbr_control_raw.channel_1.min, clbr_control_raw.channel_1.max, clbr_control_raw.channel_1.mid );
+        UART_write_string( module, "Ch2: %05ld, %05ld, %05ld\n", clbr_control_raw.channel_2.min, clbr_control_raw.channel_2.max, clbr_control_raw.channel_2.mid );
+        UART_write_string( module, "Ch3: %05ld, %05ld, %05ld\n", clbr_control_raw.channel_3.min, clbr_control_raw.channel_3.max, clbr_control_raw.channel_3.mid );
+        UART_write_string( module, "Ch4: %05ld, %05ld, %05ld\n", clbr_control_raw.channel_4.min, clbr_control_raw.channel_4.max, clbr_control_raw.channel_4.mid );
+        UART_write_string( module, "Ch5: %05ld, %05ld, %05ld\n", clbr_control_raw.channel_5.min, clbr_control_raw.channel_5.max, clbr_control_raw.channel_5.mid );
 
-void remote_control_send_UART_calibration_data( UART_moduleNum_t module )
-{
-    UART_write_string( module, "\nMin:%05ld, %05ld, %05ld, %05ld, %05ld\nMax:%05ld, %05ld, %05ld, %05ld, %05ld\nMid:%05ld, %05ld, %05ld, %05ld, %05ld\n", 
-                        clbr_control_raw.channel_1.min, clbr_control_raw.channel_2.min, clbr_control_raw.channel_3.min, clbr_control_raw.channel_4.min, clbr_control_raw.channel_5.min,
-                        clbr_control_raw.channel_1.max, clbr_control_raw.channel_2.max, clbr_control_raw.channel_3.max, clbr_control_raw.channel_4.max, clbr_control_raw.channel_5.max,
-                        clbr_control_raw.channel_1.mid, clbr_control_raw.channel_2.mid, clbr_control_raw.channel_3.mid, clbr_control_raw.channel_4.mid, clbr_control_raw.channel_5.mid
-                     );
+        delay_ms( 3000 );
+    }
+//    calibration_flag = 1;
 }
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()

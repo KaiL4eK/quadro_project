@@ -19,7 +19,7 @@ void motor_control_set_motor_stopped( motor_num_t nMotor );
 void motor_control_set_motors_started( void );
 void motor_control_set_motors_stopped( void );
 
-#define INPUT_POWER_MAX 2800L // ESC_MAX_POWER - ESC_MIN_POWER
+#define INPUT_POWER_MAX 3200L // ESC_MAX_POWER - ESC_MIN_POWER
 #define INPUT_POWER_MIN 0L
 
 #endif	/* MOTOR_CONTROL_H_ */

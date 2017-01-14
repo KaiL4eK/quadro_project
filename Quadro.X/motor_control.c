@@ -7,7 +7,7 @@
 // As DC comparison happens with 15-1 bits so it is needed to make shift for 1 bit left / *2
 
 //#define USEC_2_PWM(x)   ((x)*4 - 1)     // ((FCY/1000000L)*(x)/PWM_PRESCALE - 1)
-#define MOTOR_ESC_MAX_PWM   7599L // USEC_2_PWM(1900)
+#define MOTOR_ESC_MAX_PWM   7999L // USEC_2_PWM(2000)
 #define MOTOR_ESC_MIN_PWM   4799L // USEC_2_PWM(1200)
 #define MOTOR_ESC_STOP_PWM  3599L // USEC_2_PWM(900)
 

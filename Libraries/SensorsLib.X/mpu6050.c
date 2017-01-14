@@ -1,4 +1,5 @@
 #include "MPU6050.h"
+#include "MPU6050_private.h"
 
 static uint8_t              buffer[14];
 static bool                 initialized = false,
@@ -12,23 +13,27 @@ int mpu6050_init ( void )
 
     mpu6050_set_sleep_bit( 0 );
     mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
-    mpu6050_set_DLPF( MPU6050_DLPF_BW_20 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
-    mpu6050_setXAccelOffset(-3473);
-    mpu6050_setYAccelOffset(-2891);
-    mpu6050_setZAccelOffset(1822);
+    mpu6050_setXAccelOffset(-3387);
+    mpu6050_setYAccelOffset(-2896);
+    mpu6050_setZAccelOffset(1751);
     
-    mpu6050_setXGyroOffset(49);
-    mpu6050_setYGyroOffset(-60);
-    mpu6050_setZGyroOffset(-14);
+    mpu6050_setXGyroOffset(40);
+    mpu6050_setYGyroOffset(-66);
+    mpu6050_setZGyroOffset(-19);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     
     initialized = true;
     
     return( 0 );
+}
+
+void mpu6050_set_bandwidth ( mpu6050_bandwidth_t bw )
+{
+    mpu6050_set_DLPF( bw );
 }
 
 gyro_accel_data_t *mpu6050_get_raw_data ( void )
@@ -47,50 +52,12 @@ int mpu6050_receive_gyro_accel_raw_data ( void )
     SWAP (raw_gyr_acc.reg.x_accel_h, raw_gyr_acc.reg.x_accel_l);
     SWAP (raw_gyr_acc.reg.y_accel_h, raw_gyr_acc.reg.y_accel_l);
     SWAP (raw_gyr_acc.reg.z_accel_h, raw_gyr_acc.reg.z_accel_l);
-//    SWAP (raw_gyr_acc.reg.t_h,       raw_gyr_acc.reg.t_l);
+    SWAP (raw_gyr_acc.reg.t_h,       raw_gyr_acc.reg.t_l);
     SWAP (raw_gyr_acc.reg.x_gyro_h,  raw_gyr_acc.reg.x_gyro_l);
     SWAP (raw_gyr_acc.reg.y_gyro_h,  raw_gyr_acc.reg.y_gyro_l);
     SWAP (raw_gyr_acc.reg.z_gyro_h,  raw_gyr_acc.reg.z_gyro_l);
     
     return( 0 );
-}
-
-static float complementary_filter_rate_a = 0.97f;
-static float complementary_filter_rate_b = 0.03f;
-
-#define SENS_TIME                   0.0025f     // 2500L/1000000
-#define GYR_COEF                    131.0f      // = 65535/2/250
-
-void mpu6050_set_complementary_filter_rate( float rate_a )
-{
-    if ( rate_a >= 1.0f )
-        return;
-    
-    complementary_filter_rate_a = rate_a;
-    complementary_filter_rate_b = 1.0f - rate_a;
-}
-
-void mpu6050_get_euler_angles( euler_angles_t *angles )
-{    
-    gyro_accel_data_t *c_d = &raw_gyr_acc;
-    
-    // Just for one of arguments for atan2 be not zero
-    float   acc_x       = c_d->value.x_accel,
-            acc_y       = c_d->value.y_accel,
-            acc_z       = c_d->value.z_accel;
-    
-    float   gyr_delta_x = (c_d->value.x_gyro/GYR_COEF) * SENS_TIME;
-    float   gyr_delta_y = (c_d->value.y_gyro/GYR_COEF) * SENS_TIME;
-    float   gyr_delta_z = (c_d->value.z_gyro/GYR_COEF) * SENS_TIME;
-    
-    if ( acc_x == 0 && acc_y == 0 )
-        acc_x = 1;
-    
-    angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) 
-                            + (complementary_filter_rate_b * (atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES));
-    angles->roll  = (complementary_filter_rate_a * (gyr_delta_y + angles->roll)) 
-                            + (complementary_filter_rate_b * (atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES));
-    angles->yaw   = gyr_delta_z + angles->yaw;
 }
 
 uint8_t mpu6050_get_id ( void )
@@ -339,7 +306,7 @@ static void mean_sensors ( void )
     }
 }
 
-void mpu6050_calibration ( void )
+void mpu6050_calibration ( UART_moduleNum_t uart )
 {
     mpu6050_setXAccelOffset(0);
     mpu6050_setYAccelOffset(0);
@@ -347,9 +314,9 @@ void mpu6050_calibration ( void )
     mpu6050_setXGyroOffset(0);
     mpu6050_setYGyroOffset(0);
     mpu6050_setZGyroOffset(0);
-    UART_write_string( UARTm1, "\nReading sensors for first time...\n" );
+    UART_write_string( uart, "\nReading sensors for first time...\n" );
     mean_sensors();
-    UART_write_string( UARTm1, "\nCalculating offsets...\n" );
+    UART_write_string( uart, "\nCalculating offsets...\n" );
     {
         ax_offset=-mean_ax/8;
         ay_offset=-mean_ay/8;
@@ -391,9 +358,9 @@ void mpu6050_calibration ( void )
         } 
     }
     mean_sensors();
-    UART_write_string( UARTm1, "\nFINISHED!\n\r" );
-    UART_write_string( UARTm1, "Sensor readings with offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz );
-    UART_write_string( UARTm1, "Your offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset );
-    UART_write_string( UARTm1, "\nData is printed as: acelX acelY acelZ giroX giroY giroZ\n" );
+    UART_write_string( uart, "\nFINISHED!\n\r" );
+    UART_write_string( uart, "Sensor readings with offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz );
+    UART_write_string( uart, "Your offsets:\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n\t%ld\n", ax_offset, ay_offset, az_offset, gx_offset, gy_offset, gz_offset );
+    UART_write_string( uart, "\nData is printed as: acelX acelY acelZ giroX giroY giroZ\n" );
     while (1);   
 }

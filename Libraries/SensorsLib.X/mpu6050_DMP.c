@@ -1,4 +1,5 @@
 #include "mpu6050_dmp.h" 
+#include "MPU6050_private.h"
 #include "MPU6050.h"
 
 #include <stdint.h>

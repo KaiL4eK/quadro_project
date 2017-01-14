@@ -1,8 +1,39 @@
 #ifndef MPU6050_REGS_H_
 #define MPU6050_REGS_H_
-// The name of the sensor is "MPU-6050".
-// For program code, I omit the '-',
-// therefor I use the name "MPU6050....".
+
+#include <stdbool.h>
+
+/* Prototypes */
+void mpu6050_set_DLPF ( uint8_t value );
+void mpu6050_set_sleep_bit ( uint8_t value );
+void mpu6050_set_clock_source ( uint8_t value );
+void mpu6050_set_gyro_fullscale ( uint8_t value );
+void mpu6050_set_accel_fullscale ( uint8_t value );
+void mpu6050_set_interrupt_data_rdy_bit ( uint8_t value );
+void mpu6050_set_sample_rate_divider ( uint8_t value );
+
+uint8_t mpu6050_get_id ( void );
+void mpu6050_reset ( void );
+bool mpu6050_test_connection( void );
+
+uint16_t mpu6050_getFIFOCount();
+uint8_t mpu6050_getFIFOByte();
+void mpu6050_getFIFOBytes( uint8_t *data, uint8_t length );
+void mpu6050_resetFIFO();
+void mpu6050_setFIFOEnabled( bool enabled );
+
+int16_t MPU6050_getXAccelOffset ( void );
+void mpu6050_setXAccelOffset ( int16_t offset );
+int16_t MPU6050_getYAccelOffset ( void );
+void mpu6050_setYAccelOffset ( int16_t offset );
+int16_t MPU6050_getZAccelOffset ( void );
+void mpu6050_setZAccelOffset ( int16_t offset );
+int16_t MPU6050_getXGyroOffset ( void );
+void mpu6050_setXGyroOffset ( int16_t offset );
+int16_t MPU6050_getYGyroOffset ( void );
+void mpu6050_setYGyroOffset ( int16_t offset );
+int16_t MPU6050_getZGyroOffset ( void );
+void mpu6050_setZGyroOffset ( int16_t offset );
 
 // Default I2C address for the MPU-6050 is 0x68.
 // But only if the AD0 pin is low.
@@ -142,14 +173,6 @@
 #define MPU6050_EXT_SYNC_ACCEL_XOUT_L   0x5
 #define MPU6050_EXT_SYNC_ACCEL_YOUT_L   0x6
 #define MPU6050_EXT_SYNC_ACCEL_ZOUT_L   0x7
-
-#define MPU6050_DLPF_BW_256         0x00
-#define MPU6050_DLPF_BW_188         0x01
-#define MPU6050_DLPF_BW_98          0x02
-#define MPU6050_DLPF_BW_42          0x03
-#define MPU6050_DLPF_BW_20          0x04
-#define MPU6050_DLPF_BW_10          0x05
-#define MPU6050_DLPF_BW_5           0x06
 
 #define MPU6050_GCONFIG_FS_SEL_BIT      4
 #define MPU6050_GCONFIG_FS_SEL_LENGTH   2
