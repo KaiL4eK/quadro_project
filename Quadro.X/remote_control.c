@@ -18,9 +18,6 @@
 #define IC_INT_MODE_3RD_CE          0b10
 #define IC_INT_MODE_4TH_CE          0b11
 
-#define TWO_POS_SWITCH_ON           1
-#define TWO_POS_SWITCH_OFF          0
-
 typedef struct
 {
     int32_t    min, 
@@ -53,7 +50,7 @@ static Calibrated_control_t clbr_control_raw = { { 16754, 29989, 23371 },   //Ro
                                                  { 16832, 30036, 23434 },   //Pitch
                                                  { 16832, 30068, 23450 },   //Throttle
                                                  { 16752, 29991, 23371 },   //Yaw
-                                                 { 16736, 30020, 233786 }
+                                                 { 16736, 30020, 23786 }
                                                 };
 static Control_values_t     dir_values;
 static uint8_t              // calibration_flag = 0,

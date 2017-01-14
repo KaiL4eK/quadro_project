@@ -25,7 +25,7 @@ private:
                     *timeList = NULL;
 
     qint64  receivedPoints = 0;
-    qint32  serialSpeed = 19200;// 460800;
+    qint32  serialSpeed = 115200;// 460800;
     QString serialName;
     bool    receiveData = false,
             isRunning = false;

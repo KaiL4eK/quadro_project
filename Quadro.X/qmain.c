@@ -21,7 +21,8 @@ void set_complementary_filter_rate( float rate_a );
 //#define MPU6050_DMP
         // Optimize DMP - TODO
 
-#define UART_BT UARTm1
+#define UART_BT     UARTm2
+#define UART_DATA   UARTm1
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -43,11 +44,12 @@ int main ( void )
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UART_BT, UART_115200, INT_PRIO_MID );
-    UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
+    UART_init( UART_DATA, UART_115200, INT_PRIO_HIGHEST );
     
-    UART_write_set_endian( UARTm2, UART_little_endian );
+    UART_write_set_endian( UART_DATA, UART_big_endian );
     
-    cmdProcessor_init( UARTm2 );
+    cmdProcessor_init( UART_DATA );
+    
     
     UART_write_string( UART_BT, "/------------------------/\n" );
     UART_write_string( UART_BT, "UART initialized\n" );
@@ -81,8 +83,8 @@ int main ( void )
     if ( mpu6050_init() < 0 )
         error_process( "MPU6050 initialization" );
     
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    set_complementary_filter_rate( 0.95f );
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
+    set_complementary_filter_rate( 0.98f );
 #else
     if ( mpu6050_dmp_init() < 0 )
         error_process( "MPU6050 DMP initialization" );
@@ -123,7 +125,7 @@ int main ( void )
 #ifdef SD_CARD
         file_process_tasks();
 #endif
-//        process_UART_frame();
+        process_UART_frame();
 //        delay_ms( 500 );
 
     }
@@ -131,12 +133,15 @@ int main ( void )
     return( 0 );
 }
 
+volatile bool   start_motors    = false,
+                stop_motors     = false;
+
 #ifdef PID_tuning
 
 static void process_UART_PID_tuning()
 {
-    extern PID_rates_t  roll_rates,
-                        pitch_rates;
+    extern PID_rates_float_t    roll_rates,
+                                pitch_rates;
     
     switch ( UART_get_byte( UART_BT ) )
     {
@@ -144,51 +149,63 @@ static void process_UART_PID_tuning()
             return;
         case 'Q':
         case 'q':
-            roll_rates.prop_rev++;
+//            roll_rates.prop_rev++;
+            pitch_rates.prop_rev += 0.002;
             break;
         case 'W':
         case 'w':
-            roll_rates.prop_rev--;
+//            roll_rates.prop_rev--;
+            pitch_rates.prop_rev -= 0.002;
             break;
+//#define INTEGR_DELTA 200
+#define INTEGR_DELTA 0.00001
+
         case 'A':
         case 'a':
-            roll_rates.integr_rev += 10;
+//            roll_rates.integr_rev += INTEGR_DELTA;
+            pitch_rates.integr_rev += INTEGR_DELTA;
+            PID_controller_reset_integral_sums();
             break;
         case 'S':
         case 's':
-            roll_rates.integr_rev -= 10;
+//            roll_rates.integr_rev -= INTEGR_DELTA;
+            pitch_rates.integr_rev -= INTEGR_DELTA;
+            PID_controller_reset_integral_sums();
             break;
         case 'Z':
         case 'z':
-            roll_rates.diff++;
+//            roll_rates.diff++;
+            pitch_rates.diff += 0.1;
             break;
         case 'X':
         case 'x':
-            roll_rates.diff--;
+//            roll_rates.diff--;
+            pitch_rates.diff -= 0.1;
             break;
+
         case 'E':
         case 'e':
-            pitch_rates.prop_rev++;
+            
             break;
         case 'R':
         case 'r':
-            pitch_rates.prop_rev--;
+            
             break;
         case 'D':
         case 'd':
-            pitch_rates.integr_rev += 10;
+            
             break;
         case 'F':
         case 'f':
-            pitch_rates.integr_rev -= 10;
+            
             break;
         case 'C':
         case 'c':
-            pitch_rates.diff++;
+            start_motors = true;
             break;
         case 'V':
         case 'v':
-            pitch_rates.diff--;
+            stop_motors = true;
             break;
             
         case '1':
@@ -203,8 +220,9 @@ static void process_UART_PID_tuning()
             control_values->pitch = 0;
             break;
     }
-    UART_write_string( UART_BT, "R: P%d D%d I%d | P: P%d D%d I%d\n", roll_rates.prop_rev, roll_rates.diff, roll_rates.integr_rev, 
-                                                                    pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
+//    UART_write_string( UART_BT, "P%d D%d I%d\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
+    UART_write_string( UART_BT, "P%f D%f I%f\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
+
 }
 #endif
 
@@ -216,23 +234,23 @@ static void process_UART_PID_tuning()
                             control_values->roll < START_ANGLES && \
                             control_values->pitch > (-1*START_ANGLES) )
 
-volatile bool   start_motors    = false,
-                stop_motors     = false;
-
 #define MAX_CONTROL_ANGLE   15L
-#define CONTROL_2_ANGLE(x) ((x)/10 * MAX_CONTROL_ANGLE)
+#define CONTROL_2_ANGLE(x) ((x) * MAX_CONTROL_ANGLE / 15)
 #define STOP_LIMIT          1000L   // 1k * 2.5 ms = 2.5 sec - low thrust limit
 
 int32_t motorPower = 0;
 
-inline void process_control_system ( void )
+#define TESTING_
+
+void process_control_system ( void )
 {
     static bool         motors_armed                = false;
-
+#ifndef TESTING_    
     static int16_t      stop_counter                = 0;
     static bool         sticks_changed              = false;
            bool         sticks_in_start_position    = START_STOP_COND;   
 
+   
     if ( sticks_in_start_position != sticks_changed )
     {   // If go from some position to corners (power on position) or from corners to some position
         sticks_changed = sticks_in_start_position;
@@ -248,21 +266,59 @@ inline void process_control_system ( void )
             start_motors = false;
         }
     }
+#else
+    if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
+    {
+        if ( start_motors && !motors_armed )
+        {
+            PID_controller_reset_integral_sums();
+            motor_control_set_motors_started();
+            UART_write_string( UART_BT, "All motors started with power %ld\n", motorPower );
+            motors_armed = true;
+        }
+        
+        if ( stop_motors && motors_armed )
+        {
+            motor_control_set_motors_stopped();
+            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
+            motors_armed = false;            
+        }
+    } else {
+        if ( motors_armed )
+        {
+            motor_control_set_motors_stopped();
+            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
+            motors_armed = false;
+        }
+    }
            
+    start_motors = false;
+    stop_motors = false;
+#endif
     // Each angle presents as integer, ex. 30.25 = 3025
     // control pitch [-1000 --- 1000]
     
     if ( motors_armed )
     {
         int32_t power = 0;
-        motorPower = control_values->throttle * 32UL / 20UL;
 #ifdef RC_CONTROL_ENABLED
-        if ( motorPower >= THROTTLE_OFF_LIMIT )
+#ifndef TESTING_
+        if ( control_values->throttle >= THROTTLE_OFF_LIMIT )
         {
+            
+#endif
 #endif // RC_CONTROL_ENABLED
             // Each function takes 450 ms
-            int32_t pitch_control = PID_controller_generate_pitch_control( CONTROL_2_ANGLE(control_values->pitch) - quadrotor_state.pitch );
-            int32_t roll_control  = PID_controller_generate_roll_control( CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll );
+            motorPower = control_values->throttle * 32UL / 20UL;
+//            motorPower = 1600;
+//            control_values->pitch = 0;
+            error_value_t error = 0;
+            
+            error = CONTROL_2_ANGLE(control_values->pitch) - quadrotor_state.pitch;
+            int16_t pitch_control = PID_controller_generate_pitch_control( error );
+            
+            error = CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll;
+            int16_t roll_control  = PID_controller_generate_roll_control( error );
             
             power = motorPower + pitch_control - roll_control;
             quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
@@ -278,9 +334,8 @@ inline void process_control_system ( void )
             
             motor_control_set_motor_powers( quadrotor_state.motor_power );
 #ifdef RC_CONTROL_ENABLED
-            stop_counter = 0;
-            
-            UART_write_string( UART_BT, "Power %ld\n", motorPower );
+#ifndef TESTING_
+            stop_counter = 0;            
         }
         else
         {
@@ -293,12 +348,11 @@ inline void process_control_system ( void )
                 motor_control_set_motors_stopped();
             }
         }
+#endif // TESTING_
 #endif // RC_CONTROL_ENABLED
     } 
     else 
-    {
         memset( quadrotor_state.motor_power, 0, sizeof( quadrotor_state.motor_power ) );
-    }
 }
 
 #include "serial_protocol.h"
@@ -316,7 +370,7 @@ void process_UART_frame( void )
         case UNKNOWN_COMMAND:
             break;
         case CONNECT:
-            cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_NOERROR );
+            cmdProcessor_write_cmd( UART_DATA, RESPONSE_PREFIX, RESP_NOERROR );
             dataSend = false;
             stop_motors = true;
             UART_write_string( UART_BT, "Connect\n" );
@@ -351,7 +405,7 @@ void process_UART_frame( void )
     }
 }
 
-//#define DIRECT_LINK
+#define DIRECT_LINK
 
 #define POWER_2_PERCENT(x) ( (uint8_t)((x)*100L/INPUT_POWER_MAX) )
 
@@ -371,15 +425,15 @@ void process_sending_UART_data( void )
         sendBuffer[3] = (POWER_2_PERCENT(quadrotor_state.motor_power[0]) << 8) | POWER_2_PERCENT(quadrotor_state.motor_power[1]);
         sendBuffer[4] = (POWER_2_PERCENT(quadrotor_state.motor_power[2]) << 8) | POWER_2_PERCENT(quadrotor_state.motor_power[3]);
         
-        UART_write_byte( UARTm2, DATA_PREFIX );
+        UART_write_byte( UART_DATA, DATA_PREFIX );
 #ifdef DIRECT_LINK
-        UART_write_words( UARTm2, sendBuffer, DATA_FULL_FRAME_SIZE/2 );
+        UART_write_words( UART_DATA, sendBuffer, DATA_FULL_FRAME_SIZE/2 );
 #else
-        UART_write_words( UARTm2, sendBuffer, DATA_QUADRO_FRAME_SIZE/2 );
+        UART_write_words( UART_DATA, sendBuffer, DATA_QUADRO_FRAME_SIZE/2 );
 #endif  
         if ( ++time_tick_2ms5_count == UINT16_MAX )
         {
-            cmdProcessor_write_cmd( UARTm2, RESPONSE_PREFIX, RESP_ENDDATA );
+            cmdProcessor_write_cmd( UART_DATA, RESPONSE_PREFIX, RESP_ENDDATA );
             UART_write_string( UART_BT, "DStop1\n" );
             dataSend = false;
             start_motors = false;
@@ -532,7 +586,10 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.pitch = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll  = euler_angles.roll  * ANGLES_COEFF;
     
-//    UART_write_string( UART_BT, "R %ld, P %ld\n", quadrotor_state.roll, quadrotor_state.pitch );
+    PID_parts_t *pitch_parts = PID_controller_get_pitch_parts();
+    
+//    UART_write_string( UART_BT, "%d, %d, %d, R %d, P %d\n", pitch_parts->p, pitch_parts->i, pitch_parts->d, 
+//                                                                quadrotor_state.roll, quadrotor_state.pitch );
     
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();

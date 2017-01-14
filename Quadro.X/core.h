@@ -8,14 +8,12 @@
 
 #define CONTROL_BYTE    0xff
 
-#define clip_value( power, min, max ) (power > max ? max : power < min ? min : power)
-
 #define FREQ_CONTROL_SYSTEM   400L
 
 /********** DEFINES **********/
-typedef int32_t euler_angle_degree_int_t;
+typedef int16_t euler_angle_degree_int_t;
 typedef int16_t motor_power_t;
-typedef int32_t error_value_t;
+typedef int16_t error_value_t;
 
 typedef struct
 {
@@ -55,9 +53,21 @@ typedef struct {
                     integr_rev;
 } PID_rates_t;
 
+typedef struct {
+    float           prop_rev,
+                    diff,
+                    integr_rev;
+} PID_rates_float_t;
+
+typedef struct {
+    int16_t p, i, d;
+} PID_parts_t;
+
+PID_parts_t *PID_controller_get_pitch_parts( void );
+
 void PID_controller_reset_integral_sums ( void );
-int32_t PID_controller_generate_pitch_control( error_value_t error );
-int32_t PID_controller_generate_roll_control( error_value_t error );
+int16_t PID_controller_generate_pitch_control( error_value_t error );
+int16_t PID_controller_generate_roll_control( error_value_t error );
 
 /********** COMMAND PROCESSOR **********/
 
