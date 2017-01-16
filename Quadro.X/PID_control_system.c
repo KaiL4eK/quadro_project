@@ -15,7 +15,7 @@
 
 PID_rates_float_t   roll_rates  = { .prop_rev = 0.04,   .integr_rev = 0,          .diff = 8 },
                     pitch_rates = { .prop_rev = 0.04,   .integr_rev = 0,          .diff = 8 },
-                    yaw_rates   = { .prop_rev = 0.04,   .integr_rev = 0.00006,    .diff = 0 };
+                    yaw_rates   = { .prop_rev = 0.01,   .integr_rev = 0.00001,    .diff = 0 };
 
 static int32_t  integr_sum_pitch = 0;
 static int32_t  integr_sum_roll  = 0;

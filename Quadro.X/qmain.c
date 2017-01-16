@@ -320,19 +320,19 @@ void process_control_system ( void )
             error = CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll;
             int16_t roll_control  = PID_controller_generate_roll_control( error );
             
-            error = quadrotor_state.yaw;
+            error = 0 - quadrotor_state.yaw;
             int16_t yaw_control  = PID_controller_generate_roll_control( error );
             
-            power = motorPower + pitch_control - roll_control;
+            power = motorPower + pitch_control - roll_control - yaw_control;
             quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
-            power = motorPower + pitch_control + roll_control;
+            power = motorPower + pitch_control + roll_control + yaw_control;
             quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
-            power = motorPower - pitch_control + roll_control;
+            power = motorPower - pitch_control + roll_control - yaw_control;
             quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
-            power = motorPower - pitch_control - roll_control;
+            power = motorPower - pitch_control - roll_control + yaw_control;
             quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
             
             motor_control_set_motor_powers( quadrotor_state.motor_power );
