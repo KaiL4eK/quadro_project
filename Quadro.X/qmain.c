@@ -149,37 +149,37 @@ static void process_UART_PID_tuning()
             return;
         case 'Q':
         case 'q':
-//            roll_rates.prop_rev++;
-            pitch_rates.prop_rev += 0.002;
+            roll_rates.prop_rev     += 0.002;
+            pitch_rates.prop_rev    += 0.002;
             break;
         case 'W':
         case 'w':
-//            roll_rates.prop_rev--;
-            pitch_rates.prop_rev -= 0.002;
+            roll_rates.prop_rev     -= 0.002;
+            pitch_rates.prop_rev    -= 0.002;
             break;
 //#define INTEGR_DELTA 200
 #define INTEGR_DELTA 0.00001
 
         case 'A':
         case 'a':
-//            roll_rates.integr_rev += INTEGR_DELTA;
-            pitch_rates.integr_rev += INTEGR_DELTA;
+            roll_rates.integr_rev   += INTEGR_DELTA;
+            pitch_rates.integr_rev  += INTEGR_DELTA;
             PID_controller_reset_integral_sums();
             break;
         case 'S':
         case 's':
-//            roll_rates.integr_rev -= INTEGR_DELTA;
-            pitch_rates.integr_rev -= INTEGR_DELTA;
+            roll_rates.integr_rev   -= INTEGR_DELTA;
+            pitch_rates.integr_rev  -= INTEGR_DELTA;
             PID_controller_reset_integral_sums();
             break;
         case 'Z':
         case 'z':
-//            roll_rates.diff++;
+            roll_rates.diff += 0.1;
             pitch_rates.diff += 0.1;
             break;
         case 'X':
         case 'x':
-//            roll_rates.diff--;
+            roll_rates.diff -= 0.1;
             pitch_rates.diff -= 0.1;
             break;
 
@@ -319,6 +319,9 @@ void process_control_system ( void )
             
             error = CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll;
             int16_t roll_control  = PID_controller_generate_roll_control( error );
+            
+            error = quadrotor_state.yaw;
+            int16_t yaw_control  = PID_controller_generate_roll_control( error );
             
             power = motorPower + pitch_control - roll_control;
             quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
@@ -583,13 +586,16 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     get_euler_angles( &euler_angles, mpu6050_get_raw_data() );
     
-    quadrotor_state.pitch = euler_angles.pitch * ANGLES_COEFF;
-    quadrotor_state.roll  = euler_angles.roll  * ANGLES_COEFF;
+    quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
+    quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
+    quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
 //    PID_parts_t *pitch_parts = PID_controller_get_pitch_parts();
     
 //    UART_write_string( UART_BT, "%d, %d, %d, R %d, P %d\n", pitch_parts->p, pitch_parts->i, pitch_parts->d, 
 //                                                                quadrotor_state.roll, quadrotor_state.pitch );
+    
+    UART_write_string( UART_BT, "%d %d %d\n", quadrotor_state.roll, quadrotor_state.pitch, quadrotor_state.yaw );
     
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
