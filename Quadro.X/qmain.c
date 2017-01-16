@@ -586,7 +586,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.pitch = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll  = euler_angles.roll  * ANGLES_COEFF;
     
-    PID_parts_t *pitch_parts = PID_controller_get_pitch_parts();
+//    PID_parts_t *pitch_parts = PID_controller_get_pitch_parts();
     
 //    UART_write_string( UART_BT, "%d, %d, %d, R %d, P %d\n", pitch_parts->p, pitch_parts->i, pitch_parts->d, 
 //                                                                quadrotor_state.roll, quadrotor_state.pitch );

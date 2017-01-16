@@ -63,11 +63,11 @@ typedef struct {
     int16_t p, i, d;
 } PID_parts_t;
 
-PID_parts_t *PID_controller_get_pitch_parts( void );
 
 void PID_controller_reset_integral_sums ( void );
 int16_t PID_controller_generate_pitch_control( error_value_t error );
 int16_t PID_controller_generate_roll_control( error_value_t error );
+int16_t PID_controller_generate_yaw_control( error_value_t error );
 
 /********** COMMAND PROCESSOR **********/
 
