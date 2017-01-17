@@ -8,7 +8,7 @@
 #define ANGLES_MAX          1000L   //[-1000 --- 1000]
 #define ANGLES_MIN          -1000L
 
-#define THROTTLE_OFF_LIMIT  (800)
+#define THROTTLE_OFF_LIMIT  (200)
 #define START_ANGLES        (ANGLES_MIN + (ANGLES_MAX/5))
 
 #define TWO_POS_SWITCH_ON           1

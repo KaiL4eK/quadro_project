@@ -13,10 +13,9 @@
 //PID_rates_float_t   roll_rates  = { .prop_rev = 0.08, .integr_rev = 0.00006, .diff = 8.2 },
 //                    pitch_rates = { .prop_rev = 0.08, .integr_rev = 0.00006, .diff = 8.2 };
 
-                                    //          0.4                                      8  
-PID_rates_float_t   roll_rates  = { .prop_rev = 0,   .integr_rev = 0,          .diff = 0 },
-                    pitch_rates = { .prop_rev = 0,   .integr_rev = 0,          .diff = 0 },
-                    yaw_rates   = { .prop_rev = 0.1,   .integr_rev = 0.00005,    .diff = 0 };
+PID_rates_float_t   roll_rates  = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
+                    pitch_rates = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
+                    yaw_rates   = { .prop_rev = 0.05,  .integr_rev = 0.00005,    .diff = 0 };
 
 static int32_t  integr_sum_pitch = 0;
 static int32_t  integr_sum_roll  = 0;
@@ -26,7 +25,7 @@ PID_parts_t pitch_parts,
             roll_parts,
             yaw_parts;
 
-#define CONTROL_LIMIT 4000
+#define CONTROL_LIMIT 3000
 
 void PID_controller_reset_integral_sums ( void )
 {
@@ -76,7 +75,7 @@ int16_t PID_controller_generate_yaw_control( error_value_t error )
     static error_value_t  prev_error = 0;
     
     integr_sum_yaw += error;
-    integr_sum_yaw = clip_value( integr_sum_yaw, -INTEGR_LIMIT, INTEGR_LIMIT );
+    integr_sum_yaw = clip_value( integr_sum_yaw, -INTEGR_LIMIT/10, INTEGR_LIMIT/10 );
 
     yaw_parts.p = error * yaw_rates.prop_rev;
     yaw_parts.i = integr_sum_yaw * yaw_rates.integr_rev;

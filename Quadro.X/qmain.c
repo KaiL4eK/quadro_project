@@ -221,12 +221,14 @@ static void process_UART_PID_tuning()
 // p = p0*exp(-0.0341593/(t+273)*h)
 // h = ln(p0/p) * (t+273)/0.0341593
 
+/********** CONTROL SYSTEM FUNCTIONS **********/
+
 #define START_STOP_COND (   control_values->throttle < THROTTLE_OFF_LIMIT && \
                             control_values->rudder > (-1*START_ANGLES) && \
                             control_values->roll < START_ANGLES && \
                             control_values->pitch > (-1*START_ANGLES) )
 
-#define MAX_CONTROL_ANGLE   20L
+#define MAX_CONTROL_ANGLE   5L
 #define CONTROL_2_ANGLE(x) ((x) / 10 * MAX_CONTROL_ANGLE)
 #define STOP_LIMIT          1000L   // 1k * 2.5 ms = 2.5 sec - low thrust limit
 
@@ -290,6 +292,7 @@ void process_control_system ( void )
 //            motors_armed = false;            
 //        }
     } else {
+        quadrotor_state.yaw = 0;
         if ( motors_armed )
         {
             motor_control_set_motors_stopped();
@@ -298,8 +301,8 @@ void process_control_system ( void )
         }
     }
            
-    start_motors = false;
-    stop_motors = false;
+//    start_motors = false;
+//    stop_motors = false;
 #endif
     // Each angle presents as integer, ex. 30.25 = 3025
     // control pitch [-1000 --- 1000]
@@ -307,11 +310,11 @@ void process_control_system ( void )
     if ( motors_armed )
     {
         int32_t power = 0;
-#ifdef RC_CONTROL_ENABLED        
-#ifndef TESTING_
+#ifdef RC_CONTROL_ENABLED
+//#ifndef TESTING_
         if ( control_values->throttle >= THROTTLE_OFF_LIMIT )
         {
-#endif
+//#endif
 #endif // RC_CONTROL_ENABLED
             motorPower = control_values->throttle * 32UL / 20UL;
             
@@ -340,7 +343,7 @@ void process_control_system ( void )
             
             motor_control_set_motor_powers( quadrotor_state.motor_power );
 #ifdef RC_CONTROL_ENABLED
-#ifndef TESTING_
+//#ifndef TESTING_
             stop_counter = 0;            
         }
         else
@@ -354,7 +357,7 @@ void process_control_system ( void )
                 motor_control_set_motors_stopped();
             }
         }
-#endif // TESTING_
+//#endif // TESTING_
 #endif // RC_CONTROL_ENABLED
     } 
     else 
@@ -597,6 +600,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
     quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
+//    UART_write_string( UARTm1, "%d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
     
