@@ -310,40 +310,36 @@ void process_control_system ( void )
     if ( motors_armed )
     {
         int32_t power = 0;
+        error_value_t error = 0;
+        
+        motorPower = control_values->throttle * 32UL / 20UL;
+
+        error = CONTROL_2_ANGLE(control_values->pitch) - quadrotor_state.pitch;
+        int16_t pitch_control = PID_controller_generate_pitch_control( error );
+
+        error = CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll;
+        int16_t roll_control  = PID_controller_generate_roll_control( error );
+
+        error = 0 - quadrotor_state.yaw;
+        int16_t yaw_control  = PID_controller_generate_yaw_control( error );
+
+        power = motorPower + pitch_control - roll_control - yaw_control;
+        quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower + pitch_control + roll_control + yaw_control;
+        quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pitch_control + roll_control - yaw_control;
+        quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pitch_control - roll_control + yaw_control;
+        quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        motor_control_set_motor_powers( quadrotor_state.motor_power );
+        
 #ifdef RC_CONTROL_ENABLED
-//#ifndef TESTING_
         if ( control_values->throttle >= THROTTLE_OFF_LIMIT )
         {
-//#endif
-#endif // RC_CONTROL_ENABLED
-            motorPower = control_values->throttle * 32UL / 20UL;
-            
-            error_value_t error = 0;
-            
-            error = CONTROL_2_ANGLE(control_values->pitch) - quadrotor_state.pitch;
-            int16_t pitch_control = PID_controller_generate_pitch_control( error );
-            
-            error = CONTROL_2_ANGLE(control_values->roll) - quadrotor_state.roll;
-            int16_t roll_control  = PID_controller_generate_roll_control( error );
-            
-            error = 0 - quadrotor_state.yaw;
-            int16_t yaw_control  = PID_controller_generate_yaw_control( error );
-            
-            power = motorPower + pitch_control - roll_control - yaw_control;
-            quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-            
-            power = motorPower + pitch_control + roll_control + yaw_control;
-            quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-            
-            power = motorPower - pitch_control + roll_control - yaw_control;
-            quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-            
-            power = motorPower - pitch_control - roll_control + yaw_control;
-            quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-            
-            motor_control_set_motor_powers( quadrotor_state.motor_power );
-#ifdef RC_CONTROL_ENABLED
-//#ifndef TESTING_
             stop_counter = 0;            
         }
         else
@@ -357,7 +353,6 @@ void process_control_system ( void )
                 motor_control_set_motors_stopped();
             }
         }
-//#endif // TESTING_
 #endif // RC_CONTROL_ENABLED
     } 
     else 
