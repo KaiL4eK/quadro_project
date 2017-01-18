@@ -2,8 +2,7 @@
 #include "MPU6050_private.h"
 
 static uint8_t              buffer[14];
-static bool                 initialized = false,
-                            m_dmp_use   = false;
+static bool                 initialized = false;
        gyro_accel_data_t    raw_gyr_acc;
 
 int mpu6050_init ( void )

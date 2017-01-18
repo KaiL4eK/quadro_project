@@ -1,5 +1,5 @@
-#ifndef MPU6050_REGS_H_
-#define MPU6050_REGS_H_
+#ifndef MPU6050_PRIVATE_H_
+#define MPU6050_PRIVATE_H_
 
 #include <stdbool.h>
 
@@ -383,4 +383,4 @@ void mpu6050_setZGyroOffset ( int16_t offset );
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
-#endif /* MPU6050_REGS_H_ */
+#endif /* MPU6050_PRIVATE_H_ */

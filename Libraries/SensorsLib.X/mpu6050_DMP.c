@@ -341,19 +341,19 @@ int mpu6050_dmp_init()
     mpu6050_set_memory_start_address( 0x06 );
 
     DEBUG_PRINTLN("Checking hardware revision...");
-    uint8_t hwRevision = mpu6050_read_memory_byte();
-
-    DEBUG_PRINT("Revision @ user[16][6] = ");
-    DEBUG_PRINTLN(hwRevision);
-    DEBUG_PRINTLN("Resetting memory bank selection to 0...");
+//    uint8_t hwRevision = mpu6050_read_memory_byte();
+//
+//    DEBUG_PRINT("Revision @ user[16][6] = ");
+//    DEBUG_PRINTLN(hwRevision);
+//    DEBUG_PRINTLN("Resetting memory bank selection to 0...");
 
     mpu6050_set_memory_bank(0, false, false);
     
     // check OTP bank valid
     DEBUG_PRINTLN("Reading OTP bank valid flag...");
-    uint8_t otpValid = mpu6050_getOTPBankValid();
-    DEBUG_PRINT("OTP bank is ");
-    DEBUG_PRINTLN(otpValid ? ("valid!") : ("invalid!"));
+//    uint8_t otpValid = mpu6050_getOTPBankValid();
+//    DEBUG_PRINT("OTP bank is ");
+//    DEBUG_PRINTLN(otpValid ? ("valid!") : ("invalid!"));
 
     DEBUG_PRINTLN("Setting slave 0 address to 0x7F...");
     mpu6050_setSlaveAddress(0, 0x7F);
