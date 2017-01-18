@@ -6,24 +6,26 @@ Sector_t                        first_data_sector,
                                 first_sector            = 0,
                                 first_FAT_sector        = 0,
                                 reserved_sector_count,
-                                sector_per_cluster;
+                                sectors_per_cluster;
 
 Cluster_t                       root_cluster,
                                 total_clusters;
 
-uint16_t                        bytes_per_sector;
+uint16_t                        bytes_per_sector        = 0,
+                                clusters_per_FAT_sector = 0;
 
 //global flag to keep track of free cluster count updating in FSinfo sector
 //uint8_t     free_cluster_count_updated;
 
-uint8_t                         FAT_sector_buffer[512];
+Cluster_t                       FAT_sector_buffer[128];
 Sector_t                        FAT_sector_number       = 0;
 
-uint8_t                         dir_sector_buffer[512];
+uint8_t                         i_dir_entry             = 0;
+struct dir_entry_Structure      dir_sector_buffer[32];
+uint8_t                         dir_entries_per_sector  = 32;
 Cluster_t                       dir_cluster             = 0;
 Sector_t                        dir_sector_first        = 0, 
                                 dir_sector_number       = 0;
-uint16_t                        dir_sector_offset       = 0;
 struct dir_entry_Structure      *new_dir                = NULL;
 
 Cluster_t                       data_cluster            = 0;
@@ -35,8 +37,8 @@ Cluster_t                       next_free_cluster       = 0;
 static UART_moduleNum_t         uart_debug              =   UARTmUndef;
 /**********************************************************/
 
-static Cluster_t    find_next_free_cluster ( Cluster_t startCluster );
-static int          find_empty_dir_entry ( void );
+static Cluster_t    FAT_get_next_free_cluster ( Cluster_t startCluster );
+static int          dir_set_next_empty_entry ( void );
 
 /**********************************************************/
 int fat32_initialize ( UART_moduleNum_t uart )
@@ -83,17 +85,18 @@ int fat32_initialize ( UART_moduleNum_t uart )
             return( -1 ); 
     }
 
-    bytes_per_sector = bpb->bytesPerSector;
-    sector_per_cluster = bpb->sectorPerCluster;
-    reserved_sector_count = bpb->reservedSectorCount;
-    root_cluster = bpb->rootCluster;
-    first_FAT_sector = first_sector + reserved_sector_count;
-    first_data_sector = first_FAT_sector + (bpb->numberofFATs * bpb->FATsize_F32);
+    bytes_per_sector            = bpb->bytesPerSector;
+    clusters_per_FAT_sector     = bytes_per_sector / 4;
+    sectors_per_cluster          = bpb->sectorPerCluster;
+    reserved_sector_count       = bpb->reservedSectorCount;
+    root_cluster                = bpb->rootCluster;
+    first_FAT_sector            = first_sector + reserved_sector_count;
+    first_data_sector           = first_FAT_sector + (bpb->numberofFATs * bpb->FATsize_F32);
     
-    dataSectors = bpb->totalSectors_F32
-                  - reserved_sector_count
-                  - (bpb->numberofFATs * bpb->FATsize_F32);
-    total_clusters = dataSectors / sector_per_cluster;
+    dataSectors                 = bpb->totalSectors_F32
+                                    - reserved_sector_count
+                                    - (bpb->numberofFATs * bpb->FATsize_F32);
+    total_clusters = dataSectors / sectors_per_cluster;
 #ifdef QDEBUG
 UART_write_string( "/-----------------------------------------------------/\n" );
 UART_write_string( "\tBoot info:\n" );
@@ -103,7 +106,7 @@ UART_write_string( "First sector of partition: %ld\n", first_sector );
 UART_write_string( "Reserved sectors amount: %ld\n", reserved_sector_count );
 UART_write_string( "First data sector: %ld\n", first_data_sector );
 UART_write_string( "Bytes per sector: %ld\n", bytes_per_sector );
-UART_write_string( "Sector per cluster: %ld\n", sector_per_cluster );
+UART_write_string( "Sector per cluster: %ld\n", sectors_per_cluster );
 UART_write_string( "Root cluster: %ld\n", root_cluster );
 UART_write_string( "Total clusters: %ld\n", total_clusters ); 
 UART_write_string( "Data sector amount: %ld\n", dataSectors );
@@ -112,8 +115,8 @@ UART_write_string( "FAT size: %ld\n", bpb->FATsize_F32 );
 UART_write_string( "FSInfo sector: %ld\n", bpb->FSinfo );
 UART_write_string( "/-----------------------------------------------------/\n" );
 #endif /* QDEBUG */
-    next_free_cluster = find_next_free_cluster( root_cluster );
-    find_empty_dir_entry();
+    next_free_cluster = FAT_get_next_free_cluster( root_cluster );
+    dir_set_next_empty_entry();
 #ifdef QDEBUG
 UART_write_string( "/-----------------------------------------------------/\n" );
 UART_write_string( "\tWork info:\n" );
@@ -134,7 +137,7 @@ UART_write_string( "/-----------------------------------------------------/\n" )
     return( 0 );
 }
 #ifdef QDEBUG
-void show_content_of_FAT( uint16_t entries_amount )
+void FAT_show_contents( uint16_t entries_amount )
 {
     uint8_t     i = 0;
     uint32_t    *value = 0;
@@ -143,113 +146,128 @@ void show_content_of_FAT( uint16_t entries_amount )
     {
         if ( entries_amount-- == 0 )
             return;
-        value = (uint32_t *) &FAT_sector_buffer[i*4];
+        value = FAT_sector_buffer[i];
         UART_write_string( "FAT: 0x08%x\n", *value );
     }  
     UART_write_string("/-------------------------/\n");
 }
 #endif
-static void read_FAT_sector_with_cluster ( Cluster_t current_cluster )
+
+static void FAT_read_sector_containing_cluster ( Cluster_t current_cluster )
 {
-    FAT_sector_number = current_cluster / (bytes_per_sector/4);
+    FAT_sector_number = current_cluster / clusters_per_FAT_sector;
     
-    SD_read_sector( first_FAT_sector + FAT_sector_number, FAT_sector_buffer );
+    SD_read_sector( first_FAT_sector + FAT_sector_number, (uint8_t *)FAT_sector_buffer );
 }
 
-static Cluster_t get_next_cluster_FAT ( Cluster_t current_cluster )
+// Not used =(
+static void FAT_write_sector_containing_cluster ( Cluster_t current_cluster )
+{
+    FAT_sector_number = current_cluster / clusters_per_FAT_sector;
+    
+    SD_write_sector( first_FAT_sector + FAT_sector_number, (uint8_t *)FAT_sector_buffer );
+}
+
+static void FAT_write_sector ( void )
+{
+    SD_write_sector( first_FAT_sector + FAT_sector_number, (uint8_t *)FAT_sector_buffer );
+}
+
+static Cluster_t FAT_get_next_cluster_in_chain ( Cluster_t current_cluster )
 {
     uint16_t    FAT_sector_offset;
     //get the offset address in that sector number
-    FAT_sector_offset = (uint16_t) (current_cluster * 4LL % bytes_per_sector);
+    FAT_sector_offset = (uint16_t) (current_cluster % clusters_per_FAT_sector);
 
-    read_FAT_sector_with_cluster( current_cluster );
+    FAT_read_sector_containing_cluster( current_cluster );
     //get the cluster address from the buffer
-    return( (*(Cluster_t *)&FAT_sector_buffer[FAT_sector_offset]) & 0x0fffffff );
+    return( FAT_sector_buffer[FAT_sector_offset] & 0x0fffffff );
 }
 
-static int set_next_cluster_FAT_cache ( Cluster_t current_cluster, Cluster_t cluster_entry )
+static int FAT_set_next_cluster_in_chain_cached ( Cluster_t current_cluster, Cluster_t cluster_entry )
 {
-    uint16_t    FAT_sector_offset;
     //get the offset address in that sector number
-    FAT_sector_offset = (uint16_t) (current_cluster * 4LL % bytes_per_sector);
+    uint16_t    FAT_sector_offset = (uint16_t) (current_cluster % clusters_per_FAT_sector);
 
-    if ( current_cluster > ((FAT_sector_number + 1) * 128 - 1) )
+    if ( current_cluster > ((FAT_sector_number + 1) * clusters_per_FAT_sector - 1) )
     {
-        SD_write_sector( first_FAT_sector + FAT_sector_number, FAT_sector_buffer );
+        FAT_write_sector();
         FAT_sector_number++;
         memset( FAT_sector_buffer, 0, sizeof( FAT_sector_buffer ) );
     }
     
-    *(Cluster_t *)(&FAT_sector_buffer[FAT_sector_offset]) = cluster_entry;   //for setting new value in cluster entry in FAT
+    FAT_sector_buffer[FAT_sector_offset] = cluster_entry;   //for setting new value in cluster entry in FAT
     
     return( 0 );
 }
 
-static int set_next_cluster_FAT ( Cluster_t current_cluster, Cluster_t cluster_entry )
+static int FAT_set_next_cluster_in_chain ( Cluster_t current_cluster, Cluster_t cluster_entry )
 {
-    uint16_t    FAT_sector_offset;
-    
     //get the offset address in that sector number
-    FAT_sector_offset = (uint16_t) (current_cluster * 4 % bytes_per_sector);
+    uint16_t    FAT_sector_offset = (uint16_t) (current_cluster % clusters_per_FAT_sector);
     
-    read_FAT_sector_with_cluster( current_cluster );
-
-    *(Cluster_t *)(&FAT_sector_buffer[FAT_sector_offset]) = cluster_entry;   //for setting new value in cluster entry in FAT
-
-    SD_write_sector( first_FAT_sector + FAT_sector_number, FAT_sector_buffer );
+    FAT_read_sector_containing_cluster( current_cluster );
+    FAT_sector_buffer[FAT_sector_offset] = cluster_entry;   //for setting new value in cluster entry in FAT
+    FAT_write_sector();
     
     return( 0 );
 }
 
-static Cluster_t find_next_free_cluster ( Cluster_t startCluster )
+static Cluster_t FAT_get_next_free_cluster ( Cluster_t startCluster )
 {
-    uint32_t    *value; 
     Cluster_t   cluster;
     uint8_t     i;
 
-    startCluster -= (startCluster % (bytes_per_sector/4));   //to start with the first file in a FAT sector
-    for ( cluster = startCluster; cluster < total_clusters; cluster += 128 )
+    startCluster -= (startCluster % clusters_per_FAT_sector);   //to start with the first file in a FAT sector
+    for ( cluster = startCluster; cluster < total_clusters; cluster += clusters_per_FAT_sector )
     {
-        read_FAT_sector_with_cluster( cluster );
+        FAT_read_sector_containing_cluster( cluster );
         
-        for ( i = 0; i < 128; i++ )
+        for ( i = 0; i < clusters_per_FAT_sector; i++ )
         {
-            value = (uint32_t *) &FAT_sector_buffer[i*4];
-            if ( ((*value) & 0x0fffffff) == 0 )
+            if ( (FAT_sector_buffer[i] & 0x0fffffff) == 0 )
                 return( cluster+i );
         }
     }
     return( 0 );
 }
 
-static Sector_t get_first_sector_of_cluster ( Cluster_t cluster )
+static Sector_t cluster_get_first_data_sector ( Cluster_t cluster )
 {
-    return( ((cluster - 2) * sector_per_cluster) + first_data_sector );
+    return( ((cluster - 2) * sectors_per_cluster) + first_data_sector );
 }
 
-static int find_empty_dir_entry ( void )
+static int dir_write_sector ( void )
 {
-    struct dir_entry_Structure *dir;
-    
+    SD_write_sector( dir_sector_first + dir_sector_number, (uint8_t *)dir_sector_buffer );
+    return( 0 );
+}
+
+static int dir_read_sector ( void )
+{
+    SD_read_sector( dir_sector_first + dir_sector_number, (uint8_t *)dir_sector_buffer );
+    return( 0 );
+}
+
+static int dir_set_next_empty_entry ( void )
+{
     dir_cluster = root_cluster;
     while ( 1 )
     {
-        dir_sector_first = get_first_sector_of_cluster( dir_cluster );
-        for ( dir_sector_number = 0; dir_sector_number < sector_per_cluster; dir_sector_number++ )
+        dir_sector_first = cluster_get_first_data_sector( dir_cluster );
+        for ( dir_sector_number = 0; dir_sector_number < sectors_per_cluster; dir_sector_number++ )
         {
-            SD_read_sector( dir_sector_first + dir_sector_number, dir_sector_buffer );
-            for ( dir_sector_offset = 0; dir_sector_offset < bytes_per_sector; dir_sector_offset += DIR_ENTRY_SIZE )
+            dir_read_sector();
+            for ( i_dir_entry = 0; i_dir_entry < dir_entries_per_sector; i_dir_entry++ )
             {
-                dir = (struct dir_entry_Structure *) &dir_sector_buffer[dir_sector_offset];
+                struct dir_entry_Structure *dir = &dir_sector_buffer[i_dir_entry];
                 
                 if ( ((dir->name[0] == DELETED) || (dir->name[0] == EMPTY)) && !(dir->attrib & ATTR_VOLUME_ID) )
-                {
                     return( 0 );
-                }
             }
         }
 
-        if ( (dir_cluster = get_next_cluster_FAT( dir_cluster )) > 0x0ffffff6 )
+        if ( (dir_cluster = FAT_get_next_cluster_in_chain( dir_cluster )) > 0x0ffffff6 )
         {
             UART_write_string( uart_debug, "Found end of root dir cluster\n" );
             return( -1 );
@@ -263,16 +281,15 @@ static int find_empty_dir_entry ( void )
     return( -1 );
 }
 
+/**************************** PUBLIC FUNCTIONS ****************************/
 // Called as task
 int fat32_create_new_file ( char *filename )
 {
-    new_dir = (struct dir_entry_Structure *) &dir_sector_buffer[dir_sector_offset];
+    new_dir = &dir_sector_buffer[i_dir_entry++];
     
-    dir_sector_offset += DIR_ENTRY_SIZE;
-    
-    data_cluster = next_free_cluster++;
-    set_next_cluster_FAT_cache( data_cluster, EOC );   //last cluster of the file, marked EOF
-    data_first_sector = get_first_sector_of_cluster( data_cluster );
+    data_cluster        = next_free_cluster++;
+    FAT_set_next_cluster_in_chain_cached( data_cluster, EOC );   //last cluster of the file, marked EOF
+    data_first_sector   = cluster_get_first_data_sector( data_cluster );
     data_sector = 0;
 
     memcpy( new_dir->name, filename, FAT_FILENAME_LENGTH );
@@ -290,50 +307,33 @@ int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size )
     SD_write_sector( data_first_sector + data_sector, buffer );
     new_dir->fileSize += size;
     
-    if ( ++data_sector == sector_per_cluster )
+    if ( ++data_sector == sectors_per_cluster )
     {
-        set_next_cluster_FAT_cache( data_cluster, next_free_cluster );
-        data_cluster = next_free_cluster++;
-        set_next_cluster_FAT_cache( data_cluster, EOC );
-        data_first_sector = get_first_sector_of_cluster( data_cluster );
-        data_sector = 0;
+        FAT_set_next_cluster_in_chain_cached( data_cluster, next_free_cluster );
+        data_cluster        = next_free_cluster++;
+        FAT_set_next_cluster_in_chain_cached( data_cluster, EOC );
+        data_first_sector   = cluster_get_first_data_sector( data_cluster );
+        data_sector         = 0;
     }
     
     return( 0 );
 }
-// Called as task
-static int write_FAT_buffer ( void )
-{
-//    debug( "FAT writing" );
-    SD_write_sector( first_FAT_sector + FAT_sector_number, FAT_sector_buffer );
-    return( 0 );
-}
-// Called as task
-static int write_dir_buffer ( void )
-{
-//    debug( "Dir writing" );
-    SD_write_sector( dir_sector_first + dir_sector_number, dir_sector_buffer );
-    return( 0 );
-}
-// Called as task
+
 int fat32_save_current_file ( void )
 {
-//    debug( "Saving file" );
-    write_dir_buffer();
-    write_FAT_buffer();
-    if ( dir_sector_offset == bytes_per_sector )
+    dir_write_sector();
+    FAT_write_sector();
+    if ( i_dir_entry == dir_entries_per_sector )
     {
-        if ( ++dir_sector_number == sector_per_cluster )
+        if ( ++dir_sector_number == sectors_per_cluster )
         {
-            // Don`t change order of operations!!
-            // Cause all readings are cached and programm needs last reading
-            set_next_cluster_FAT( dir_cluster, next_free_cluster );
+            FAT_set_next_cluster_in_chain( dir_cluster, next_free_cluster );
             dir_cluster = next_free_cluster++;
-            set_next_cluster_FAT( dir_cluster, EOC );
-            dir_sector_first = get_first_sector_of_cluster( dir_cluster );
+            FAT_set_next_cluster_in_chain( dir_cluster, EOC );
+            dir_sector_first = cluster_get_first_data_sector( dir_cluster );
             dir_sector_number = 0;
         }
-        dir_sector_offset = 0;
+        i_dir_entry = 0;
         memset( dir_sector_buffer, 0, sizeof( dir_sector_buffer ) );
     }
     return( 0 );
@@ -602,9 +602,9 @@ static int get_file_list_root( void )
     UART_write_string( uart_debug, "\nFile List:\n" );
     while ( 1 )
     {
-        first_cluster_sector = get_first_sector_of_cluster( cluster );
+        first_cluster_sector = cluster_get_first_data_sector( cluster );
         UART_write_string( uart_debug, "Reading sector to find entry: %ld\n", first_cluster_sector );
-        for ( sector = 0; sector < sector_per_cluster; sector++ )
+        for ( sector = 0; sector < sectors_per_cluster; sector++ )
         {
             SD_read_sector( first_cluster_sector + sector, buffer );            
             for ( i = 0; i < bytes_per_sector; i += DIR_ENTRY_SIZE )
@@ -653,7 +653,7 @@ static int get_file_list_root( void )
             }
         }
 
-        cluster = get_next_cluster_FAT( cluster );
+        cluster = FAT_get_next_cluster_in_chain( cluster );
 
         if ( cluster > 0x0ffffff6 )
         {
