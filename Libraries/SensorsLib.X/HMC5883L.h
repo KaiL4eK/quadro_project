@@ -9,8 +9,6 @@
 #include <string.h>
 #include "per_proto.h"
 
-#define RADIANS_TO_DEGREES          57.295779513f
-#define DEGREES_TO_RADIANS          0.017453293f
 #define GAIN_MULTIPLYER             100L
 #define INIT_CALIBRATION_SAMPLES    100
 

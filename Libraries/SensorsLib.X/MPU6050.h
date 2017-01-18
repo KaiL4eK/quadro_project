@@ -79,7 +79,5 @@ typedef struct
 
 void mpu6050_dmp_get_euler_angles(euler_angles_t *a);
 
-#define RADIANS_TO_DEGREES          57.295779513f
-
 #endif	/* MPU6050_H_ */
 

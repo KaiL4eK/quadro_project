@@ -10,6 +10,9 @@
 #include <string.h>
 #include <xc.h>
 
+#define RADIANS_TO_DEGREES          57.295779513f
+#define DEGREES_TO_RADIANS          0.017453293f
+
 #define SWAP( x, y ) { uint8_t tmp = x; x = y; y = tmp; }
 #define OFF_ALL_ANALOG_INPUTS   { AD1PCFGL = 0x1fff; }
 
@@ -172,7 +175,7 @@ int flash_read ( void );
 int flash_set ( FlashData_t data_type, int data );
 int flash_get ( FlashData_t data_type );
 
-#define clip_value( val, min, max ) ((val) > max ? max : val < min ? min : val)
+#define clip_value( val, min, max ) ((val) > max ? max : (val) < min ? min : (val))
 
 #endif	/* PERIPHERY_PROTO_H_ */
 
