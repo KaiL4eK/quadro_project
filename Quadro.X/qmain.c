@@ -539,14 +539,34 @@ void process_saving_data ( void )
     
     if ( writing_flag )
     {
-        gyro_accel_data_t *g_a = mpu6050_get_raw_data();
-        uint8_t buffer[16];
-        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel, 0 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.y_gyro, 2 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.z_gyro, 4 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel, 6 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.y_accel, 8 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.z_accel, 10 );
+        SD_card_data_t      sd_data;
+        extern float        integr_sum_pitch;
+        extern float        integr_sum_roll;
+        extern float        integr_sum_yaw;
+        gyro_accel_data_t   *g_a                            = mpu6050_get_raw_data();
+        int16_t             interg_parts[3]                 = { integr_sum_pitch, integr_sum_roll, integr_sum_yaw };
+        
+        uint8_t             buffer[32];
+        
+        
+        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               0 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.y_gyro,                2 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.z_gyro,                4 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               6 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.y_accel,               8 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.z_accel,               10 );
+        WRITE_2_BYTE_VAL( buffer, interg_parts[0],                  12 );
+        WRITE_2_BYTE_VAL( buffer, interg_parts[1],                  14 );
+        WRITE_2_BYTE_VAL( buffer, interg_parts[2],                  16 );
+        WRITE_2_BYTE_VAL( buffer, control_values->throttle,         18 );
+        WRITE_2_BYTE_VAL( buffer, control_values->pitch,            20 );
+        WRITE_2_BYTE_VAL( buffer, control_values->roll,             22 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[0],  24 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[1],  26 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[2],  28 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[3],  30 );
+        
+        memset( &buffer[24], 0, 8 /*bytes 32-24*/ );
         file_write( buffer, sizeof( buffer ) );
     }
 }
@@ -554,7 +574,7 @@ void process_saving_data ( void )
 
 #ifdef ENABLE_BMP180
 #define BMP180_EXP_FILTER_PART  0.03D
-inline void bmp180_rcv_filtered_data ( void )
+void bmp180_rcv_filtered_data ( void )
 {
     float    tmp_altitude;
     bmp180_rcv_press_temp_data( &bmp180_press, &bmp180_temp );

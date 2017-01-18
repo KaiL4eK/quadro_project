@@ -7,19 +7,13 @@
 
 #include "core.h"
 
-//PID_rates_t roll_rates  = { .prop_rev = 8, .integr_rev = 20000, .diff = 1 },
-//            pitch_rates = { .prop_rev = 8, .integr_rev = 20000, .diff = 1 };
-
-//PID_rates_float_t   roll_rates  = { .prop_rev = 0.08, .integr_rev = 0.00006, .diff = 8.2 },
-//                    pitch_rates = { .prop_rev = 0.08, .integr_rev = 0.00006, .diff = 8.2 };
-
 PID_rates_float_t   roll_rates  = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
                     pitch_rates = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
                     yaw_rates   = { .prop_rev = 0.05,  .integr_rev = 0.00005,    .diff = 0 };
 
-static float    integr_sum_pitch = 0;
-static float    integr_sum_roll  = 0;
-static float    integr_sum_yaw   = 0;
+float       integr_sum_pitch = 0;
+float       integr_sum_roll  = 0;
+float       integr_sum_yaw   = 0;
 
 PID_parts_t pitch_parts,
             roll_parts,
