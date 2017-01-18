@@ -41,6 +41,9 @@ static inline bool UART_low_speed( UART_speed_t baud )
 
 void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     if ( module == UARTm1 )
     {
         U1MODEbits.UARTEN   = 0;            // Bit15 TX, RX DISABLED, ENABLE at end of func
@@ -70,7 +73,7 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
         U1MODEbits.UARTEN   = 1;            // And turn the peripheral on
         U1STAbits.UTXEN     = 1; 
     } 
-    else if ( module == UARTm2 )
+    else
     {
         U2MODEbits.UARTEN   = 0;
         U2MODEbits.UEN      = 0;
@@ -104,6 +107,9 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
 
 void UART_write_set_endian ( UART_moduleNum_t module, UART_write_endian_t mode )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     uart_fd[module].write_endian_mode = mode;
 }
 
@@ -147,6 +153,9 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 
 uint8_t UART_get_byte( UART_moduleNum_t module )   
 {
+    if ( module == UARTmUndef )
+        return 0;
+    
     volatile UART_module_fd *p_fd = &uart_fd[module];
     
     if ( p_fd->n_read_bytes_available == 0 )
@@ -158,6 +167,9 @@ uint8_t UART_get_byte( UART_moduleNum_t module )
 
 void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_bytes )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     volatile UART_module_fd *p_fd = &uart_fd[module];
     
     int16_t i = 0;
@@ -172,6 +184,9 @@ void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_byt
 
 uint8_t UART_bytes_available( UART_moduleNum_t module )
 {
+    if ( module == UARTmUndef )
+        return 0;
+    
     return uart_fd[module].n_read_bytes_available;
 }
 
@@ -213,6 +228,9 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2TXInterrupt()
 
 void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     volatile UART_module_fd *p_fd = &uart_fd[module];
     
     while ( p_fd->n_write_bytes_available == UART_DATA_BUFFER_SIZE ) { Nop(); }
@@ -231,6 +249,9 @@ void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
 
 void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     uint16_t iter = 0;
     for ( iter = 0; iter < count; iter++ ) {
         if ( uart_fd[module].write_endian_mode == UART_big_endian )
@@ -249,6 +270,9 @@ static char send_buffer[BUFFER_MAX_SIZE];
 
 void UART_write_string( UART_moduleNum_t module, const char *fstring, ... )
 {
+    if ( module == UARTmUndef )
+        return;
+    
     int iter = 0;
     va_list str_args;
     

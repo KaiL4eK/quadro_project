@@ -49,10 +49,12 @@ int main ( void )
     UART_write_set_endian( UART_DATA, UART_big_endian );
     
     cmdProcessor_init( UART_DATA );
-    
-    
+        
     UART_write_string( UART_BT, "/------------------------/\n" );
     UART_write_string( UART_BT, "UART initialized\n" );
+    
+    error_process_init( UART_BT );
+
 #ifndef TEST_WO_MODULES 
 #ifdef SD_CARD
     flash_read();
@@ -73,7 +75,7 @@ int main ( void )
 #ifdef SD_CARD
     spi_init();
     UART_write_string( UART_BT, "SPI initialized\n" );
-    init_sd_file_io();
+    file_io_initialize( UART_BT );
     UART_write_string( UART_BT, "SD initialized\n" );
 #endif /* SD_CARD */
     i2c_init( 400000 );

@@ -44,7 +44,8 @@ typedef enum
 
 typedef enum
 {
-    UARTm1 = 0,
+    UARTmUndef = 0,
+    UARTm1,
     UARTm2
 } UART_moduleNum_t;
 
@@ -64,7 +65,6 @@ typedef enum
     INT_PRIO_MID_HIGH = 5,
     INT_PRIO_HIGH = 6,
     INT_PRIO_HIGHEST = 7
-            
 } Interrupt_priority_lvl_t;
 
 void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority );
@@ -100,29 +100,17 @@ int i2c_write_word_eeprom(uint8_t slave_addr, uint8_t eeprom_addr, uint16_t data
 
 typedef enum
 {
-    SPI_PRIM_64 = 0b00,
-    SPI_PRIM_16 = 0b01,
-    SPI_PRIM_4 = 0b10,
-    SPI_PRIM_1 = 0b11
-}SPI_primPrescale_t;
-
-typedef enum
-{
-    SPI_SEC_8 = 0b000,
-    SPI_SEC_7 = 0b001,
-    SPI_SEC_6 = 0b010,
-    SPI_SEC_5 = 0b011,
-    SPI_SEC_4 = 0b100,
-    SPI_SEC_3 = 0b101,
-    SPI_SEC_2 = 0b110,
-    SPI_SEC_1 = 0b111
-}SPI_secondPrescale_t;
+    SPI_SPEED_LOW       = 0b00,
+    SPI_SPEED_MID       = 0b01,
+    SPI_SPEED_HIGH      = 0b10,
+    SPI_SPEED_HIGHEST   = 0b11
+}SPI_speed_t;
 
 void spi_init( void );
 uint8_t spi_write( uint8_t data );
 uint8_t spi_read( void );
 void spi_cs_set( uint8_t bit );
-void spi_set_speed( SPI_primPrescale_t primary, SPI_secondPrescale_t secondary );
+void spi_set_speed( SPI_speed_t primary );
 
 /*** timing.c ***/
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <xc.h>
+#include "core.h"
 
 typedef enum
 {
@@ -39,7 +40,7 @@ typedef enum
 
 #define WRITING_ACCEPTED    0x05
 
-int init_SDcard ( void );
+int SD_initialize ( UART_moduleNum_t uart );
 int SD_read_sector ( uint32_t start_block, uint8_t *buffer );
 int SD_write_sector ( uint32_t start_block, uint8_t *buffer );
 

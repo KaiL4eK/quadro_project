@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <xc.h>
 #include <string.h>
+#include "core.h"
 
 typedef uint32_t Cluster_t;
 typedef uint32_t Sector_t;
@@ -145,16 +146,10 @@ typedef struct
 
 /************ API ***************/
 
-int convert_filename ( char *filename );
-int init_FAT32 ( void );
-
-int write_data_buffer ( uint8_t *buffer, uint16_t size );
-int get_file_dir_entry_from_root ( char *filename, FileDescriptor_t *out_fd );
-int create_new_file ( char *filename );
-int save_current_file ( void );
-void show_content_of_FAT( uint16_t entries_amount );
-int get_file_list_root( void );
-
+int fat32_initialize ( UART_moduleNum_t uart );
+int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size );
+int fat32_create_new_file ( char *filename );
+int fat32_save_current_file ( void );
 
 #endif	/* FAT32_H_ */
 

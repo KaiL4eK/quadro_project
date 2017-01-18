@@ -9,7 +9,6 @@
       <itemPath>FAT32.h</itemPath>
       <itemPath>file_io.h</itemPath>
       <itemPath>SDcard.h</itemPath>
-      <itemPath>error_.h</itemPath>
       <itemPath>remote_control.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -21,7 +20,6 @@
                    projectFiles="true">
       <itemPath>qmain.c</itemPath>
       <itemPath>motor_control.c</itemPath>
-      <itemPath>bmp180.c</itemPath>
       <itemPath>FAT32.c</itemPath>
       <itemPath>SDcard.c</itemPath>
       <itemPath>file_io.c</itemPath>

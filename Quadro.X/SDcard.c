@@ -1,9 +1,8 @@
 #include "SDcard.h"
-#include "per_proto.h"
-#include "error_.h"
 
-uint8_t     SDHC_flag = 0, 
-            card_type = 0;
+uint8_t                     SDHC_flag = 0;
+
+static UART_moduleNum_t     uart_debug     =   UARTmUndef;
 
 #define CMD_BEGIN   0x40
 #define CRC         0x95
@@ -59,19 +58,22 @@ uint8_t SD_send_cmd ( SD_command_t command, uint32_t argument )
 
 #define IN_IDLE_STATE    0x01
 
-int init_SDcard ( void )
+int SD_initialize ( UART_moduleNum_t uart )
 {    
     uint8_t response = 0xFF, 
             retry = 0, 
             SD_version = 2,
-            i = 0;
+            i = 0,
+            card_type   = 0;
+    
+    uart_debug = uart;
     
     spi_cs_set( 1 );
     for ( i = 0; i < 10; i++ )                        // 2. send 80 clock cycles so card can init registers
          spi_read();
     spi_cs_set( 0 );
     
-    spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
+    spi_set_speed( SPI_SPEED_LOW );
     
     while ( (response = SD_send_cmd( GO_IDLE_STATE, 0 )) != IN_IDLE_STATE ) // 0
         if ( retry++ == UINT8_MAX )
@@ -144,7 +146,7 @@ int SD_read_sector ( uint32_t start_block, uint8_t *buffer )
     while ( (response = SD_send_cmd( READ_SINGLE_BLOCK, start_block )) != 0 )
         if ( retry++ == UINT8_MAX )
         {
-            UART_write_string( UARTm1, "Reading command wasn`t accepted\n" );
+            UART_write_string( uart_debug, "Reading command wasn`t accepted\n" );
             return( TIMEOUT_ERROR_READ );
         }
     
@@ -181,7 +183,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
     while ( (response = SD_send_cmd( WRITE_SINGLE_BLOCK, start_block )) != 0 )
         if ( retry++ == UINT8_MAX )
         {
-            UART_write_string( UARTm1, "Writing command wasn`t accepted\n" );
+            UART_write_string( uart_debug, "Writing command wasn`t accepted\n" );
             return( TIMEOUT_ERROR_WRITE );
         }
         
@@ -201,7 +203,7 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
     {
         spi_read();
         spi_cs_set( 1 );
-        UART_write_string( UARTm1, "SD writing error: 0x%08x\n", response );
+        UART_write_string( uart_debug, "SD writing error: 0x%08x\n", response );
         error_process( "SD card write error" );
         return( TIMEOUT_ERROR_WRITE_NOT_ACCEPTED );
     }

@@ -1,5 +1,4 @@
 #include "remote_control.h"
-#include "per_proto.h"
 
 /* Input capture defines */
 

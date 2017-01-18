@@ -3,6 +3,18 @@
 #define CS_TRIS _TRISA0
 #define CS_LAT  _LATA0
 
+typedef enum
+{
+    SPI_SEC_8 = 0b000,
+    SPI_SEC_7 = 0b001,
+    SPI_SEC_6 = 0b010,
+    SPI_SEC_5 = 0b011,
+    SPI_SEC_4 = 0b100,
+    SPI_SEC_3 = 0b101,
+    SPI_SEC_2 = 0b110,
+    SPI_SEC_1 = 0b111
+}SPI_secondPrescale_t;
+
 void spi_init( void )
 {
     SPI2STATbits.SPIEN = 0;     // Disable SPI2 module
@@ -23,7 +35,7 @@ void spi_init( void )
                                 // 0 = Serial output data changes on transition from Idle clock state to active clock state
     SPI2CON1bits.CKP = 1;       // 1 = Idle state for clock is a high level; active state is a low level
                                 // 0 = Idle state for clock is a low level; active state is a high level
-    SPI2CON1bits.PPRE = SPI_PRIM_64;    // 11 = Primary prescale 1:1
+    SPI2CON1bits.PPRE = SPI_SPEED_LOW;    // 11 = Primary prescale 1:1
                                         // 10 = Primary prescale 4:1
                                         // 01 = Primary prescale 16:1
                                         // 00 = Primary prescale 64:1
@@ -34,16 +46,10 @@ void spi_init( void )
     SPI2STATbits.SPIEN = 1;     // Enable SPI2 module
 }
 
-void spi_set_speed( SPI_primPrescale_t primary, SPI_secondPrescale_t secondary )
+void spi_set_speed( SPI_speed_t speed )
 {
-    if ( primary == SPI_PRIM_1 && secondary == SPI_SEC_1 )
-        return;
-        
     SPI2STATbits.SPIEN = 0;     // Disable SPI2 module
-    
-    SPI2CON1bits.PPRE = primary;
-    SPI2CON1bits.SPRE = secondary;
-    
+    SPI2CON1bits.PPRE = speed;
     SPI2STATbits.SPIEN = 1;     // Enable SPI2 module
 }
 

@@ -2,7 +2,6 @@
 #define	Q_CORE_H_
 
 #include "per_proto.h"
-#include "error_.h"
 
 #include "motor_control.h"
 
@@ -44,6 +43,16 @@ typedef struct {
     uint8_t         motorPower;
     // Not ready
 }UART_frame_t;
+
+/********** error.c **********/
+
+#define ERR_LIGHT           _LATA4
+#define ERR_LIGHT_NO_ERR    1
+#define ERR_LIGHT_ERR       0
+#define INIT_ERR_L  { _TRISA4 = 0; ERR_LIGHT = ERR_LIGHT_NO_ERR; }
+
+void error_process_init ( UART_moduleNum_t uart );
+void error_process ( const char *err_str );
 
 /********** PID CONTROLLER **********/
 // _rev - rate is reversed (divided by)

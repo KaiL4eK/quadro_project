@@ -1,10 +1,11 @@
+#include <stdlib.h>
+#include <stdbool.h>
+
 #include "file_io.h"
 #include "FAT32.h"
-#include "per_proto.h"
-#include "error_.h"
+#include "core.h"
 
-#define PROCESSING_LIGHT    _LATA5
-#define PROCESSING_TRIS     _TRISA5
+static int convert_filename ( char *filename );
 
 typedef enum
 {
@@ -26,58 +27,54 @@ struct task_
 
 #define BUFFERS_AMOUNT  5
 
-static uint8_t      data_buffer[BUFFERS_AMOUNT][512],
-                    current_buffer = 0,
-                    busy_buffers[BUFFERS_AMOUNT],
-                    file_opened = 0,
-                    init_flag = 0;
+static UART_moduleNum_t uart_debug                          = UARTmUndef;
+static uint8_t          data_buffer[BUFFERS_AMOUNT][512],
+                        busy_buffers[BUFFERS_AMOUNT],
+                        current_buffer                      = 0,
+                        file_opened                         = 0;
+static bool             initialized                         = 0;
 
-static uint16_t     data_offset = 0;
+static uint16_t         data_offset                         = 0;
 
-static Task_t       *tasks_list = NULL,
-                    *last_task = NULL;
+static Task_t           *tasks_list                         = NULL,
+                        *last_task                          = NULL;
 
-int init_sd_file_io ( void )
+int file_io_initialize ( UART_moduleNum_t uart )
 {
-    spi_set_speed( SPI_PRIM_64, SPI_SEC_8 );
-    if ( init_FAT32() < 0 ) {
+    if ( fat32_initialize( uart ) < 0 ) {
         error_process( "FAT32 not found!" );
     }
     
-    spi_set_speed( SPI_PRIM_1, SPI_SEC_8 );
-    PROCESSING_TRIS = 0;
-    PROCESSING_LIGHT = 1;
-    init_flag = 1;
+    uart_debug = uart;
+    initialized = 1;
     return( 0 );
 }
 
-inline int convert_filename ( char *filename );
-
-inline static int open ( void )
+static int open ( void )
 {
     if ( file_opened )
         return( -1 );
     
-    create_new_file( tasks_list->filename );
+    fat32_create_new_file( tasks_list->filename );
     file_opened = 1;
     
     return( 0 );
 }
 
-inline static int close ( void )
+static int close ( void )
 {
     if ( !file_opened )
         return( -1 );
     
-    write_data_buffer( data_buffer[tasks_list->buffer_num], tasks_list->buffer_sz );
+    fat32_write_data_buffer( data_buffer[tasks_list->buffer_num], tasks_list->buffer_sz );
     busy_buffers[tasks_list->buffer_num] = 0;
-    save_current_file();
+    fat32_save_current_file();
     file_opened = 0;
     
     return( 0 );
 }
 
-int add_task ( TaskType_t task, uint8_t buffer_num, char *filename )
+static int add_task ( TaskType_t task, uint8_t buffer_num, char *filename )
 {
     Task_t *new_task = malloc( sizeof( *new_task ) );
     if ( tasks_list == NULL )
@@ -107,12 +104,11 @@ int add_task ( TaskType_t task, uint8_t buffer_num, char *filename )
 
 int file_process_tasks ( void )
 {
-    if ( tasks_list == NULL || !init_flag )
+    if ( tasks_list == NULL || !initialized )
     {
-        PROCESSING_LIGHT = 1;
         return( 0 );
     }
-    PROCESSING_LIGHT = 0;
+
     switch ( tasks_list->type )
     {
         case OPEN_FILE:
@@ -122,7 +118,7 @@ int file_process_tasks ( void )
             close();
             break;
         case WRITE_BUFFER:
-            write_data_buffer( data_buffer[tasks_list->buffer_num], tasks_list->buffer_sz );
+            fat32_write_data_buffer( data_buffer[tasks_list->buffer_num], tasks_list->buffer_sz );
             busy_buffers[tasks_list->buffer_num] = 0;
             break;
     }
@@ -140,7 +136,7 @@ int file_process_tasks ( void )
 
 int file_open ( char *in_filename )
 {
-    if ( !init_flag )
+    if ( !initialized )
         return( -1 );
     
     char filename[12];
@@ -159,7 +155,7 @@ int file_open ( char *in_filename )
     
     if ( convert_filename( filename ) < 0 )
     {
-        UART_write_string( UARTm1, "Incorrect filename - file_open()\n" );
+        UART_write_string( uart_debug, "Incorrect filename - file_open()\n" );
         return( -1 );
     }
     
@@ -168,10 +164,10 @@ int file_open ( char *in_filename )
     return( 0 );
 }
 
-uint8_t out_counter = 0;
-
-inline void set_next_buffer( void )
+static void set_next_buffer( void )
 {
+    static uint8_t out_counter = 0;
+    
     busy_buffers[current_buffer++] = 1;
     current_buffer = current_buffer == BUFFERS_AMOUNT ? 0 : current_buffer;
     while ( busy_buffers[current_buffer] )
@@ -185,7 +181,7 @@ inline void set_next_buffer( void )
 
 int file_close ( void )
 {
-    if ( !init_flag )
+    if ( !initialized )
         return( -1 );
     
     add_task( CLOSE_FILE, current_buffer, NULL );
@@ -196,7 +192,7 @@ int file_close ( void )
 
 int file_write( uint8_t *buffer, uint16_t buffer_length )
 {
-    if ( !init_flag )
+    if ( !initialized )
         return( -1 );
     
     memcpy( &data_buffer[current_buffer][data_offset], buffer, buffer_length );
@@ -211,7 +207,7 @@ int file_write( uint8_t *buffer, uint16_t buffer_length )
     return( 0 );
 }
 
-inline int convert_filename ( char *filename )
+static int convert_filename ( char *filename )
 {
     uint8_t fileNameFAT[11], 
             j = 0, k = 0;
