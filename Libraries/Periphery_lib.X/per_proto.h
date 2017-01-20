@@ -47,9 +47,9 @@ typedef enum
 
 typedef enum
 {
-    UARTmUndef = 0,
-    UARTm1,
-    UARTm2
+    UARTmUndef = 100,
+    UARTm1 = 0,
+    UARTm2 = 1
 } UART_moduleNum_t;
 
 typedef enum
@@ -109,7 +109,7 @@ typedef enum
     SPI_SPEED_HIGHEST   = 0b11
 }SPI_speed_t;
 
-void spi_init( void );
+void spi_init( uint8_t idle_state );
 uint8_t spi_write( uint8_t data );
 uint8_t spi_read( void );
 void spi_cs_set( uint8_t bit );

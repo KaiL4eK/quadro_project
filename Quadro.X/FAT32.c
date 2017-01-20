@@ -59,7 +59,8 @@ int fat32_initialize ( UART_moduleNum_t uart )
         {
             UART_write_string( uart_debug, "SD card initialization failed\n" );
             UART_write_string( uart_debug, (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found\n" : 
-                                        err_state == TIMEOUT_ERROR_INIT_2 ? "Timeout 2\n" : "Unknown error\n") );
+                                            err_state == TIMEOUT_ERROR_INIT_2 ? "Error 2\n" : 
+                                            err_state == TIMEOUT_ERROR_INIT_3 ? "Error 3\n" : "Unknown error\n") );
             error_process( __FUNCTION__ );
         }
     }

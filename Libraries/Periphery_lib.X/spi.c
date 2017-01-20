@@ -15,7 +15,7 @@ typedef enum
     SPI_SEC_1 = 0b111
 }SPI_secondPrescale_t;
 
-void spi_init( void )
+void spi_init( uint8_t idle_state )
 {
     SPI2STATbits.SPIEN = 0;     // Disable SPI2 module
     
@@ -31,10 +31,10 @@ void spi_init( void )
     SPI2CON1bits.MSTEN = 1;     // Master mode enabled
     SPI2CON1bits.SMP = 0;       // 1 = Input data sampled at end of data output time; 
                                 // 0 = Input data sampled at middle of data output time
-    SPI2CON1bits.CKE = 0;       // 1 = Serial output data changes on transition from active clock state to Idle clock state
+    SPI2CON1bits.CKE = 1;       // 1 = Serial output data changes on transition from active clock state to Idle clock state
                                 // 0 = Serial output data changes on transition from Idle clock state to active clock state
-    SPI2CON1bits.CKP = 1;       // 1 = Idle state for clock is a high level; active state is a low level
-                                // 0 = Idle state for clock is a low level; active state is a high level
+    SPI2CON1bits.CKP = idle_state & 0b1;    // 1 = Idle state for clock is a high level; active state is a low level
+                                            // 0 = Idle state for clock is a low level; active state is a high level
     SPI2CON1bits.PPRE = SPI_SPEED_LOW;    // 11 = Primary prescale 1:1
                                         // 10 = Primary prescale 4:1
                                         // 01 = Primary prescale 16:1

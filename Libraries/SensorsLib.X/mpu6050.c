@@ -4,7 +4,7 @@
 static uint8_t              buffer[14];
 static bool                 initialized = false;
        gyro_accel_data_t    raw_gyr_acc;
-
+       
 int mpu6050_init ( void )
 {
     if ( !mpu6050_test_connection() )
@@ -15,13 +15,13 @@ int mpu6050_init ( void )
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
-    mpu6050_setXAccelOffset(-3391);
-    mpu6050_setYAccelOffset(-2872);
-    mpu6050_setZAccelOffset(1753);
+    mpu6050_setXAccelOffset(-3389);
+    mpu6050_setYAccelOffset(-2910);
+    mpu6050_setZAccelOffset(1734);
     
-    mpu6050_setXGyroOffset(38);
-    mpu6050_setYGyroOffset(-67);
-    mpu6050_setZGyroOffset(-22);
+    mpu6050_setXGyroOffset(48);
+    mpu6050_setYGyroOffset(-63);
+    mpu6050_setZGyroOffset(-24);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     

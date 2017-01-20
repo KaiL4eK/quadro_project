@@ -12,15 +12,15 @@ void process_UART_frame( void );
 
 void set_complementary_filter_rate( float rate_a );
 
-//#define SD_CARD
+#define SD_CARD
 #define PID_tuning
 #define RC_CONTROL_ENABLED
 //#define TEST_WO_MODULES
 //#define MPU6050_DMP
         // Optimize DMP - TODO
 
-#define UART_BT     UARTm1
-#define UART_DATA   UARTm2
+#define UART_BT     UARTm2
+#define UART_DATA   UARTm1
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -55,23 +55,23 @@ int main ( void )
 
 #ifndef TEST_WO_MODULES 
 #ifdef SD_CARD
-    flash_read();
-    file_num = flash_get( FILE_NUM );
-    file_num = file_num < 0 ? 0 : file_num;
-    UART_write_string( UART_BT, "Flash successfully read\n" );
+//    flash_read();
+//    file_num = flash_get( FILE_NUM );
+//    file_num = file_num < 0 ? 0 : file_num;
+//    UART_write_string( UART_BT, "Flash successfully read\n" );
 #endif /* SD_CARD */
 
     control_values = remote_control_init();
     UART_write_string( UART_BT, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
-    remote_control_find_controller();
+//    remote_control_find_controller();
     UART_write_string( UART_BT, "RC found\n" );
 #endif // RC_CONTROL_ENABLED
     
 //    remote_control_make_calibration( UART_BT );
 
 #ifdef SD_CARD
-    spi_init();
+    spi_init( 0 );
     UART_write_string( UART_BT, "SPI initialized\n" );
     file_io_initialize( UART_BT );
     UART_write_string( UART_BT, "SD initialized\n" );
@@ -135,6 +135,10 @@ volatile bool   start_motors    = false,
 
 #ifdef PID_tuning
 
+float pitch_offset              = 0.0f;
+float roll_offset               = 0.0f;
+#define OFFSET_DELTA                0.1;
+
 static void process_UART_PID_tuning()
 {
     extern PID_rates_float_t    roll_rates,
@@ -179,17 +183,21 @@ static void process_UART_PID_tuning()
             roll_rates.diff -= 0.1;
             pitch_rates.diff -= 0.1;
             break;
-        case 'E':
-        case 'e':
-            break;
         case 'R':
         case 'r':
-            break;
-        case 'D':
-        case 'd':
+            pitch_offset += OFFSET_DELTA;
             break;
         case 'F':
         case 'f':
+            pitch_offset -= OFFSET_DELTA;
+            break;
+        case 'D':
+        case 'd':
+            roll_offset += OFFSET_DELTA;
+            break;
+        case 'G':
+        case 'g':
+            roll_offset -= OFFSET_DELTA;
             break;
         case 'C':
         case 'c':
@@ -201,15 +209,15 @@ static void process_UART_PID_tuning()
             break;
             
         case '1':
-            control_values->pitch = 1000;
+//            control_values->pitch = 1000;
             break;
             
         case '2':
-            control_values->pitch = -1000;
+//            control_values->pitch = -1000;
             break;
             
         case '0':
-            control_values->pitch = 0;
+//            control_values->pitch = 0;
             break;
     }
 //    UART_write_string( UART_BT, "P%d D%d I%d\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
@@ -518,9 +526,9 @@ static uint8_t writing_flag = 0;
 
 void process_saving_data ( void )
 {
-    if ( writing_flag != control_values.two_pos_switch )
+    if ( writing_flag != control_values->two_pos_switch )
     {
-        writing_flag = control_values.two_pos_switch;
+        writing_flag = control_values->two_pos_switch;
         if ( writing_flag )
         {
             char filename[16];
@@ -539,15 +547,13 @@ void process_saving_data ( void )
     
     if ( writing_flag )
     {
-        SD_card_data_t      sd_data;
         extern float        integr_sum_pitch;
         extern float        integr_sum_roll;
         extern float        integr_sum_yaw;
         gyro_accel_data_t   *g_a                            = mpu6050_get_raw_data();
-        int16_t             interg_parts[3]                 = { integr_sum_pitch, integr_sum_roll, integr_sum_yaw };
+        int16_t             integr_part;
         
         uint8_t             buffer[32];
-        
         
         WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               0 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.y_gyro,                2 );
@@ -555,18 +561,20 @@ void process_saving_data ( void )
         WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               6 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.y_accel,               8 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.z_accel,               10 );
-        WRITE_2_BYTE_VAL( buffer, interg_parts[0],                  12 );
-        WRITE_2_BYTE_VAL( buffer, interg_parts[1],                  14 );
-        WRITE_2_BYTE_VAL( buffer, interg_parts[2],                  16 );
+        integr_part = integr_sum_pitch;
+        WRITE_2_BYTE_VAL( buffer, integr_part,                      12 );
+        integr_part = integr_sum_roll;
+        WRITE_2_BYTE_VAL( buffer, integr_part,                      14 );
+        integr_part = integr_sum_yaw;
+        WRITE_2_BYTE_VAL( buffer, integr_part,                      16 );
         WRITE_2_BYTE_VAL( buffer, control_values->throttle,         18 );
         WRITE_2_BYTE_VAL( buffer, control_values->pitch,            20 );
         WRITE_2_BYTE_VAL( buffer, control_values->roll,             22 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[0],  24 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[1],  26 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[2],  28 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state->motor_power[3],  30 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[0],   24 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[1],   26 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[2],   28 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[3],   30 );
         
-        memset( &buffer[24], 0, 8 /*bytes 32-24*/ );
         file_write( buffer, sizeof( buffer ) );
     }
 }
@@ -583,6 +591,7 @@ void bmp180_rcv_filtered_data ( void )
 }
 #endif
 
+// Generates interrupt each 2.5 msec
 void control_system_timer_init( void )
 {
     T4CONbits.TON = 0;
@@ -630,7 +639,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
     quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
-//    UART_write_string( UARTm1, "%d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
+//    UART_write_string( UART_BT, "%d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
     

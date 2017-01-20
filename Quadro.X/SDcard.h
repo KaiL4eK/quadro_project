@@ -33,9 +33,10 @@ typedef enum
 
 #define TIMEOUT_ERROR_INIT_1                ( -1 )
 #define TIMEOUT_ERROR_INIT_2                ( -2 )
-#define TIMEOUT_ERROR_READ                  ( -3 )
-#define TIMEOUT_ERROR_WRITE                 ( -4 )
-#define TIMEOUT_ERROR_WRITE_NOT_ACCEPTED    ( -5 )
+#define TIMEOUT_ERROR_INIT_3                ( -3 )
+#define TIMEOUT_ERROR_READ                  ( -4 )
+#define TIMEOUT_ERROR_WRITE                 ( -5 )
+#define TIMEOUT_ERROR_WRITE_NOT_ACCEPTED    ( -6 )
 #define NO_ERROR                            ( 0 )
 
 #define WRITING_ACCEPTED    0x05
