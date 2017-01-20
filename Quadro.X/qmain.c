@@ -237,12 +237,13 @@ static void process_UART_PID_tuning()
                             control_values->pitch > (-1*START_ANGLES) )
 
 #define MAX_CONTROL_ANGLE       10L
+#define CONTROL_2_ANGLE_RATIO   10L
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
 #define DEADZONE_LIMIT_ANGLE    50
 
 #define CONTROL_DEADZONE(x)     (-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE ? 0 : x)
 
-const static float control_2_angle_rate = MAX_CONTROL_ANGLE/10.0f;
+const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
 
 int32_t motorPower = 0;
 
