@@ -16,11 +16,11 @@ int mpu6050_init ( void )
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     mpu6050_set_sample_rate_divider( 1 );
     
-    mpu6050_setXAccelOffset(-3397);
-    mpu6050_setYAccelOffset(-2871);
-    mpu6050_setZAccelOffset(1732);
+    mpu6050_setXAccelOffset(-3401);
+    mpu6050_setYAccelOffset(-2896);
+    mpu6050_setZAccelOffset(1736);
     
-    mpu6050_setXGyroOffset(43);
+    mpu6050_setXGyroOffset(39);
     mpu6050_setYGyroOffset(-65);
     mpu6050_setZGyroOffset(-25);
     

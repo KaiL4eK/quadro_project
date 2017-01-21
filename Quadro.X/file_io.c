@@ -183,8 +183,8 @@ static void set_next_buffer( void )
     current_buffer = current_buffer == BUFFERS_AMOUNT ? 0 : current_buffer;
     while ( busy_buffers[current_buffer] )
     {
-        if ( out_counter++ == 255 )
-            error_process( "Buffers overlay" );
+        if ( out_counter++ == 255 ) { file_close(); }
+//            error_process( "Buffers overlay" );
     }
     data_offset = 0;
     memset( data_buffer[current_buffer], 0, sizeof( data_buffer[current_buffer] ) );
@@ -203,7 +203,7 @@ int file_close ( void )
 
 int file_write( uint8_t *buffer, uint16_t buffer_length )
 {
-    if ( !initialized )
+    if ( !initialized || !file_opened )
         return( -1 );
     
     memcpy( &data_buffer[current_buffer][data_offset], buffer, buffer_length );

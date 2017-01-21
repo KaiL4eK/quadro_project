@@ -34,6 +34,7 @@ static int32_t      bmp180_altitude = 0;
 #endif
 
 static Control_values_t     *control_values = NULL;
+static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state = {0, 0, 0, { 0, 0, 0, 0 }};
     
 int main ( void ) 
@@ -83,6 +84,7 @@ int main ( void )
     if ( mpu6050_init() < 0 )
         error_process( "MPU6050 initialization" );
     
+    g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
     set_complementary_filter_rate( 0.98f );
 #else
@@ -135,8 +137,8 @@ volatile bool   start_motors    = false,
 
 #ifdef PID_tuning
 
-float pitch_offset              = 0.0f;
-float roll_offset               = 0.0f;
+float pitch_offset                  = 0.0f;
+float roll_offset                   = 0.0f;
 #define OFFSET_DELTA                0.1;
 
 static void process_UART_PID_tuning()
@@ -221,7 +223,7 @@ static void process_UART_PID_tuning()
             break;
     }
 //    UART_write_string( UART_BT, "P%d D%d I%d\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
-    UART_write_string( UART_BT, "P%f D%f I%f\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
+    UART_write_string( UART_BT, "P %f D %f I %f OP %f OR %f\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev, pitch_offset, roll_offset );
 
 }
 #endif
@@ -241,7 +243,7 @@ static void process_UART_PID_tuning()
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
 #define DEADZONE_LIMIT_ANGLE    50
 
-#define CONTROL_DEADZONE(x)     (-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE ? 0 : x)
+#define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE) ? 0 : (x))
 
 const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
 
@@ -324,8 +326,8 @@ void process_control_system ( void )
     {
         int32_t power = 0;
         error_value_t error = 0;
-        int16_t pitch_setpoint  = control_values->pitch * control_2_angle_rate;
-        int16_t roll_setpoint   = control_values->roll  * control_2_angle_rate;
+        int16_t pitch_setpoint  = control_values->pitch;
+        int16_t roll_setpoint   = control_values->roll;
         int16_t yaw_setpoint    = 0;
         
         motorPower = control_values->throttle * 1.6f;   // * 32 / 20
@@ -356,22 +358,23 @@ void process_control_system ( void )
         motor_control_set_motor_powers( quadrotor_state.motor_power );
         
 #ifdef RC_CONTROL_ENABLED
-        if ( control_values->throttle < THROTTLE_OFF_LIMIT )
-        {
-            PID_controller_reset_integral_sums();
+//        if ( control_values->throttle < THROTTLE_OFF_LIMIT )
+//        {
+//            PID_controller_reset_integral_sums();
             
             if ( control_values->throttle <= THROTTLE_START_LIMIT )
             {
-                if ( stop_counter++ == STOP_LIMIT )
+                if ( stop_counter++ >= STOP_LIMIT )
                 {
                     UART_write_string( UART_BT, "All motors stopped\n" );
                     motors_armed = false;
                     motor_control_set_motors_stopped();
+                    stop_counter = 0;
                 }
             } else {
                 stop_counter = 0;       
             }
-        }
+//        }
 #endif // RC_CONTROL_ENABLED
     } 
     else 
@@ -488,7 +491,7 @@ void set_complementary_filter_rate( float rate_a )
 
 const static float gyro_rate_raw_2_deg_per_sec    = SENS_TIME/GYR_COEF;
 
-static void get_euler_angles( euler_angles_t *angles, gyro_accel_data_t *g_a )
+static void get_euler_angles( euler_angles_t *angles )
 {    
     float   acc_x               = g_a->value.x_accel,
             acc_y               = g_a->value.y_accel,
@@ -510,6 +513,9 @@ static void get_euler_angles( euler_angles_t *angles, gyro_accel_data_t *g_a )
     angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
     angles->roll  = (complementary_filter_rate_a * (gyr_delta_y + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
     angles->yaw   = gyr_delta_z + angles->yaw;
+    
+    angles->pitch   -= pitch_offset;
+    angles->roll    -= roll_offset;
 }
 
 /******************** FILTERING API END ********************/
@@ -556,7 +562,6 @@ void process_saving_data ( void )
         extern float        integr_sum_pitch;
         extern float        integr_sum_roll;
         extern float        integr_sum_yaw;
-        gyro_accel_data_t   *g_a                            = mpu6050_get_raw_data();
         int16_t             integr_part;
         
         uint8_t             buffer[32];
@@ -564,9 +569,9 @@ void process_saving_data ( void )
         WRITE_2_BYTE_VAL( buffer, g_a->value.x_gyro,                0 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.y_gyro,                2 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.z_gyro,                4 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               6 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.y_accel,               8 );
-        WRITE_2_BYTE_VAL( buffer, g_a->value.z_accel,               10 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.pitch,            6 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.roll,             8 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.yaw,              10 );
         integr_part = integr_sum_pitch;
         WRITE_2_BYTE_VAL( buffer, integr_part,                      12 );
         integr_part = integr_sum_roll;
@@ -584,7 +589,7 @@ void process_saving_data ( void )
         file_write( buffer, sizeof( buffer ) );
         counter = 0;
         
-        UART_write_string( UART_BT, "Writed SD %d\n", file_get_buffer_load() );
+//        UART_write_string( UART_BT, "Writed SD %d\n", file_get_buffer_load() );
     }
 }
 #endif /* SD_CARD */
@@ -617,7 +622,7 @@ void control_system_timer_init( void )
 
 /******************** INTERRUPT HANDLER ********************/
 
-#define MEASURE_INT_TIME
+//#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
@@ -642,14 +647,14 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
         mpu6050_dmp_get_euler_angles( &euler_angles );
 #endif
     
-    get_euler_angles( &euler_angles, mpu6050_get_raw_data() );
+    get_euler_angles( &euler_angles );
     
     quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
     quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
 //    UART_write_string( UART_BT, "Control: %d %d\n", control_values->pitch, control_values->roll );
-//    UART_write_string( UART_BT, "%d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
+//    UART_write_string( UART_BT, "Angles: %d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
     
