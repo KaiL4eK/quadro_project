@@ -233,6 +233,17 @@ static void process_UART_PID_tuning()
 
 /********** CONTROL SYSTEM FUNCTIONS **********/
 
+static float    angle_pitch         = 0;
+static float    angle_roll          = 0;                            
+
+float           roll_level_adjust   = 0, 
+                pitch_level_adjust  = 0;
+
+float           angle_pitch_acc     = 0,
+                angle_roll_acc      = 0;
+euler_angles_t  euler_angles        = {0, 0, 0}; 
+
+
 #define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
                             control_values->rudder > (-1*START_ANGLES) && \
                             control_values->roll < START_ANGLES && \
@@ -241,7 +252,7 @@ static void process_UART_PID_tuning()
 #define MAX_CONTROL_ANGLE       10L
 #define CONTROL_2_ANGLE_RATIO   10L
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
-#define DEADZONE_LIMIT_ANGLE    50
+#define DEADZONE_LIMIT_ANGLE    16
 
 #define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE) ? 0 : (x))
 
@@ -250,6 +261,26 @@ const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANG
 int32_t motorPower = 0;
 
 #define TESTING_
+
+float pid_error_temp;
+float pid_i_mem_roll, pid_roll_setpoint, gyro_roll_input, pid_output_roll, pid_last_roll_d_error;
+float pid_i_mem_pitch, pid_pitch_setpoint, gyro_pitch_input, pid_output_pitch, pid_last_pitch_d_error;
+float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_yaw_d_error;
+
+float pid_p_gain_roll = 4.62;               //Gain setting for the roll P-controller
+float pid_i_gain_roll = 0.14;              //Gain setting for the roll I-controller
+float pid_d_gain_roll = 64.0;              //Gain setting for the roll D-controller
+int pid_max_roll = 1400;                    //Maximum output of the PID-controller (+/-)
+
+float pid_p_gain_pitch = 4.62;  //Gain setting for the pitch P-controller.
+float pid_i_gain_pitch = 0.14;  //Gain setting for the pitch I-controller.
+float pid_d_gain_pitch = 64.0;  //Gain setting for the pitch D-controller.
+int pid_max_pitch = 1400;          //Maximum output of the PID-controller (+/-)
+
+float pid_p_gain_yaw = 14.2;                //Gain setting for the pitch P-controller. //4.0
+float pid_i_gain_yaw = 0.07;               //Gain setting for the pitch I-controller. //0.02
+float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller.
+int pid_max_yaw = 1400;                     //Maximum output of the PID-controller (+/-)
 
 void process_control_system ( void )
 {
@@ -284,6 +315,15 @@ void process_control_system ( void )
             {   // If now in corner position
                 if ( !motors_armed )
                 {
+                    angle_pitch = angle_pitch_acc;
+                    angle_roll  = angle_roll_acc;
+                    pid_i_mem_roll          = 0;
+                    pid_last_roll_d_error   = 0;
+                    pid_i_mem_pitch         = 0;
+                    pid_last_pitch_d_error  = 0;
+                    pid_i_mem_yaw           = 0;
+                    pid_last_yaw_d_error    = 0;
+        
                     PID_controller_reset_integral_sums();
                     motor_control_set_motors_started();
                     UART_write_string( UART_BT, "All motors started with power %d\n", motorPower );
@@ -292,22 +332,8 @@ void process_control_system ( void )
                 start_motors = false;
             }
         }
-//        if ( start_motors && !motors_armed )
-//        {
-//            PID_controller_reset_integral_sums();
-//            motor_control_set_motors_started();
-//            UART_write_string( UART_BT, "All motors started with power %ld\n", motorPower );
-//            motors_armed = true;
-//        }
-//        
-//        if ( stop_motors && motors_armed )
-//        {
-//            motor_control_set_motors_stopped();
-//            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
-//            motors_armed = false;            
-//        }
     } else {
-        quadrotor_state.yaw = 0;
+//        quadrotor_state.yaw = 0;
         if ( motors_armed )
         {
             motor_control_set_motors_stopped();
@@ -324,6 +350,7 @@ void process_control_system ( void )
     
     if ( motors_armed )
     {
+#if 0
         int32_t power = 0;
         error_value_t error = 0;
         int16_t pitch_setpoint  = control_values->pitch;
@@ -356,11 +383,78 @@ void process_control_system ( void )
         quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
         motor_control_set_motor_powers( quadrotor_state.motor_power );
+#else 
+        pid_pitch_setpoint  = control_values->pitch  / 2;
+        pid_roll_setpoint   = control_values->roll   / 2;
+        pid_yaw_setpoint    = control_values->rudder / 2;
         
+        pid_pitch_setpoint  = CONTROL_DEADZONE( pid_pitch_setpoint );
+        pid_roll_setpoint   = CONTROL_DEADZONE( pid_roll_setpoint );
+        pid_yaw_setpoint    = CONTROL_DEADZONE( pid_yaw_setpoint );
+        
+        pid_roll_setpoint   -= roll_level_adjust;
+        pid_roll_setpoint   /= 3.0;
+        
+        pid_pitch_setpoint -= pitch_level_adjust;
+        pid_pitch_setpoint /= 3.0;
+        
+          //Roll calculations
+        pid_error_temp = gyro_roll_input - pid_roll_setpoint;
+        pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
+        if(pid_i_mem_roll > pid_max_roll)pid_i_mem_roll = pid_max_roll;
+        else if(pid_i_mem_roll < pid_max_roll * -1)pid_i_mem_roll = pid_max_roll * -1;
+
+        pid_output_roll = pid_p_gain_roll * pid_error_temp + pid_i_mem_roll + pid_d_gain_roll * (pid_error_temp - pid_last_roll_d_error);
+        if(pid_output_roll > pid_max_roll)pid_output_roll = pid_max_roll;
+        else if(pid_output_roll < pid_max_roll * -1)pid_output_roll = pid_max_roll * -1;
+
+        pid_last_roll_d_error = pid_error_temp;
+
+        //Pitch calculations
+        pid_error_temp = gyro_pitch_input - pid_pitch_setpoint;
+        pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
+        if(pid_i_mem_pitch > pid_max_pitch)pid_i_mem_pitch = pid_max_pitch;
+        else if(pid_i_mem_pitch < pid_max_pitch * -1)pid_i_mem_pitch = pid_max_pitch * -1;
+
+        pid_output_pitch = pid_p_gain_pitch * pid_error_temp + pid_i_mem_pitch + pid_d_gain_pitch * (pid_error_temp - pid_last_pitch_d_error);
+        if(pid_output_pitch > pid_max_pitch)pid_output_pitch = pid_max_pitch;
+        else if(pid_output_pitch < pid_max_pitch * -1)pid_output_pitch = pid_max_pitch * -1;
+
+        pid_last_pitch_d_error = pid_error_temp;
+
+        //Yaw calculations
+        pid_error_temp = gyro_yaw_input - pid_yaw_setpoint;
+        pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
+        if(pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
+        else if(pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
+
+        pid_output_yaw = pid_p_gain_yaw * pid_error_temp + pid_i_mem_yaw + pid_d_gain_yaw * (pid_error_temp - pid_last_yaw_d_error);
+        if(pid_output_yaw > pid_max_yaw)pid_output_yaw = pid_max_yaw;
+        else if(pid_output_yaw < pid_max_yaw * -1)pid_output_yaw = pid_max_yaw * -1;
+
+        pid_last_yaw_d_error = pid_error_temp;
+        
+        int32_t power = 0;
+        motorPower = control_values->throttle * 1.6f;   // * 32 / 20
+        
+        power = motorPower + pid_output_pitch - pid_output_roll - pid_output_yaw;
+        quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower + pid_output_pitch + pid_output_roll + pid_output_yaw;
+        quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pid_output_pitch + pid_output_roll - pid_output_yaw;
+        quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pid_output_pitch - pid_output_roll + pid_output_yaw;
+        quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        motor_control_set_motor_powers( quadrotor_state.motor_power );
+        
+//        UART_write_string( UART_BT, "Control: %d %d\n", (int)pid_pitch_setpoint, (int)pid_roll_setpoint );
+        
+#endif
 #ifdef RC_CONTROL_ENABLED
-//        if ( control_values->throttle < THROTTLE_OFF_LIMIT )
-//        {
-//            PID_controller_reset_integral_sums();
             
             if ( control_values->throttle <= THROTTLE_START_LIMIT )
             {
@@ -490,8 +584,8 @@ void set_complementary_filter_rate( float rate_a )
 #define GYR_COEF                    131.0f      // = 65535/2/250    - Taken from datasheet mpu6050
 
 const static float gyro_rate_raw_2_deg_per_sec    = SENS_TIME/GYR_COEF;
-
-static void get_euler_angles( euler_angles_t *angles )
+#if 0
+static void get_euler_angles()
 {    
     float   acc_x               = g_a->value.x_accel,
             acc_y               = g_a->value.y_accel,
@@ -510,12 +604,51 @@ static void get_euler_angles( euler_angles_t *angles )
         accel_angle_pitch   = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
     }
     
-    angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
-    angles->roll  = (complementary_filter_rate_a * (gyr_delta_y + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
-    angles->yaw   = gyr_delta_z + angles->yaw;
+    euler_angles->pitch     = (complementary_filter_rate_a * (gyr_delta_x + euler_angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
+    euler_angles->roll      = (complementary_filter_rate_a * (gyr_delta_y + euler_angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
+    euler_angles->yaw       = gyr_delta_z + euler_angles->yaw;
     
-    angles->pitch   -= pitch_offset;
-    angles->roll    -= roll_offset;
+    euler_angles->pitch   -= pitch_offset;
+    euler_angles->roll    -= roll_offset;
+}
+#endif
+static void process_calculations()
+{
+    gyro_roll_input     = (gyro_roll_input * 0.7)   + ((g_a->value.y_gyro / GYR_COEF) * 0.3);   //Gyro pid input is deg/sec.
+    gyro_pitch_input    = (gyro_pitch_input * 0.7)  + ((g_a->value.x_gyro / GYR_COEF) * 0.3);   //Gyro pid input is deg/sec.
+    gyro_yaw_input      = (gyro_yaw_input * 0.7)    + ((g_a->value.z_gyro / GYR_COEF) * 0.3);   //Gyro pid input is deg/sec.  
+    
+    angle_pitch += g_a->value.x_gyro * 0.000019084;                                    //Calculate the traveled pitch angle and add this to the angle_pitch variable.
+    angle_roll  += g_a->value.y_gyro * 0.000019084;                                      //Calculate the traveled roll angle and add this to the angle_roll variable.
+
+    float   acc_x               = g_a->value.x_accel,
+            acc_y               = g_a->value.y_accel,
+            acc_z               = g_a->value.z_accel;
+    
+    //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
+//    angles->pitch   -= angles->roll * sin(g_a->value.z_gyro * 0.000001066);                  //If the IMU has yawed transfer the roll angle to the pitch angel.
+//    angles->roll    += angles->pitch * sin(g_a->value.z_gyro * 0.000001066);                  //If the IMU has yawed transfer the pitch angle to the roll angel.
+
+    //Accelerometer angle calculations
+    float acc_total_vector = sqrt((acc_x*acc_x)+(acc_y*acc_y)+(acc_z*acc_z));       //Calculate the total accelerometer vector.
+
+    if(abs(acc_y) < acc_total_vector) {                                         //Prevent the asin function to produce a NaN
+        angle_pitch_acc = asin((float)acc_y/acc_total_vector)* 57.296;          //Calculate the pitch angle.
+    }
+    
+    if(abs(acc_x) < acc_total_vector) {                                         //Prevent the asin function to produce a NaN
+        angle_roll_acc  = asin((float)acc_x/acc_total_vector)* -57.296;          //Calculate the roll angle.
+    }
+
+    //Place the MPU-6050 spirit level and note the values in the following two lines for calibration.
+    angle_pitch_acc -= 0.0;                                                     //Accelerometer calibration value for pitch.
+    angle_roll_acc  -= 0.0;                                                     //Accelerometer calibration value for roll.
+
+    angle_pitch = angle_pitch   * 0.9996 + angle_pitch_acc  * 0.0004;              //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
+    angle_roll  = angle_roll    * 0.9996 + angle_roll_acc   * 0.0004;                 //Correct the drift of the gyro roll angle with the accelerometer roll angle.
+
+    pitch_level_adjust  = angle_pitch * 15;                                     //Calculate the pitch angle correction
+    roll_level_adjust   = angle_roll * 15;                                      //Calculate the roll angle correction
 }
 
 /******************** FILTERING API END ********************/
@@ -622,12 +755,10 @@ void control_system_timer_init( void )
 
 /******************** INTERRUPT HANDLER ********************/
 
-//#define MEASURE_INT_TIME
+#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
-{
-    static euler_angles_t       euler_angles    = {0, 0, 0}; 
-    
+{    
 #ifdef MEASURE_INT_TIME
     timer_start();
 #endif
@@ -647,14 +778,14 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
         mpu6050_dmp_get_euler_angles( &euler_angles );
 #endif
     
-    get_euler_angles( &euler_angles );
+//    get_euler_angles();
+    process_calculations();
     
     quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
     quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
-//    UART_write_string( UART_BT, "Control: %d %d\n", control_values->pitch, control_values->roll );
-//    UART_write_string( UART_BT, "Angles: %d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
+//    UART_write_string( UART_BT, "Angles: %02.1f, %02.1f\n", angle_pitch, angle_roll );
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
     
