@@ -19,8 +19,8 @@ void set_complementary_filter_rate( float rate_a );
 //#define MPU6050_DMP
         // Optimize DMP - TODO
 
-#define UART_BT     UARTm2
-#define UART_DATA   UARTm1
+#define UART_BT     UARTm1
+#define UART_DATA   UARTm2
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -55,16 +55,16 @@ int main ( void )
 
 #ifndef TEST_WO_MODULES 
 #ifdef SD_CARD
-//    flash_read();
-//    file_num = flash_get( FILE_NUM );
-//    file_num = file_num < 0 ? 0 : file_num;
-//    UART_write_string( UART_BT, "Flash successfully read\n" );
+    flash_read();
+    file_num = flash_get( FILE_NUM );
+    file_num = file_num < 0 ? 0 : file_num;
+    UART_write_string( UART_BT, "Flash successfully read\n" );
 #endif /* SD_CARD */
 
     control_values = remote_control_init();
     UART_write_string( UART_BT, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
-//    remote_control_find_controller();
+    remote_control_find_controller();
     UART_write_string( UART_BT, "RC found\n" );
 #endif // RC_CONTROL_ENABLED
     
@@ -525,8 +525,12 @@ static uint8_t writing_flag = 0;
 #define WRITE_2_BYTE_VAL( buf, val, off ) {   buf[(off)]   = ((val) >> 8) & 0xff; \
                                               buf[(off)+1] = ((val)     ) & 0xff; }
 
+#define SD_DIVIDER  4
+
 void process_saving_data ( void )
 {
+    static uint8_t counter = 0;
+    
     if ( writing_flag != control_values->two_pos_switch )
     {
         writing_flag = control_values->two_pos_switch;
@@ -535,6 +539,7 @@ void process_saving_data ( void )
             char filename[16];
             sprintf( filename, "log%d.txt", file_num++ );
             file_open( filename );
+            counter = 0;
             return;
         }
         else
@@ -546,7 +551,7 @@ void process_saving_data ( void )
         }
     }
     
-    if ( writing_flag )
+    if ( writing_flag && ++counter == SD_DIVIDER )
     {
         extern float        integr_sum_pitch;
         extern float        integr_sum_roll;
@@ -556,7 +561,7 @@ void process_saving_data ( void )
         
         uint8_t             buffer[32];
         
-        WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               0 );
+        WRITE_2_BYTE_VAL( buffer, g_a->value.x_gyro,                0 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.y_gyro,                2 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.z_gyro,                4 );
         WRITE_2_BYTE_VAL( buffer, g_a->value.x_accel,               6 );
@@ -577,6 +582,9 @@ void process_saving_data ( void )
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[3],   30 );
         
         file_write( buffer, sizeof( buffer ) );
+        counter = 0;
+        
+        UART_write_string( UART_BT, "Writed SD %d\n", file_get_buffer_load() );
     }
 }
 #endif /* SD_CARD */
@@ -609,7 +617,7 @@ void control_system_timer_init( void )
 
 /******************** INTERRUPT HANDLER ********************/
 
-//#define MEASURE_INT_TIME
+#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
@@ -640,6 +648,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
     quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
     
+//    UART_write_string( UART_BT, "Control: %d %d\n", control_values->pitch, control_values->roll );
 //    UART_write_string( UART_BT, "%d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();

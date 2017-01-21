@@ -16,13 +16,13 @@ int mpu6050_init ( void )
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     mpu6050_set_sample_rate_divider( 1 );
     
-    mpu6050_setXAccelOffset(-3389);
-    mpu6050_setYAccelOffset(-2910);
-    mpu6050_setZAccelOffset(1734);
+    mpu6050_setXAccelOffset(-3397);
+    mpu6050_setYAccelOffset(-2871);
+    mpu6050_setZAccelOffset(1732);
     
-    mpu6050_setXGyroOffset(48);
-    mpu6050_setYGyroOffset(-63);
-    mpu6050_setZGyroOffset(-24);
+    mpu6050_setXGyroOffset(43);
+    mpu6050_setYGyroOffset(-65);
+    mpu6050_setZGyroOffset(-25);
     
     memset( &raw_gyr_acc, 0, sizeof( raw_gyr_acc ) );
     

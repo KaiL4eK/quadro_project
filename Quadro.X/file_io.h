@@ -11,6 +11,7 @@ int file_write( uint8_t *buffer, uint16_t buffer_length );
 int file_close ( void );
 int file_io_initialize ( UART_moduleNum_t uart );
 int file_process_tasks ( void );
+uint8_t file_get_buffer_load ( void );
 
 #endif	/* FILE_IO_H_ */
 

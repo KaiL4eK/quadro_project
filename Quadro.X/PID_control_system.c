@@ -7,8 +7,8 @@
 
 #include "core.h"
 
-PID_rates_float_t   roll_rates  = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
-                    pitch_rates = { .prop_rev = 0.3,   .integr_rev = 0.00013,    .diff = 8 },
+PID_rates_float_t   roll_rates  = { .prop_rev = 0.45,   .integr_rev = 0.00013,    .diff = 7 },
+                    pitch_rates = { .prop_rev = 0.45,   .integr_rev = 0.00013,    .diff = 7 },
                     yaw_rates   = { .prop_rev = 0.05,  .integr_rev = 0.00005,    .diff = 0 };
 
 float       integr_sum_pitch = 0;

@@ -102,6 +102,17 @@ static int add_task ( TaskType_t task, uint8_t buffer_num, char *filename )
     return( 0 );
 }
 
+uint8_t file_get_buffer_load ( void )
+{
+    int i = 0;
+    uint8_t count = 0;
+    for ( i = 0; i < BUFFERS_AMOUNT; i++ )
+        if ( busy_buffers[i] )
+            count++;
+    
+    return count;
+}
+
 int file_process_tasks ( void )
 {
     if ( tasks_list == NULL || !initialized )
