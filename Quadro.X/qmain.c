@@ -39,6 +39,7 @@ static int32_t      bmp180_altitude = 0;
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state = {0, 0, 0, { 0, 0, 0, 0 }};
+static euler_angles_t       euler_angles    = {0, 0, 0}; 
     
 int main ( void ) 
 {
@@ -512,9 +513,6 @@ static void complementary_filter_IMU_data_2_angles( euler_angles_t *angles )
     angles->pitch   = (complementary_filter_rate_a * (gyr_d_angle_pitch + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
     angles->roll    = (complementary_filter_rate_a * (gyr_d_angle_roll + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
     angles->yaw     = gyr_d_angle_yaw + angles->yaw;
-    
-    angles->pitch   -= pitch_offset;
-    angles->roll    -= roll_offset;
 }
 
 /******************** FILTERING API END ********************/
@@ -624,9 +622,7 @@ void control_system_timer_init( void )
 //#define MEASURE_INT_TIME
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
-{
-    static euler_angles_t       euler_angles    = {0, 0, 0}; 
-    
+{    
 #ifdef MEASURE_INT_TIME
     timer_start();
 #endif
@@ -647,6 +643,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     
     complementary_filter_IMU_data_2_angles( &euler_angles );
+
+    euler_angles.pitch      -= pitch_offset;
+    euler_angles.roll       -= roll_offset;
     
     quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
