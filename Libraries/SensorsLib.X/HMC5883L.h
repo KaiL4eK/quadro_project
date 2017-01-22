@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <string.h>
-#include "per_proto.h"
+#include "common.h"
 
 #define GAIN_MULTIPLYER             100L
 #define INIT_CALIBRATION_SAMPLES    100

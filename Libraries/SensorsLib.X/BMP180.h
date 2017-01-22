@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <xc.h>
-#include "per_proto.h"
+#include "common.h"
 
 #define BMP085_I2C_ADDRESS  0x77
 

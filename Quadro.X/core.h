@@ -51,7 +51,7 @@ typedef struct {
 #define ERR_LIGHT_ERR       0
 #define INIT_ERR_L  { _TRISA4 = 0; ERR_LIGHT = ERR_LIGHT_NO_ERR; }
 
-void error_process_init ( UART_moduleNum_t uart );
+void error_process_init ( uint8_t uart_module );
 void error_process ( const char *err_str );
 
 /********** PID CONTROLLER **********/
@@ -80,9 +80,9 @@ int16_t PID_controller_generate_yaw_control( error_value_t error );
 
 /********** COMMAND PROCESSOR **********/
 
-void cmdProcessor_init ( UART_moduleNum_t module );
+void cmdProcessor_init ( uint8_t module );
 UART_frame_t *cmdProcessor_rcvFrame ( void );
-void cmdProcessor_write_cmd ( UART_moduleNum_t module, uint8_t prefix, uint8_t code );
+void cmdProcessor_write_cmd ( uint8_t module, uint8_t prefix, uint8_t code );
 
 #endif	/* Q_CORE_H_ */
 

@@ -2,6 +2,8 @@
 
 /* I2C1 pins: SDA - RG3; SCL - RG2; */
 
+// HW dependent functions
+
 void i2c_idle( void )
 {
     // Wait until I2C Bus is Inactive
@@ -128,9 +130,7 @@ int i2c_write_bytes_eeprom( uint8_t slave_addr, uint8_t eeprom_addr, uint8_t siz
     i2c_send_byte( slave_addr << 1 | 0x0 );
     i2c_send_byte( eeprom_addr );
     
-    if ( i2c_send_bytes( data_buffer, size ) ) {
-        UART_write_string( UARTm1, "Error sending from %s\n", __FUNCTION__ );
-    }
+    i2c_send_bytes( data_buffer, size );
    
     i2c_stop();
     return( 0 );

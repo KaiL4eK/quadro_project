@@ -39,12 +39,18 @@ static inline bool UART_low_speed( UART_speed_t baud )
     return( baud == UART_38400 || baud == UART_19200 || baud == UART_9600 );
 }
 
-void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority )
+#define UART_MODULE_MAX_COUNT   2
+#define UART_i1                 0
+#define UART_i2                 1
+
+#define ASSERT_MODULE_NUMBER( x )   ( (x) == 1 || (x) == 2 )
+
+int UART_init( uint8_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority )
 {
-    if ( module == UARTmUndef )
-        return;
+    if ( !ASSERT_MODULE_NUMBER( module ) )
+        return 1;
     
-    if ( module == UARTm1 )
+    if ( module == 1 )
     {
         U1MODEbits.UARTEN   = 0;            // Bit15 TX, RX DISABLED, ENABLE at end of func
         U1MODEbits.UEN      = 0;            // Bits8,9 TX,RX enabled, CTS,RTS not
@@ -63,9 +69,6 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
         
         _U1TXIP             = priority;
         _U1RXIP             = priority;
-        
-//        _TRISF3             = 0;
-//        _LATF3              = 0;
         
         U1STAbits.UTXISEL0  = 0;
         U1STAbits.UTXISEL1  = 0;
@@ -93,8 +96,6 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
         _U2TXIP             = priority;
         _U2RXIP             = priority;
         
-//        _TRISF5             = 0;
-        
         U2STAbits.UTXISEL0  = 0;
         U2STAbits.UTXISEL1  = 0;
         
@@ -102,15 +103,16 @@ void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_l
         U2STAbits.UTXEN     = 1;
     }
     
-    uart_fd[module].initialized   = true;
+    uart_fd[module-1].initialized   = true;
+    return 0;
 }
 
-void UART_write_set_endian ( UART_moduleNum_t module, UART_write_endian_t mode )
+void UART_write_set_endian ( uint8_t module, UART_write_endian_t mode )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
-    uart_fd[module].write_endian_mode = mode;
+    uart_fd[module-1].write_endian_mode = mode;
 }
 
 /**
@@ -121,7 +123,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
     if ( U1STAbits.URXDA ) 
     {
-        volatile UART_module_fd  *p_fd = &uart_fd[UARTm1];
+        volatile UART_module_fd  *p_fd = &uart_fd[UART_i1];
         
         p_fd->read_buffer[p_fd->i_read_head_byte++] = U1RXREG;
         
@@ -138,7 +140,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 {
     if ( U2STAbits.URXDA ) 
     {
-        volatile UART_module_fd  *p_fd = &uart_fd[UARTm2];
+        volatile UART_module_fd  *p_fd = &uart_fd[UART_i2];
         
         p_fd->read_buffer[p_fd->i_read_head_byte++] = U2RXREG;
         
@@ -151,26 +153,26 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
         _U2RXIF = 0;
 }
 
-uint8_t UART_get_byte( UART_moduleNum_t module )   
+uint8_t UART_get_byte( uint8_t module )   
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return 0;
     
-    volatile UART_module_fd *p_fd = &uart_fd[module];
+    volatile UART_module_fd *p_fd = &uart_fd[module-1];
     
     if ( p_fd->n_read_bytes_available == 0 )
-        return( 0 );
+        return 0;
     
     p_fd->n_read_bytes_available--;
     return p_fd->read_buffer[p_fd->i_read_tail_byte++];
 }
 
-void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_bytes )
+void UART_get_bytes( uint8_t module, uint8_t *out_buffer, uint8_t n_bytes )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
-    volatile UART_module_fd *p_fd = &uart_fd[module];
+    volatile UART_module_fd *p_fd = &uart_fd[module-1];
     
     int16_t i = 0;
     for ( i = 0; i < n_bytes; i++ ) {
@@ -182,12 +184,12 @@ void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_byt
     }
 }
 
-uint8_t UART_bytes_available( UART_moduleNum_t module )
+uint8_t UART_bytes_available( uint8_t module )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return 0;
     
-    return uart_fd[module].n_read_bytes_available;
+    return uart_fd[module-1].n_read_bytes_available;
 }
 
 /**
@@ -196,7 +198,7 @@ uint8_t UART_bytes_available( UART_moduleNum_t module )
 
 void __attribute__( (__interrupt__, auto_psv) ) _U1TXInterrupt()
 {
-    volatile UART_module_fd  *p_fd = &uart_fd[UARTm1];
+    volatile UART_module_fd  *p_fd = &uart_fd[UART_i1];
     
     if ( !U1STAbits.UTXBF )
     {
@@ -212,7 +214,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1TXInterrupt()
 
 void __attribute__( (__interrupt__, auto_psv) ) _U2TXInterrupt()
 {
-    volatile UART_module_fd  *p_fd = &uart_fd[UARTm2];
+    volatile UART_module_fd  *p_fd = &uart_fd[UART_i2];
     
     if ( !U2STAbits.UTXBF )
     {
@@ -226,19 +228,19 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2TXInterrupt()
     }
 };
 
-void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
+void UART_write_byte( uint8_t module, uint8_t elem )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
-    volatile UART_module_fd *p_fd = &uart_fd[module];
+    volatile UART_module_fd *p_fd = &uart_fd[module-1];
     
     while ( p_fd->n_write_bytes_available == UART_DATA_BUFFER_SIZE ) { Nop(); }
     
     p_fd->write_buffer[p_fd->i_write_head_byte++] = elem;
     p_fd->n_write_bytes_available++;
 
-    if ( module == UARTm1 )
+    if ( module == 1 )
         _U1TXIF = 1;
     else
         _U2TXIF = 1;  
@@ -247,14 +249,14 @@ void UART_write_byte( UART_moduleNum_t module, uint8_t elem )
 #define HIGH_16( x ) (((x) >> 8) & 0xff)
 #define LOW_16( x )  ((x) & 0xff)
 
-void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count )
+void UART_write_words( uint8_t module, uint16_t *arr, uint8_t count )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
     uint16_t iter = 0;
     for ( iter = 0; iter < count; iter++ ) {
-        if ( uart_fd[module].write_endian_mode == UART_big_endian )
+        if ( uart_fd[module-1].write_endian_mode == UART_big_endian )
         {
             UART_write_byte( module, HIGH_16( arr[iter] ) );
             UART_write_byte( module, LOW_16( arr[iter] ) );
@@ -268,9 +270,9 @@ void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count )
 #define BUFFER_MAX_SIZE 256
 static char send_buffer[BUFFER_MAX_SIZE];
 
-void UART_write_string( UART_moduleNum_t module, const char *fstring, ... )
+void UART_write_string( uint8_t module, const char *fstring, ... )
 {
-    if ( module == UARTmUndef )
+    if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
     int iter = 0;

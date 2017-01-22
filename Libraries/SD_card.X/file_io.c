@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include "file_io.h"
 #include "FAT32.h"
-#include "core.h"
 
 static int convert_filename ( char *filename );
 
@@ -17,7 +17,7 @@ typedef enum
 typedef struct task_ Task_t;
 
 struct task_
-{
+{    
     TaskType_t  type;
     char        filename[12];
     uint8_t     buffer_num;
@@ -27,7 +27,7 @@ struct task_
 
 #define BUFFERS_AMOUNT  5
 
-static UART_moduleNum_t uart_debug                          = UARTmUndef;
+static uint8_t          uart_debug                          = -1;
 static uint8_t          data_buffer[BUFFERS_AMOUNT][512],
                         busy_buffers[BUFFERS_AMOUNT],
                         current_buffer                      = 0,
@@ -39,15 +39,15 @@ static uint16_t         data_offset                         = 0;
 static Task_t           *tasks_list                         = NULL,
                         *last_task                          = NULL;
 
-int file_io_initialize ( UART_moduleNum_t uart )
+int file_io_initialize ( uint8_t uart_module )
 {
-    if ( fat32_initialize( uart ) < 0 ) {
-        error_process( "FAT32 not found!" );
+    if ( fat32_initialize( uart_module ) < 0 ) {
+        return 1;
     }
     
-    uart_debug = uart;
+    uart_debug = uart_module;
     initialized = 1;
-    return( 0 );
+    return 0;
 }
 
 static int open ( void )

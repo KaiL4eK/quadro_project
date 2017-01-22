@@ -40,3 +40,5 @@
 **/nbproject/Makefile-*
 **/disassembly/
 *.map
+/Libraries/SD_card.X/nbproject/private/
+/Libraries/SD_card.X/dist/default/

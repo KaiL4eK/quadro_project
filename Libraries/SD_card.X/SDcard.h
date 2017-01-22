@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <xc.h>
-#include "core.h"
+#include "common.h"
 
 typedef enum
 {
@@ -41,7 +41,7 @@ typedef enum
 
 #define WRITING_ACCEPTED    0x05
 
-int SD_initialize ( UART_moduleNum_t uart );
+int SD_initialize ( uint8_t uart_module );
 int SD_read_sector ( uint32_t start_block, uint8_t *buffer );
 int SD_write_sector ( uint32_t start_block, uint8_t *buffer );
 

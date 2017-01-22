@@ -10,7 +10,7 @@
 void control_system_timer_init( void );
 void process_UART_frame( void );
 
-void set_complementary_filter_rate( float rate_a );
+void complementary_filter_set_rate( float rate_a );
 
 #define SD_CARD
 #define PID_tuning
@@ -19,8 +19,11 @@ void set_complementary_filter_rate( float rate_a );
 //#define MPU6050_DMP
         // Optimize DMP - TODO
 
-#define UART_BT     UARTm1
-#define UART_DATA   UARTm2
+#define UART_BT     1
+
+#ifdef INTERFACE_COMMUNICATION
+    #define UART_DATA   2
+#endif
 
 #ifdef SD_CARD
 static int file_num = 0;
@@ -43,12 +46,13 @@ int main ( void )
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UART_BT, UART_115200, INT_PRIO_MID );
+    
+#ifdef INTERFACE_COMMUNICATION
     UART_init( UART_DATA, UART_115200, INT_PRIO_HIGHEST );
-    
     UART_write_set_endian( UART_DATA, UART_big_endian );
-    
     cmdProcessor_init( UART_DATA );
-        
+#endif
+    
     UART_write_string( UART_BT, "/------------------------/\n" );
     UART_write_string( UART_BT, "UART initialized\n" );
     
@@ -65,7 +69,10 @@ int main ( void )
     control_values = remote_control_init();
     UART_write_string( UART_BT, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
-    remote_control_find_controller();
+    while ( !remote_control_find_controller() ) {
+        UART_write_string( UART_BT, "RC search\n" );
+        delay_ms( 500 );
+    }
     UART_write_string( UART_BT, "RC found\n" );
 #endif // RC_CONTROL_ENABLED
     
@@ -86,7 +93,7 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
-    set_complementary_filter_rate( 0.98f );
+    complementary_filter_set_rate( 0.98f );
 #else
     if ( mpu6050_dmp_init() < 0 )
         error_process( "MPU6050 DMP initialization" );
@@ -126,7 +133,10 @@ int main ( void )
 #ifdef SD_CARD
         file_process_tasks();
 #endif
+
+#ifdef INTERFACE_COMMUNICATION
         process_UART_frame();
+#endif
     }
     
     return( 0 );
@@ -150,63 +160,50 @@ static void process_UART_PID_tuning()
     {
         case 0:
             return;
-        case 'Q':
-        case 'q':
+        case 'Q': case 'q':
             roll_rates.prop_rev     += 0.002;
             pitch_rates.prop_rev    += 0.002;
             break;
-        case 'W':
-        case 'w':
+        case 'W': case 'w':
             roll_rates.prop_rev     -= 0.002;
             pitch_rates.prop_rev    -= 0.002;
             break;
 //#define INTEGR_DELTA 200
 #define INTEGR_DELTA 0.00001
-
-        case 'A':
-        case 'a':
+        case 'A': case 'a':
             roll_rates.integr_rev   += INTEGR_DELTA;
             pitch_rates.integr_rev  += INTEGR_DELTA;
             PID_controller_reset_integral_sums();
             break;
-        case 'S':
-        case 's':
+        case 'S': case 's':
             roll_rates.integr_rev   -= INTEGR_DELTA;
             pitch_rates.integr_rev  -= INTEGR_DELTA;
             PID_controller_reset_integral_sums();
             break;
-        case 'Z':
-        case 'z':
+        case 'Z': case 'z':
             roll_rates.diff += 0.1;
             pitch_rates.diff += 0.1;
             break;
-        case 'X':
-        case 'x':
+        case 'X': case 'x':
             roll_rates.diff -= 0.1;
             pitch_rates.diff -= 0.1;
             break;
-        case 'R':
-        case 'r':
+        case 'R': case 'r':
             pitch_offset += OFFSET_DELTA;
             break;
-        case 'F':
-        case 'f':
+        case 'F': case 'f':
             pitch_offset -= OFFSET_DELTA;
             break;
-        case 'D':
-        case 'd':
+        case 'D': case 'd':
             roll_offset += OFFSET_DELTA;
             break;
-        case 'G':
-        case 'g':
+        case 'G': case 'g':
             roll_offset -= OFFSET_DELTA;
             break;
-        case 'C':
-        case 'c':
+        case 'C': case 'c':
             start_motors = true;
             break;
-        case 'V':
-        case 'v':
+        case 'V': case 'v':
             stop_motors = true;
             break;
             
@@ -384,6 +381,7 @@ void process_control_system ( void )
 #undef TESTING_
 
 /********** COMMUNICATION FUNCTIONS **********/
+#ifdef INTERFACE_COMMUNICATION
 
 #include "serial_protocol.h"
 
@@ -471,13 +469,14 @@ void process_sending_UART_data( void )
         send_timer_divider_count = 0;
     }
 }
+#endif 
 
 /******************** FILTERING API ********************/
 
 static float complementary_filter_rate_a = 0.95f;
 static float complementary_filter_rate_b = 0.05f;
 
-void set_complementary_filter_rate( float rate_a )
+void complementary_filter_set_rate( float rate_a )
 {
     if ( rate_a >= 1.0f )
         return;
@@ -491,15 +490,15 @@ void set_complementary_filter_rate( float rate_a )
 
 const static float gyro_rate_raw_2_deg_per_sec    = SENS_TIME/GYR_COEF;
 
-static void get_euler_angles( euler_angles_t *angles )
-{    
+static void complementary_filter_IMU_data_2_angles( euler_angles_t *angles )
+{
     float   acc_x               = g_a->value.x_accel,
             acc_y               = g_a->value.y_accel,
             acc_z               = g_a->value.z_accel;
     
-    float   gyr_delta_x         = g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec;
-    float   gyr_delta_y         = g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec;
-    float   gyr_delta_z         = g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec;
+    float   gyr_d_angle_pitch   = g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec;
+    float   gyr_d_angle_roll    = g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec;
+    float   gyr_d_angle_yaw     = g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec;
     
     float   accel_angle_roll    = 0;
     float   accel_angle_pitch   = 0;
@@ -510,9 +509,9 @@ static void get_euler_angles( euler_angles_t *angles )
         accel_angle_pitch   = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
     }
     
-    angles->pitch = (complementary_filter_rate_a * (gyr_delta_x + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
-    angles->roll  = (complementary_filter_rate_a * (gyr_delta_y + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
-    angles->yaw   = gyr_delta_z + angles->yaw;
+    angles->pitch   = (complementary_filter_rate_a * (gyr_d_angle_pitch + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
+    angles->roll    = (complementary_filter_rate_a * (gyr_d_angle_roll + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
+    angles->yaw     = gyr_d_angle_yaw + angles->yaw;
     
     angles->pitch   -= pitch_offset;
     angles->roll    -= roll_offset;
@@ -647,7 +646,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
         mpu6050_dmp_get_euler_angles( &euler_angles );
 #endif
     
-    get_euler_angles( &euler_angles );
+    complementary_filter_IMU_data_2_angles( &euler_angles );
     
     quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
     quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
@@ -674,7 +673,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif /* SD_CARD */
     
     process_UART_PID_tuning();
-//    process_sending_UART_data();
+#ifdef INTERFACE_COMMUNICATION
+    process_sending_UART_data();
+#endif
     
 #ifdef MEASURE_INT_TIME
     uint16_t time_elapsed_us = convert_ticks_to_us( timer_stop(), 1 );

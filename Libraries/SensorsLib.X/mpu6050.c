@@ -306,7 +306,7 @@ static void mean_sensors ( void )
     }
 }
 
-void mpu6050_calibration ( UART_moduleNum_t uart )
+void mpu6050_calibration ( uint8_t uart )
 {
     mpu6050_setXAccelOffset(0);
     mpu6050_setYAccelOffset(0);

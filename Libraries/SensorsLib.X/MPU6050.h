@@ -7,8 +7,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <xc.h>
-#include "per_proto.h"
+#include "common.h"
 
 typedef union
 {
@@ -55,7 +54,7 @@ int mpu6050_init ( void );
 gyro_accel_data_t *mpu6050_get_raw_data ( void );
 int mpu6050_receive_gyro_accel_raw_data ( void );
 void mpu6050_set_bandwidth ( mpu6050_bandwidth_t bw );
-void mpu6050_calibration ( UART_moduleNum_t uart );
+void mpu6050_calibration ( uint8_t uart );
 
 // DMP
 

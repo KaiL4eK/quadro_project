@@ -38,19 +38,7 @@ typedef enum
     UART_19200 = 51,
     UART_9600 = 103
 } UART_speed_t;
- 
-typedef enum
-{
-    UARTr_interrupt = 1,
-    UARTr_polling = 2
-} UART_receiveMode_t;
 
-typedef enum
-{
-    UARTmUndef = 100,
-    UARTm1 = 0,
-    UARTm2 = 1
-} UART_moduleNum_t;
 
 typedef enum
 {
@@ -70,16 +58,16 @@ typedef enum
     INT_PRIO_HIGHEST = 7
 } Interrupt_priority_lvl_t;
 
-void UART_init( UART_moduleNum_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority );
-void UART_write_byte( UART_moduleNum_t module, uint8_t elem );
-void UART_write_words( UART_moduleNum_t module, uint16_t *arr, uint8_t count );
-void UART_write_string( UART_moduleNum_t module, const char *fstring, ... );
+int  UART_init( uint8_t module, UART_speed_t baud, Interrupt_priority_lvl_t priority );
+void UART_write_byte( uint8_t module, uint8_t elem );
+void UART_write_words( uint8_t module, uint16_t *arr, uint8_t count );
+void UART_write_string( uint8_t module, const char *fstring, ... );
 
-void UART_write_set_endian ( UART_moduleNum_t module, UART_write_endian_t mode );
+void UART_write_set_endian ( uint8_t module, UART_write_endian_t mode );
 
-uint8_t UART_bytes_available( UART_moduleNum_t module );
-uint8_t UART_get_byte( UART_moduleNum_t module );
-void UART_get_bytes( UART_moduleNum_t module, uint8_t *out_buffer, uint8_t n_bytes );
+uint8_t UART_bytes_available( uint8_t module );
+uint8_t UART_get_byte( uint8_t module );
+void UART_get_bytes( uint8_t module, uint8_t *out_buffer, uint8_t n_bytes );
 
 /*** twi.c ***/
 

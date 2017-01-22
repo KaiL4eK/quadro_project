@@ -52,9 +52,8 @@ static Calibrated_control_t clbr_control_raw = { { 16754, 29989, 23371 },   //Ro
                                                  { 16736, 30020, 23786 }
                                                 };
 static Control_values_t     dir_values;
-static uint8_t              // calibration_flag = 0,
-                            remote_control_online = 0,
-                            init_flag = 0;
+static bool                 remote_control_online   = false,
+                            intialized              = false;
 
 /* Prototypes */
 static void init_channel_1();
@@ -70,18 +69,14 @@ static void init_channel_5();
 #define TRIS_LOSS_L     _TRISA3
 #define LOSS_LIGHT_LOST     0
 #define LOSS_LIGHT_FOUND    1
-#define WD_TIMER_RESET {TMR3 = 0; remote_control_online = 1; LOSS_LIGHT = LOSS_LIGHT_FOUND;}
+#define WD_TIMER_RESET {TMR3 = 0; remote_control_online = true; LOSS_LIGHT = LOSS_LIGHT_FOUND;}
 
-void remote_control_find_controller()
+bool remote_control_find_controller()
 {
     LOSS_LIGHT = LOSS_LIGHT_FOUND;
     memset( &control_raw, 0, sizeof(control_raw) );
-    while( !remote_control_online ) {
-        LOSS_LIGHT = LOSS_LIGHT_LOST;
-        delay_ms( 500 );
-        UART_write_string( UARTm1, "Searching for RC\n" );
-    }
-    LOSS_LIGHT = LOSS_LIGHT_FOUND;
+    
+    return remote_control_online;
 }
 
 static void 
@@ -101,7 +96,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
 {
     // Processing losing signal from transmitter
     LOSS_LIGHT = LOSS_LIGHT_LOST;
-    remote_control_online = 0;
+    remote_control_online = false;
     _T3IF = 0;
 }
 
@@ -119,7 +114,7 @@ Control_values_t *remote_control_init( void )
     init_channel_5();
     T2CONbits.TON = 1;
     init_watch_dog_timer();
-    init_flag = 1;
+    intialized = true;
     
     return( &dir_values );
 }
@@ -153,7 +148,7 @@ turn_off_timer1_time_measurement()
 }
 
 // Change this after going to 80 MHz!!!
-void remote_control_make_calibration( UART_moduleNum_t module )
+void remote_control_make_calibration( uint8_t module )
 {
     _TRISA5 = 0;
     _LATA5 = 0;
@@ -166,7 +161,7 @@ void remote_control_make_calibration( UART_moduleNum_t module )
     clbr_control_raw.channel_4.min = UINT16_MAX;
     clbr_control_raw.channel_5.min = UINT16_MAX;
     turn_on_timer1_time_measurement();
-    while( remote_control_online != 1 );
+    while( !remote_control_online );
     
     delay_ms( 500 );
     
@@ -223,7 +218,7 @@ int remote_control_update_control_values( void )
     Control_t tmp_count_cntrl_raw;
     
     memcpy( &tmp_count_cntrl_raw, &control_raw, sizeof( control_raw ) );
-    if ( !remote_control_online || !init_flag )
+    if ( !remote_control_online || !intialized )
     {
         tmp_count_cntrl_raw.channel_1 = clbr_control_raw.channel_1.mid;
         tmp_count_cntrl_raw.channel_2 = clbr_control_raw.channel_2.mid;
@@ -254,13 +249,13 @@ int remote_control_update_control_values( void )
     return( 0 );
 }
 
-void remote_control_send_UART_control_values( UART_moduleNum_t module )
+void remote_control_send_UART_control_values( uint8_t module )
 {
     UART_write_string( module, "In: %04d, %04d, %04d, %04d, %01d\n", 
             dir_values.throttle, dir_values.rudder, dir_values.roll, dir_values.pitch, dir_values.two_pos_switch );
 }
 
-void remote_control_send_UART_control_raw_data( UART_moduleNum_t module )
+void remote_control_send_UART_control_raw_data( uint8_t module )
 {
     UART_write_string( module, "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
             control_raw.channel_3, control_raw.channel_4, control_raw.channel_1, control_raw.channel_2, control_raw.channel_5 );

@@ -1,8 +1,7 @@
 #include "SDcard.h"
 
-uint8_t                     SDHC_flag = 0;
-
-static UART_moduleNum_t     uart_debug     =   UARTmUndef;
+uint8_t                     SDHC_flag   = 0;
+static uint8_t              uart_debug  =   -1;
 
 #define CMD_BEGIN   0x40
 #define CRC         0x95
@@ -69,22 +68,21 @@ uint8_t SD_send_cmd ( SD_command_t command, uint32_t argument )
     return( response );
 }
 
-typedef struct {
-    unsigned idle_state:1;
-    unsigned erase_reset:1;
-    unsigned illegal_command:1;
-    unsigned command_crc_error:1;
-    unsigned erase_sequence_error:1;
-    unsigned address_error:1;
-    unsigned parameter_error:1;
-    unsigned zero:1;
-} r1_response_t;
+//typedef struct {
+//    unsigned idle_state:1;
+//    unsigned erase_reset:1;
+//    unsigned illegal_command:1;
+//    unsigned command_crc_error:1;
+//    unsigned erase_sequence_error:1;
+//    unsigned address_error:1;
+//    unsigned parameter_error:1;
+//    unsigned zero:1;
+//} r1_response_t;
 
 #define IN_IDLE_STATE    0x01
 
-int SD_initialize ( UART_moduleNum_t uart )
+int SD_initialize ( uint8_t uart_module )
 {    
-//    r1_response_t   response;
     uint8_t         response    = 0xFF;
     uint8_t         SD_version  = 2,
                     i           = 0,
@@ -92,7 +90,7 @@ int SD_initialize ( UART_moduleNum_t uart )
 
     uint8_t         retry = 0;
     
-    uart_debug = uart;
+    uart_debug = uart_module;
     
     spi_set_speed( SPI_SPEED_LOW );
     
@@ -243,7 +241,6 @@ int SD_write_sector ( uint32_t start_block, uint8_t *buffer )
         spi_read();
         spi_cs_set( 1 );
         UART_write_string( uart_debug, "SD writing error: 0x%08x\n", response );
-        error_process( "SD card write error" );
         return( TIMEOUT_ERROR_WRITE_NOT_ACCEPTED );
     }
 

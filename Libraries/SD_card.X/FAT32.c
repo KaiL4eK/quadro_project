@@ -1,3 +1,5 @@
+#include <errno.h>
+
 #include "FAT32.h"
 #include "SDcard.h"
 
@@ -34,14 +36,14 @@ Sector_t                        data_first_sector       = 0,
 
 Cluster_t                       next_free_cluster       = 0;
 
-static UART_moduleNum_t         uart_debug              =   UARTmUndef;
+static uint8_t                  uart_debug              =   -1;
 /**********************************************************/
 
 static Cluster_t    FAT_get_next_free_cluster ( Cluster_t startCluster );
 static int          dir_set_next_empty_entry ( void );
 
 /**********************************************************/
-int fat32_initialize ( UART_moduleNum_t uart )
+int fat32_initialize ( uint8_t uart_module )
 {
     struct BS_Structure *bpb; //mapping the buffer onto the structure
     struct MBRinfo_Structure *mbr;
@@ -49,19 +51,19 @@ int fat32_initialize ( UART_moduleNum_t uart )
     Sector_t    dataSectors;
     uint8_t     buffer[512];
  
-    uart_debug = uart;
+    uart_debug = uart_module;
     
     spi_set_speed( SPI_SPEED_LOW );
     
     {
         int err_state = 0;
-        if ( (err_state = SD_initialize( uart )) < 0 )
+        if ( (err_state = SD_initialize( uart_module )) < 0 )
         {
             UART_write_string( uart_debug, "SD card initialization failed\n" );
             UART_write_string( uart_debug, (err_state == TIMEOUT_ERROR_INIT_1 ? "SD card not found\n" : 
                                             err_state == TIMEOUT_ERROR_INIT_2 ? "Error 2\n" : 
                                             err_state == TIMEOUT_ERROR_INIT_3 ? "Error 3\n" : "Unknown error\n") );
-            error_process( __FUNCTION__ );
+            return EACCESS;
         }
     }
     
@@ -74,7 +76,7 @@ int fat32_initialize ( UART_moduleNum_t uart )
         mbr = (struct MBRinfo_Structure *)buffer;       //if it is not boot sector, it must be MBR
         
         if ( mbr->signature != 0xaa55 ) 
-            return( -1 );       //if it is not even MBR then it's not FAT32
+            return EMFILE;       //if it is not even MBR then it's not FAT32
 
         partition = (struct partitionInfo_Structure *)(&mbr->partitionData[0]);//first partition
         
@@ -83,7 +85,7 @@ int fat32_initialize ( UART_moduleNum_t uart )
         SD_read_sector( first_sector, buffer );//read the bpb sector
 
         if(bpb->jumpBoot[0]!=0xE9 && bpb->jumpBoot[0]!=0xEB) 
-            return( -1 ); 
+            return EBADF; 
     }
 
     bytes_per_sector            = bpb->bytesPerSector;
