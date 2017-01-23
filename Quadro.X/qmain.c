@@ -10,7 +10,8 @@
 void control_system_timer_init( void );
 void process_UART_frame( void );
 
-void complementary_filter_set_rate( float rate_a );
+void complementary_filter_set_angle_rate( float rate_a );
+void complementary_filter_set_rotation_speed_rate( float rate_a );
 
 #define SD_CARD
 #define PID_tuning
@@ -39,7 +40,9 @@ static int32_t      bmp180_altitude = 0;
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state = {0, 0, 0, { 0, 0, 0, 0 }};
-static euler_angles_t       euler_angles    = {0, 0, 0}; 
+static euler_angles_t       euler_angles    = {0, 0, 0};
+static struct gyro_rates { float pitch, roll, yaw; }
+                            gyro_rates      = {0, 0, 0};
     
 int main ( void ) 
 {
@@ -60,13 +63,6 @@ int main ( void )
     error_process_init( UART_BT );
 
 #ifndef TEST_WO_MODULES 
-#ifdef SD_CARD
-    flash_read();
-    file_num = flash_get( FILE_NUM );
-    file_num = file_num < 0 ? 0 : file_num;
-    UART_write_string( UART_BT, "Flash successfully read\n" );
-#endif /* SD_CARD */
-
     control_values = remote_control_init();
     UART_write_string( UART_BT, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
@@ -93,8 +89,9 @@ int main ( void )
         error_process( "MPU6050 initialization" );
     
     g_a = mpu6050_get_raw_data();
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
-    complementary_filter_set_rate( 0.98f );
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    complementary_filter_set_angle_rate( 0.95f );
+    complementary_filter_set_rotation_speed_rate( 0.6f );
 #else
     if ( mpu6050_dmp_init() < 0 )
         error_process( "MPU6050 DMP initialization" );
@@ -231,6 +228,33 @@ static void process_UART_PID_tuning()
 
 /********** CONTROL SYSTEM FUNCTIONS **********/
 
+/*** Input ***/
+int16_t pitch_setpoint  = 0;
+int16_t roll_setpoint   = 0;
+int16_t yaw_setpoint    = 0;
+
+int16_t pitch_adjust    = 0;
+int16_t roll_adjust     = 0;
+
+/*** Output ***/
+int16_t pitch_control = 0;
+int16_t roll_control  = 0;
+int16_t yaw_control   = 0;
+
+#define ANGLE_ADJUST_RATE           100
+
+// Max angular speed = 40 deg/sec   (1000/25)
+const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/25;
+
+void calculate_PID_controls ()
+{
+    pitch_control   = PID_controller_generate_pitch_control( pitch_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.pitch, gyro_rates.pitch );
+
+//    roll_control    = PID_controller_generate_roll_control( roll_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.roll, gyro_rates.roll );
+
+//    yaw_control     = PID_controller_generate_yaw_control( yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.yaw );
+}
+
 #define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
                             control_values->rudder > (-1*START_ANGLES) && \
                             control_values->roll < START_ANGLES && \
@@ -239,7 +263,7 @@ static void process_UART_PID_tuning()
 #define MAX_CONTROL_ANGLE       10L
 #define CONTROL_2_ANGLE_RATIO   10L
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
-#define DEADZONE_LIMIT_ANGLE    50
+#define DEADZONE_LIMIT_ANGLE    10
 
 #define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE) ? 0 : (x))
 
@@ -322,25 +346,17 @@ void process_control_system ( void )
     
     if ( motors_armed )
     {
+        // -1000 --- 1000
+        pitch_setpoint  = CONTROL_DEADZONE( control_values->pitch );
+        roll_setpoint   = CONTROL_DEADZONE( control_values->roll );
+        yaw_setpoint    = CONTROL_DEADZONE( control_values->rudder );
+        
+        calculate_PID_controls();
+
+        // 0 --- 2000
+        motorPower      = control_values->throttle; // * 1.6f;   // * 32 / 20
+        
         int32_t power = 0;
-        error_value_t error = 0;
-        int16_t pitch_setpoint  = control_values->pitch;
-        int16_t roll_setpoint   = control_values->roll;
-        int16_t yaw_setpoint    = 0;
-        
-        motorPower = control_values->throttle * 1.6f;   // * 32 / 20
-        
-        pitch_setpoint = CONTROL_DEADZONE( pitch_setpoint );
-        error = pitch_setpoint - quadrotor_state.pitch;
-        int16_t pitch_control = PID_controller_generate_pitch_control( error );
-
-        roll_setpoint = CONTROL_DEADZONE( roll_setpoint );
-        error = roll_setpoint - quadrotor_state.roll;
-        int16_t roll_control  = PID_controller_generate_roll_control( error );
-
-        error = yaw_setpoint - quadrotor_state.yaw;
-        int16_t yaw_control  = PID_controller_generate_yaw_control( error );
-
         power = motorPower + pitch_control - roll_control - yaw_control;
         quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
@@ -356,23 +372,19 @@ void process_control_system ( void )
         motor_control_set_motor_powers( quadrotor_state.motor_power );
         
 #ifdef RC_CONTROL_ENABLED
-//        if ( control_values->throttle < THROTTLE_OFF_LIMIT )
-//        {
-//            PID_controller_reset_integral_sums();
-            
-            if ( control_values->throttle <= THROTTLE_START_LIMIT )
+
+        if ( control_values->throttle <= THROTTLE_START_LIMIT )
+        {
+            if ( stop_counter++ >= STOP_LIMIT )
             {
-                if ( stop_counter++ >= STOP_LIMIT )
-                {
-                    UART_write_string( UART_BT, "All motors stopped\n" );
-                    motors_armed = false;
-                    motor_control_set_motors_stopped();
-                    stop_counter = 0;
-                }
-            } else {
-                stop_counter = 0;       
+                UART_write_string( UART_BT, "All motors stopped\n" );
+                motors_armed = false;
+                motor_control_set_motors_stopped();
+                stop_counter = 0;
             }
-//        }
+        } else {
+            stop_counter = 0;       
+        }
 #endif // RC_CONTROL_ENABLED
     } 
     else 
@@ -380,6 +392,65 @@ void process_control_system ( void )
 }
 
 #undef TESTING_
+
+/******************** FILTERING API ********************/
+
+static float complementary_filter_angle_rate_a = 0.95f;
+static float complementary_filter_angle_rate_b = 0.05f;
+
+static float complementary_filter_rotation_speed_rate_a = 0.7f;
+static float complementary_filter_rotation_speed_rate_b = 0.3f;
+
+void complementary_filter_set_angle_rate( float rate_a )
+{
+    if ( rate_a >= 1.0f )
+        return;
+    
+    complementary_filter_angle_rate_a = rate_a;
+    complementary_filter_angle_rate_b = 1.0f - rate_a;
+}
+
+void complementary_filter_set_rotation_speed_rate( float rate_a )
+{
+    if ( rate_a >= 1.0f )
+        return;
+    
+    complementary_filter_rotation_speed_rate_a = rate_a;
+    complementary_filter_rotation_speed_rate_b = 1.0f - rate_a;
+}
+
+#define SENS_TIME_MS       0.0025f          // 2500L/1000000
+#define GYR_COEF           131.0f           // INT16_MAX/250 - Taken from datasheet mpu6050
+
+const static float gyro_rate_raw_2_deg_per_sec    = 1.0f/GYR_COEF;
+
+static void compute_IMU_data( void )
+{
+    euler_angles_t *angles = &euler_angles;
+    
+    float   acc_x               = g_a->value.x_accel,
+            acc_y               = g_a->value.y_accel,
+            acc_z               = g_a->value.z_accel;
+    
+    gyro_rates.pitch            = complementary_filter_rotation_speed_rate_a * gyro_rates.pitch + complementary_filter_rotation_speed_rate_b * (g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec);
+    gyro_rates.roll             = complementary_filter_rotation_speed_rate_a * gyro_rates.roll  + complementary_filter_rotation_speed_rate_b * (g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec);
+    gyro_rates.yaw              = complementary_filter_rotation_speed_rate_a * gyro_rates.yaw   + complementary_filter_rotation_speed_rate_b * (g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec);    
+    
+    float   accel_angle_roll    = 0;
+    float   accel_angle_pitch   = 0;
+    
+    if ( acc_x != 0 && acc_y != 0 )
+    {
+        accel_angle_roll    = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES;
+        accel_angle_pitch   = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
+    }
+    
+    angles->pitch   = (complementary_filter_angle_rate_a * (gyro_rates.pitch  * SENS_TIME_MS + angles->pitch)) + (complementary_filter_angle_rate_b * accel_angle_pitch);
+    angles->roll    = (complementary_filter_angle_rate_a * (gyro_rates.roll   * SENS_TIME_MS + angles->roll))  + (complementary_filter_angle_rate_b * accel_angle_roll);
+    angles->yaw     =                                       gyro_rates.yaw    * SENS_TIME_MS + angles->yaw;
+}
+
+/******************** FILTERING API END ********************/
 
 /********** COMMUNICATION FUNCTIONS **********/
 #ifdef INTERFACE_COMMUNICATION
@@ -472,51 +543,6 @@ void process_sending_UART_data( void )
 }
 #endif 
 
-/******************** FILTERING API ********************/
-
-static float complementary_filter_rate_a = 0.95f;
-static float complementary_filter_rate_b = 0.05f;
-
-void complementary_filter_set_rate( float rate_a )
-{
-    if ( rate_a >= 1.0f )
-        return;
-    
-    complementary_filter_rate_a = rate_a;
-    complementary_filter_rate_b = 1.0f - rate_a;
-}
-
-#define SENS_TIME                   0.0025f     // 2500L/1000000
-#define GYR_COEF                    131.0f      // = 65535/2/250    - Taken from datasheet mpu6050
-
-const static float gyro_rate_raw_2_deg_per_sec    = SENS_TIME/GYR_COEF;
-
-static void complementary_filter_IMU_data_2_angles( euler_angles_t *angles )
-{
-    float   acc_x               = g_a->value.x_accel,
-            acc_y               = g_a->value.y_accel,
-            acc_z               = g_a->value.z_accel;
-    
-    float   gyr_d_angle_pitch   = g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec;
-    float   gyr_d_angle_roll    = g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec;
-    float   gyr_d_angle_yaw     = g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec;
-    
-    float   accel_angle_roll    = 0;
-    float   accel_angle_pitch   = 0;
-    
-    if ( acc_x != 0 && acc_y != 0 )
-    {
-        accel_angle_roll    = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES;
-        accel_angle_pitch   = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
-    }
-    
-    angles->pitch   = (complementary_filter_rate_a * (gyr_d_angle_pitch + angles->pitch)) + (complementary_filter_rate_b * accel_angle_pitch);
-    angles->roll    = (complementary_filter_rate_a * (gyr_d_angle_roll + angles->roll))  + (complementary_filter_rate_b * accel_angle_roll);
-    angles->yaw     = gyr_d_angle_yaw + angles->yaw;
-}
-
-/******************** FILTERING API END ********************/
-
 #ifdef SD_CARD
 static uint8_t writing_flag = 0;
 
@@ -539,9 +565,7 @@ void process_saving_data ( void )
         writing_flag = control_values->two_pos_switch;
         if ( writing_flag )
         {
-            char filename[16];
-            sprintf( filename, "log%d.txt", file_num++ );
-            file_open( filename );
+            file_open( "log%d.txt" );
             counter = 0;
             return;
         }
@@ -576,8 +600,8 @@ void process_saving_data ( void )
         integr_part = integr_sum_yaw;
         WRITE_2_BYTE_VAL( buffer, integr_part,                      16 );
         WRITE_2_BYTE_VAL( buffer, control_values->throttle,         18 );
-        WRITE_2_BYTE_VAL( buffer, control_values->pitch,            20 );
-        WRITE_2_BYTE_VAL( buffer, control_values->roll,             22 );
+        WRITE_2_BYTE_VAL( buffer, pitch_setpoint,                   20 );
+        WRITE_2_BYTE_VAL( buffer, roll_setpoint,                    22 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[0],   24 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[1],   26 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[2],   28 );
@@ -605,14 +629,14 @@ void bmp180_rcv_filtered_data ( void )
 // Generates interrupt each 2.5 msec
 void control_system_timer_init( void )
 {
-    T4CONbits.TON = 0;
-    T4CONbits.T32 = 1;
+    T4CONbits.TON   = 0;
+    T4CONbits.T32   = 1;
     T4CONbits.TCKPS = TIMER_DIV_1;
-    _T5IP = INT_PRIO_HIGHEST;
-    _T5IE = 1;
-    PR5 = (((FCY/FREQ_CONTROL_SYSTEM) >> 16) & 0xffff);
-    PR4 = ((FCY/FREQ_CONTROL_SYSTEM) & 0xffff);
-    T4CONbits.TON = 1;
+    _T5IP           = INT_PRIO_HIGHEST;
+    _T5IE           = 1;
+    PR5             = (((FCY/FREQ_CONTROL_SYSTEM) >> 16) & 0xffff);
+    PR4             = ((FCY/FREQ_CONTROL_SYSTEM) & 0xffff);
+    T4CONbits.TON   = 1;
 }
 
 #define ANGLES_COEFF                100L        // each float is represented as integer *100 (2 decimals after point)
@@ -642,7 +666,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
         mpu6050_dmp_get_euler_angles( &euler_angles );
 #endif
     
-    complementary_filter_IMU_data_2_angles( &euler_angles );
+    compute_IMU_data();
 
     euler_angles.pitch      -= pitch_offset;
     euler_angles.roll       -= roll_offset;

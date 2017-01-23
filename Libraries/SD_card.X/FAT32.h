@@ -149,7 +149,7 @@ typedef struct
 int fat32_initialize ( uint8_t uart_module );
 int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size );
 int fat32_create_new_file ( char *filename );
-int fat32_save_current_file ( void );
+uint16_t fat32_get_file_index ( void );
 
 #endif	/* FAT32_H_ */
 

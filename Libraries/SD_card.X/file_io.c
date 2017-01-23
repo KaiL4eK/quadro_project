@@ -68,7 +68,6 @@ static int close ( void )
     
     fat32_write_data_buffer( data_buffer[tasks_list->buffer_num], tasks_list->buffer_sz );
     busy_buffers[tasks_list->buffer_num] = 0;
-    fat32_save_current_file();
     file_opened = 0;
     
     return( 0 );
@@ -145,24 +144,15 @@ int file_process_tasks ( void )
     return( 0 );
 }
 
-int file_open ( char *in_filename )
+int file_open ( char *name_format )
 {
     if ( !initialized )
         return( -1 );
     
     char filename[12];
-    // Copy filename in correct array
-    memset( filename, 0, sizeof( filename ) );
+    sprintf( filename, name_format, fat32_get_file_index() );
     
     data_offset = 0;
-    
-    uint8_t i = 0;    
-    for ( i = 0; i < 12; i++ )
-    {
-        filename[i] = in_filename[i];
-        if ( in_filename[i] == '\0' )
-            break;
-    }
     
     if ( convert_filename( filename ) < 0 )
     {

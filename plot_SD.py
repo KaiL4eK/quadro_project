@@ -7,6 +7,7 @@ import math as m
 import matplotlib.pyplot as plt
 import sys
 
+
 angle_multiplyer = 1000.0
 
 fulltime = 0.0
@@ -36,84 +37,69 @@ gyro_data = [0]
 count_data = [0]
 last_angle = 0.0
 
-angle_pitch 	= [0]
-angle_roll		= [0]
-angle_yaw		= [0]
+gyro_pitch			= [0]
+gyro_roll 			= [0]
+gyro_yaw			= [0]
 
-integr_pitch 	= [0]
-integr_roll		= [0]
-integr_yaw		= [0]
+angle_pitch 		= [0]
+angle_roll			= [0]
+angle_yaw			= [0]
 
-control_pitch	= [0]
-control_roll	= [0]
-control_throttle = [0]
+integr_pitch 		= [0]
+integr_roll			= [0]
+integr_yaw			= [0]
 
-motor_1			= [0]
-motor_2			= [0]
-motor_3			= [0]
-motor_4			= [0]
+control_pitch		= [0]
+control_roll		= [0]
+control_throttle 	= [0]
+
+motor_1				= [0]
+motor_2				= [0]
+motor_3				= [0]
+motor_4				= [0]
 
 filename = sys.argv[1]
-# fd = open( filename, 'r' )
-# alpha = 0.005
+
 token_size = 32
 sensor_time = 10.0/1000
-gyro_sensitivity = 65535/2/250
+gyro_sensitivity = 65535/2/250.0
 alpha = 0.98
+
+def bytes_2_int16( bytes ):
+	int16 = ord(bytes[0]) << 8 | ord(bytes[1])
+
+	if int16 > (2**15 - 1):
+		int16 = int16 - (2**16 - 1)
+
+	return int16
 
 # altitude_multiplyer = 1000.0
 
 with open( filename, 'r' ) as f:
 	while True:
 		rdata = f.read(token_size)
-		if not rdata: 
+		if not rdata:
 			break
 
-		gyr_x = ord(rdata[0]) << 8 | ord(rdata[1])
-		gyr_y = ord(rdata[2]) << 8 | ord(rdata[3])
-		gyr_z = ord(rdata[4]) << 8 | ord(rdata[5])
-		_angle_pitch = ord(rdata[6]) << 8 | ord(rdata[7])
-		_angle_roll = ord(rdata[8]) << 8 | ord(rdata[9])
-		_angle_yaw = ord(rdata[10]) << 8 | ord(rdata[11])
+		_gyr_pitch 			= bytes_2_int16( rdata[0:2] )/gyro_sensitivity
+		_gyr_roll 			= bytes_2_int16( rdata[2:4] )/gyro_sensitivity
+		_gyr_yaw 			= bytes_2_int16( rdata[4:6] )/gyro_sensitivity
 
-		_integr_pitch 		= ord(rdata[12]) << 8 | ord(rdata[13])
+		_angle_pitch 		= bytes_2_int16( rdata[6:8] )
+		_angle_roll 		= bytes_2_int16( rdata[8:10] )
+		_angle_yaw 			= bytes_2_int16( rdata[10:12] )
 
-		_control_pitch 		= ord(rdata[20]) << 8 | ord(rdata[21])
-		_control_roll 		= ord(rdata[22]) << 8 | ord(rdata[23])
-		_control_throttle	= ord(rdata[18]) << 8 | ord(rdata[19])
+		_integr_pitch 		= bytes_2_int16( rdata[12:14] )
 
-		if gyr_x > 32767:
-			gyr_x = gyr_x - 65536
+		_control_throttle	= bytes_2_int16( rdata[18:20] )
+		_control_pitch 		= bytes_2_int16( rdata[20:22] )
+		_control_roll 		= bytes_2_int16( rdata[22:24] )
 
-		if gyr_y > 32767:
-			gyr_y = gyr_y - 65536
-
-		if gyr_z > 32767:
-			gyr_z = gyr_z - 65536
-
-		if _angle_pitch > 32767:
-			_angle_pitch = _angle_pitch - 65536
-
-		if _angle_roll > 32767:
-			_angle_roll = _angle_roll - 65536
-
-		if _angle_yaw > 32767:
-			_angle_yaw = _angle_yaw - 65536
-
-		if _control_pitch > 32767:
-			_control_pitch = _control_pitch - 65536
-
-		if _control_roll > 32767:
-			_control_roll = _control_roll - 65536
-
-		if _control_throttle > 32767:
-			_control_throttle = _control_throttle - 65536
-
-		if _integr_pitch > 32767:
-			_integr_pitch = _integr_pitch - 65536
 
 		fulltime += sensor_time
 		time.append(fulltime)
+
+		gyro_pitch.append( _gyr_pitch )
 
 		control_throttle.append( _control_throttle )
 		control_pitch.append( _control_pitch )
@@ -147,16 +133,16 @@ with open( filename, 'r' ) as f:
 # fig = plt.figure()
 # fig.subplots_adjust(right=0.99, left=0.04, top=0.98, bottom=0.06)
 
+# plt.plot( time, control_throttle, 'y-', label='Cntrl_t' )
+# plt.plot( time, integr_pitch, 'r-', label='Integr_p' )
+# plt.plot( time, angle_pitch,  'k-', label='Angle_p' )
+# plt.plot( time, control_pitch,  'b-', label='Cntrl_p' )
+# plt.plot( time, gyro_pitch,  'g-', label='Gyro_p' )
 
-plt.plot( time, control_throttle, 'y-', label='Cntrl_t' )
-plt.plot( time, integr_pitch, 'r-', label='Integr_p' )
-plt.plot( time, angle_pitch,  'k-', label='Angle_p' )
-plt.plot( time, control_pitch,  'b-', label='Cntrl_p' )
-
-# plt.axis([ 0, fulltime, -20, 20 ])
-plt.ylabel('Angle')
-plt.xlabel('Time')
-plt.grid()
-plt.title(filename)
-plt.legend()
-plt.show()
+# # plt.axis([ 0, fulltime, -20, 20 ])
+# plt.ylabel('Angle')
+# plt.xlabel('Time')
+# plt.grid()
+# plt.title(filename)
+# plt.legend()
+# plt.show()

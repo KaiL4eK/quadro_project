@@ -11,7 +11,6 @@ int mpu6050_init ( void )
         return( -1 );
 
     mpu6050_set_sleep_bit( 0 );
-    mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     mpu6050_set_sample_rate_divider( 1 );

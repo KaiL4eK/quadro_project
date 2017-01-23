@@ -74,9 +74,9 @@ typedef struct {
 
 
 void PID_controller_reset_integral_sums ( void );
-int16_t PID_controller_generate_pitch_control( error_value_t error );
-int16_t PID_controller_generate_roll_control( error_value_t error );
-int16_t PID_controller_generate_yaw_control( error_value_t error );
+int16_t PID_controller_generate_pitch_control( float error, float angle_speed );
+int16_t PID_controller_generate_roll_control( float error, float angle_speed );
+int16_t PID_controller_generate_yaw_control( float error );
 
 /********** COMMAND PROCESSOR **********/
 

@@ -6,7 +6,7 @@
 #include <xc.h>
 #include "common.h"
 
-int file_open ( char *in_filename );
+int file_open ( char *name_format );
 int file_write( uint8_t *buffer, uint16_t buffer_length );
 int file_close ( void );
 int file_io_initialize ( uint8_t uart_module );

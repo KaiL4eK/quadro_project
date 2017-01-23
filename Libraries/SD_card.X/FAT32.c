@@ -23,6 +23,7 @@ Cluster_t                       FAT_sector_buffer[128];
 Sector_t                        FAT_sector_number       = 0;
 
 uint8_t                         i_dir_entry             = 0;
+uint16_t                        i_global_dir_entry      = 0;
 struct dir_entry_Structure      dir_sector_buffer[32];
 uint8_t                         dir_entries_per_sector  = 32;
 Cluster_t                       dir_cluster             = 0;
@@ -118,7 +119,8 @@ UART_write_string( "FAT size: %ld\n", bpb->FATsize_F32 );
 UART_write_string( "FSInfo sector: %ld\n", bpb->FSinfo );
 UART_write_string( "/-----------------------------------------------------/\n" );
 #endif /* QDEBUG */
-    next_free_cluster = FAT_get_next_free_cluster( root_cluster );
+    next_free_cluster   = FAT_get_next_free_cluster( root_cluster );
+    i_global_dir_entry  = 0;
     dir_set_next_empty_entry();
 #ifdef QDEBUG
 UART_write_string( "/-----------------------------------------------------/\n" );
@@ -267,6 +269,8 @@ static int dir_set_next_empty_entry ( void )
                 
                 if ( ((dir->name[0] == DELETED) || (dir->name[0] == EMPTY)) && !(dir->attrib & ATTR_VOLUME_ID) )
                     return( 0 );
+                
+                i_global_dir_entry++;
             }
         }
 
@@ -286,14 +290,20 @@ static int dir_set_next_empty_entry ( void )
 
 /**************************** PUBLIC FUNCTIONS ****************************/
 // Called as task
+uint16_t fat32_get_file_index ( void )
+{
+    return i_global_dir_entry;
+}
+
 int fat32_create_new_file ( char *filename )
 {
     new_dir = &dir_sector_buffer[i_dir_entry++];
+    i_global_dir_entry++;
     
     data_cluster        = next_free_cluster++;
     FAT_set_next_cluster_in_chain_cached( data_cluster, EOC );   //last cluster of the file, marked EOF
     data_first_sector   = cluster_get_first_data_sector( data_cluster );
-    data_sector = 0;
+    data_sector         = 0;
 
     memcpy( new_dir->name, filename, FAT_FILENAME_LENGTH );
     
@@ -301,6 +311,22 @@ int fat32_create_new_file ( char *filename )
     new_dir->firstClusterLO = data_cluster & 0xffff;
     new_dir->fileSize = 0;
     new_dir->attrib = ATTR_ARCHIVE;
+    
+    dir_write_sector();
+    FAT_write_sector();
+    if ( i_dir_entry == dir_entries_per_sector )
+    {
+        if ( ++dir_sector_number == sectors_per_cluster )
+        {
+            FAT_set_next_cluster_in_chain( dir_cluster, next_free_cluster );
+            dir_cluster = next_free_cluster++;
+            FAT_set_next_cluster_in_chain( dir_cluster, EOC );
+            dir_sector_first = cluster_get_first_data_sector( dir_cluster );
+            dir_sector_number = 0;
+        }
+        i_dir_entry = 0;
+        memset( dir_sector_buffer, 0, sizeof( dir_sector_buffer ) );
+    }
     
     return( NO_ERROR_FAT );
 }
@@ -322,25 +348,6 @@ int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size )
     return( 0 );
 }
 
-int fat32_save_current_file ( void )
-{
-    dir_write_sector();
-    FAT_write_sector();
-    if ( i_dir_entry == dir_entries_per_sector )
-    {
-        if ( ++dir_sector_number == sectors_per_cluster )
-        {
-            FAT_set_next_cluster_in_chain( dir_cluster, next_free_cluster );
-            dir_cluster = next_free_cluster++;
-            FAT_set_next_cluster_in_chain( dir_cluster, EOC );
-            dir_sector_first = cluster_get_first_data_sector( dir_cluster );
-            dir_sector_number = 0;
-        }
-        i_dir_entry = 0;
-        memset( dir_sector_buffer, 0, sizeof( dir_sector_buffer ) );
-    }
-    return( 0 );
-}
 /* 
 int get_file_dir_entry_from_root ( char *filename, FileDescriptor_t *out_fd )
 {
