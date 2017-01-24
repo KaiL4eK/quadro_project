@@ -18,8 +18,8 @@ void setup_PLL_oscillator( void )
 /*              DELAYS          */
 /********************************/
 
-#define TIMER_MS_TICK (FCY/1000)
-#define TIMER_US_TICK (FCY/1000000)
+static const float timer_tick_2_ms = 1000.0/FCY;
+static const float timer_tick_2_us = 1000000.0/FCY;
 
 void delay_ms( uint16_t mseconds )
 {
@@ -53,36 +53,46 @@ void delay_us( uint16_t useconds )
 //    T6CONbits.TON = 0;
 }
 
+uint16_t        timer_overflow  = 0;
+TimerTicks32_t  timer_ticks     = 0;
+
 void timer_start()
 {
-    T8CONbits.TON = 0;
-    T8CONbits.T32 = 1;
+    T8CONbits.TON   = 0;
+    T8CONbits.T32   = 1;
     T8CONbits.TCKPS = TIMER_DIV_1;
-    TMR9HLD = 0;
-    TMR8 = 0;
-    T8CONbits.TON = 1;
-}
-
-TimerTicks32_t timer_restart()
-{
-    uint32_t res = TMR8 | ((uint32_t)TMR9HLD) << 16;
-    timer_start();
-    return( res );
+    TMR8 = TMR9HLD  = 0;
+    
+    timer_overflow  = 0;
+    timer_ticks     = 0;
+    
+    T8CONbits.TON   = 1;
 }
 
 TimerTicks32_t timer_stop()
 {
-    uint32_t res = TMR8 | ((uint32_t)TMR9HLD) << 16;
+    timer_ticks = TMR8 | ((uint32_t)TMR9HLD) << 16;
     T8CONbits.TON = 0;
-    return( res );
 }
 
-uint32_t convert_ticks_to_ms ( TimerTicks32_t timer_ticks, uint8_t timer_divider )
+TimerTicks32_t timer_restart()
 {
-    return( timer_ticks*timer_divider/TIMER_MS_TICK );
+    timer_stop();
+    timer_start();
 }
 
-uint32_t convert_ticks_to_us ( TimerTicks32_t timer_ticks, uint8_t timer_divider )
+void __attribute__( (__interrupt__, no_auto_psv) ) _T9Interrupt()
 {
-    return( timer_ticks*timer_divider/TIMER_US_TICK );
+    timer_overflow++;
+    _T9IF = 0;
+}
+
+uint32_t timer_get_ms ()
+{
+    return( ( timer_ticks + ( (float)timer_overflow * UINT32_MAX ) ) * timer_tick_2_ms );
+}
+
+uint32_t timer_get_us ()
+{
+    return( ( timer_ticks + ( (float)timer_overflow * UINT32_MAX ) ) * timer_tick_2_us );
 }

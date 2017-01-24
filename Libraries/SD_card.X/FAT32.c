@@ -23,7 +23,7 @@ Cluster_t                       FAT_sector_buffer[128];
 Sector_t                        FAT_sector_number       = 0;
 
 uint8_t                         i_dir_entry             = 0;
-uint16_t                        i_global_dir_entry      = 0;
+int16_t                         i_global_dir_entry      = 0;
 struct dir_entry_Structure      dir_sector_buffer[32];
 uint8_t                         dir_entries_per_sector  = 32;
 Cluster_t                       dir_cluster             = 0;
@@ -90,8 +90,15 @@ int fat32_initialize ( uint8_t uart_module )
     }
 
     bytes_per_sector            = bpb->bytesPerSector;
+    
+    if ( bytes_per_sector != 512 )
+    {
+        UART_write_string( uart_debug, "Unsupported bytes per sector count: %d\n", bytes_per_sector );
+        return EXDEV;
+    }
+    
     clusters_per_FAT_sector     = bytes_per_sector / 4;
-    sectors_per_cluster          = bpb->sectorPerCluster;
+    sectors_per_cluster         = bpb->sectorPerCluster;
     reserved_sector_count       = bpb->reservedSectorCount;
     root_cluster                = bpb->rootCluster;
     first_FAT_sector            = first_sector + reserved_sector_count;
@@ -100,7 +107,8 @@ int fat32_initialize ( uint8_t uart_module )
     dataSectors                 = bpb->totalSectors_F32
                                     - reserved_sector_count
                                     - (bpb->numberofFATs * bpb->FATsize_F32);
-    total_clusters = dataSectors / sectors_per_cluster;
+    
+    total_clusters              = dataSectors / sectors_per_cluster;
 #ifdef QDEBUG
 UART_write_string( "/-----------------------------------------------------/\n" );
 UART_write_string( "\tBoot info:\n" );
@@ -297,7 +305,7 @@ uint16_t fat32_get_file_index ( void )
 
 int fat32_create_new_file ( char *filename )
 {
-    new_dir = &dir_sector_buffer[i_dir_entry++];
+    new_dir = &dir_sector_buffer[i_dir_entry];
     i_global_dir_entry++;
     
     data_cluster        = next_free_cluster++;
@@ -305,7 +313,7 @@ int fat32_create_new_file ( char *filename )
     data_first_sector   = cluster_get_first_data_sector( data_cluster );
     data_sector         = 0;
 
-    memcpy( new_dir->name, filename, FAT_FILENAME_LENGTH );
+    memcpy( new_dir->name, filename, sizeof( new_dir->name ) );
     
     new_dir->firstClusterHI = (data_cluster >> 16) & 0xffff;
     new_dir->firstClusterLO = data_cluster & 0xffff;
@@ -314,7 +322,34 @@ int fat32_create_new_file ( char *filename )
     
     dir_write_sector();
     FAT_write_sector();
-    if ( i_dir_entry == dir_entries_per_sector )
+
+//    UART_write_string( uart_debug, "SD: new file: %s\n", filename );
+    
+    return( NO_ERROR_FAT );
+}
+
+int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size )
+{
+    SD_write_sector( data_first_sector + data_sector, buffer );
+    new_dir->fileSize += size;
+    dir_write_sector();     // Just to update the size of file =)
+    
+    if ( ++data_sector == sectors_per_cluster )
+    {
+        FAT_set_next_cluster_in_chain_cached( data_cluster, next_free_cluster );
+        data_cluster        = next_free_cluster++;
+        FAT_set_next_cluster_in_chain_cached( data_cluster, EOC );
+        data_first_sector   = cluster_get_first_data_sector( data_cluster );
+        data_sector         = 0;
+        FAT_write_sector();
+    }
+    
+    return( 0 );
+}
+
+int fat32_file_close ( void )
+{
+    if ( ++i_dir_entry == dir_entries_per_sector )
     {
         if ( ++dir_sector_number == sectors_per_cluster )
         {
@@ -328,24 +363,7 @@ int fat32_create_new_file ( char *filename )
         memset( dir_sector_buffer, 0, sizeof( dir_sector_buffer ) );
     }
     
-    return( NO_ERROR_FAT );
-}
-// Called as task
-int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size )
-{
-    SD_write_sector( data_first_sector + data_sector, buffer );
-    new_dir->fileSize += size;
-    
-    if ( ++data_sector == sectors_per_cluster )
-    {
-        FAT_set_next_cluster_in_chain_cached( data_cluster, next_free_cluster );
-        data_cluster        = next_free_cluster++;
-        FAT_set_next_cluster_in_chain_cached( data_cluster, EOC );
-        data_first_sector   = cluster_get_first_data_sector( data_cluster );
-        data_sector         = 0;
-    }
-    
-    return( 0 );
+    return 0;
 }
 
 /* 

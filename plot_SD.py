@@ -7,6 +7,7 @@ import math as m
 import matplotlib.pyplot as plt
 import sys
 
+import common
 
 angle_multiplyer = 1000.0
 
@@ -61,19 +62,12 @@ motor_4				= [0]
 filename = sys.argv[1]
 
 token_size = 32
-sensor_time = 10.0/1000
+sensor_time = 2.5/1000
 gyro_sensitivity = 65535/2/250.0
 alpha = 0.98
 
-def bytes_2_int16( bytes ):
-	int16 = ord(bytes[0]) << 8 | ord(bytes[1])
 
-	if int16 > (2**15 - 1):
-		int16 = int16 - (2**16 - 1)
-
-	return int16
-
-# altitude_multiplyer = 1000.0
+angle_multiplyer = 100.0
 
 with open( filename, 'r' ) as f:
 	while True:
@@ -85,9 +79,9 @@ with open( filename, 'r' ) as f:
 		_gyr_roll 			= bytes_2_int16( rdata[2:4] )/gyro_sensitivity
 		_gyr_yaw 			= bytes_2_int16( rdata[4:6] )/gyro_sensitivity
 
-		_angle_pitch 		= bytes_2_int16( rdata[6:8] )
-		_angle_roll 		= bytes_2_int16( rdata[8:10] )
-		_angle_yaw 			= bytes_2_int16( rdata[10:12] )
+		_angle_pitch 		= bytes_2_int16( rdata[6:8] )/angle_multiplyer
+		_angle_roll 		= bytes_2_int16( rdata[8:10] )/angle_multiplyer
+		_angle_yaw 			= bytes_2_int16( rdata[10:12] )/angle_multiplyer
 
 		_integr_pitch 		= bytes_2_int16( rdata[12:14] )
 
@@ -135,14 +129,14 @@ with open( filename, 'r' ) as f:
 
 # plt.plot( time, control_throttle, 'y-', label='Cntrl_t' )
 # plt.plot( time, integr_pitch, 'r-', label='Integr_p' )
-# plt.plot( time, angle_pitch,  'k-', label='Angle_p' )
+plt.plot( time, angle_pitch,  'k-', label='Angle_p' )
 # plt.plot( time, control_pitch,  'b-', label='Cntrl_p' )
-# plt.plot( time, gyro_pitch,  'g-', label='Gyro_p' )
+plt.plot( time, gyro_pitch,  'g-', label='Gyro_p' )
 
 # # plt.axis([ 0, fulltime, -20, 20 ])
-# plt.ylabel('Angle')
-# plt.xlabel('Time')
-# plt.grid()
-# plt.title(filename)
-# plt.legend()
-# plt.show()
+plt.ylabel('Angle')
+plt.xlabel('Time')
+plt.grid()
+plt.title(filename)
+plt.legend()
+plt.show()

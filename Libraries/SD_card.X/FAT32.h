@@ -150,6 +150,7 @@ int fat32_initialize ( uint8_t uart_module );
 int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size );
 int fat32_create_new_file ( char *filename );
 uint16_t fat32_get_file_index ( void );
+int fat32_file_close ( void );
 
 #endif	/* FAT32_H_ */
 

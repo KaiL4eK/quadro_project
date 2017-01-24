@@ -125,8 +125,8 @@ typedef uint16_t TimerTicks16_t;
 void timer_start();
 uint32_t timer_restart();
 uint32_t timer_stop();
-uint32_t convert_ticks_to_us ( TimerTicks32_t timer_ticks, uint8_t timer_divider );
-uint32_t convert_ticks_to_ms ( TimerTicks32_t timer_ticks, uint8_t timer_divider );
+uint32_t timer_get_us ();
+uint32_t timer_get_ms ();
 
 #define TIMER_DIV_1   0b00
 #define TIMER_DIV_8   0b01

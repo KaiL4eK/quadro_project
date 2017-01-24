@@ -1,7 +1,7 @@
 #ifndef Q_CORE_H_
 #define	Q_CORE_H_
 
-#include "per_proto.h"
+#include <per_proto.h>
 
 #include "motor_control.h"
 
@@ -63,9 +63,9 @@ typedef struct {
 } PID_rates_t;
 
 typedef struct {
-    float           prop_rev,
+    float           prop,
                     diff,
-                    integr_rev;
+                    integr;
 } PID_rates_float_t;
 
 typedef struct {

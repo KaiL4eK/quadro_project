@@ -1,5 +1,6 @@
 **/build*
 *pro.user*
+*.pyc
 **/dist/
 **/nbproject/private/
 **/disassembly/
