@@ -123,8 +123,8 @@ typedef uint16_t TimerTicks16_t;
 
 // timer_start, timer_restart, timer_stop - divider = 1
 void timer_start();
-uint32_t timer_restart();
-uint32_t timer_stop();
+void timer_restart();
+void timer_stop();
 uint32_t timer_get_us ();
 uint32_t timer_get_ms ();
 
