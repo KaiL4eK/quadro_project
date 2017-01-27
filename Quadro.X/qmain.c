@@ -13,7 +13,7 @@ void process_UART_frame( void );
 void complementary_filter_set_angle_rate( float rate_a );
 void complementary_filter_set_rotation_speed_rate( float rate_a );
 
-#define SD_CARD
+//#define SD_CARD
 #define PID_tuning
 #define RC_CONTROL_ENABLED
 //#define TEST_WO_MODULES
@@ -34,9 +34,9 @@ static int32_t      bmp180_altitude = 0;
 
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
-static quadrotor_state_t    quadrotor_state = {0, 0, 0, { 0, 0, 0, 0 }};
+static quadrotor_state_t    quadrotor_state = {0, 0, 0, 0, 0, 0, { 0, 0, 0, 0 }};
 static euler_angles_t       euler_angles    = {0, 0, 0};
-static struct gyro_rates { float pitch, roll, yaw; }
+static struct gyro_rates_ { float pitch, roll, yaw; }
                             gyro_rates      = {0, 0, 0};
     
 int main ( void ) 
@@ -45,7 +45,7 @@ int main ( void )
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
     UART_init( UART_BT, UART_460800, INT_PRIO_MID );
-    
+
 #ifdef UART_PYT
     UART_init( UART_PYT, UART_460800, INT_PRIO_HIGH );
     UART_write_set_endian( UART_PYT, UART_big_endian );
@@ -89,8 +89,8 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    complementary_filter_set_angle_rate( 0.9f );
-    complementary_filter_set_rotation_speed_rate( 0.0f );
+    complementary_filter_set_angle_rate( 0.99f );
+    complementary_filter_set_rotation_speed_rate( 0.7f );
     UART_write_string( UART_BT, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration( UART_BT );
@@ -135,8 +135,179 @@ int main ( void )
     return( 0 );
 }
 
+// p = p0*exp(-0.0341593/(t+273)*h)
+// h = ln(p0/p) * (t+273)/0.0341593
+
+/********** CONTROL SYSTEM FUNCTIONS **********/
+
+/*** Input ***/
+int16_t pitch_setpoint      = 0;
+int16_t roll_setpoint       = 0;
+int16_t yaw_setpoint        = 0;
+
+float pitch_rate_setpoint   = 0;
+float roll_rate_setpoint    = 0;
+float yaw_rate_setpoint     = 0;
+
+int16_t pitch_adjust        = 0;
+int16_t roll_adjust         = 0;
+
+/*** Output ***/
+int16_t pitch_control       = 0;
+int16_t roll_control        = 0;
+int16_t yaw_control         = 0;
+
+#define ANGLE_ADJUST_RATE           100
+
+// Max angular speed = 40 deg/sec   (1000/25)
+const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/25;
+
+void calculate_PID_controls ()
+{   
+    pitch_rate_setpoint = pitch_setpoint * CONTROL_2_ANGLE_SPEED_RATE;
+    pitch_control   = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch, gyro_rates.pitch );
+
+//    roll_control    = PID_controller_generate_roll_control( roll_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.roll, gyro_rates.roll );
+
+//    yaw_control     = PID_controller_generate_yaw_control( yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.yaw );
+}
+
+#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
+                            control_values->rudder > (-1*START_ANGLES) && \
+                            control_values->roll < START_ANGLES && \
+                            control_values->pitch > (-1*START_ANGLES) )
+
+#define MAX_CONTROL_ANGLE       10L
+#define CONTROL_2_ANGLE_RATIO   10L
+#define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
+#define DEADZONE_LIMIT          30
+
+#define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT <= (x) && (x) <= DEADZONE_LIMIT) ? 0 : (x))
+
+const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
+
+int32_t motorPower = 0;
+
 volatile bool   start_motors    = false,
                 stop_motors     = false;
+
+#define TESTING_
+
+void process_control_system ( void )
+{ 
+    static int16_t      stop_counter                = 0;
+    static bool         sticks_changed              = false;
+           bool         sticks_in_start_position    = START_STOP_COND;   
+#ifndef TESTING_   
+    if ( sticks_in_start_position != sticks_changed )
+    {   // If go from some position to corners (power on position) or from corners to some position
+        sticks_changed = sticks_in_start_position;
+        if ( sticks_in_start_position )
+        {   // If now in corner position
+            if ( !motors_armed )
+            {
+                PID_controller_reset_integral_sums();
+                motor_control_set_motors_started();
+                UART_write_string( UART_BT, "All motors started with power %d\n", motorPower );
+                motors_armed = true;
+            }
+            start_motors = false;
+        }
+    }
+#else
+           
+
+    if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
+    {
+#ifdef HANDS_START
+        if ( sticks_in_start_position != sticks_changed )
+        {   // If go from some position to corners (power on position) or from corners to some position
+            sticks_changed = sticks_in_start_position;
+            if ( sticks_in_start_position )
+            {   // If now in corner position
+                if ( !motors_armed )
+                {
+                    PID_controller_reset_integral_sums();
+                    motor_control_set_motors_started();
+                    UART_write_string( UART_BT, "All motors started with power %d\n", motorPower );
+                    motors_armed = true;
+                }
+                start_motors = false;
+            }
+        }
+#else
+        if ( start_motors && !motor_control_is_armed() )
+        {
+            PID_controller_reset_integral_sums();
+            motor_control_set_motors_started();
+            UART_write_string( UART_BT, "All motors started with power %ld\n", motorPower );
+        }
+        
+        if ( stop_motors && motor_control_is_armed() )
+        {
+            motor_control_set_motors_stopped();
+            UART_write_string( UART_BT, "All motors stopped\n", motorPower );        
+        }
+        
+        start_motors = false;
+        stop_motors = false;
+#endif
+    } else {
+        if ( motor_control_is_armed() )
+        {
+            motor_control_set_motors_stopped();
+            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
+        }
+    }
+#endif
+    // -1000 --- 1000
+           
+    pitch_setpoint  = CONTROL_DEADZONE( control_values->pitch );
+    roll_setpoint   = CONTROL_DEADZONE( control_values->roll );
+    yaw_setpoint    = CONTROL_DEADZONE( control_values->rudder );
+    
+    if ( motor_control_is_armed() )
+    {
+        calculate_PID_controls();
+
+        // 0 --- 2000
+        motorPower      = control_values->throttle; // * 1.6f;   // * 32 / 20
+        
+        int32_t power = 0;
+        power = motorPower + pitch_control - roll_control - yaw_control;
+        quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower + pitch_control + roll_control + yaw_control;
+        quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pitch_control + roll_control - yaw_control;
+        quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        power = motorPower - pitch_control - roll_control + yaw_control;
+        quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        motor_control_set_motor_powers( quadrotor_state.motor_power );
+        
+#ifdef HANDS_START
+        if ( control_values->throttle <= THROTTLE_START_LIMIT )
+        {
+            if ( stop_counter++ >= STOP_LIMIT )
+            {
+                UART_write_string( UART_BT, "All motors stopped\n" );
+                motors_armed = false;
+                motor_control_set_motors_stopped();
+                stop_counter = 0;
+            }
+        } else {
+            stop_counter = 0;       
+        }
+#endif
+    } 
+    else 
+        memset( quadrotor_state.motor_power, 0, sizeof( quadrotor_state.motor_power ) );
+}
+
+#undef TESTING_
 
 bool    SD_write    = false;
 
@@ -156,12 +327,12 @@ static void process_UART_PID_tuning()
         case 0:
             return;
         case 'Q': case 'q':
-            roll_rates.prop     += 0.002;
-            pitch_rates.prop    += 0.002;
+            roll_rates.prop     += 0.02;
+            pitch_rates.prop    += 0.02;
             break;
         case 'W': case 'w':
-            roll_rates.prop     -= 0.002;
-            pitch_rates.prop    -= 0.002;
+            roll_rates.prop     -= 0.02;
+            pitch_rates.prop    -= 0.02;
             break;
 //#define INTEGR_DELTA 200
 #define INTEGR_DELTA 0.00001
@@ -201,194 +372,36 @@ static void process_UART_PID_tuning()
         case 'V': case 'v':
             stop_motors = true;
             break;
-        
-            
+
         case '1':
-            SD_write = !SD_write;
-//            control_values->pitch = 1000;
+            UART_write_string( UART_BT, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
+            return;
             break;
             
         case '2':
-//            control_values->pitch = -1000;
+            UART_write_string( UART_BT, "Control: %03d %03d %03d\n", control_values->pitch, control_values->roll, control_values->rudder );
+            return;
+            break;
+            
+        case '3':
+            UART_write_string( UART_BT, "Angles: %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch );
+            return;
+            break;
+            
+        case '4':
+            UART_write_string( UART_BT, "Rates: %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate );
+            return;
             break;
             
         case '0':
-//            control_values->pitch = 0;
+            return;
             break;
     }
     
-//    UART_write_string( UART_BT, "P%d D%d I%d\n", pitch_rates.prop_rev, pitch_rates.diff, pitch_rates.integr_rev );
     UART_write_string( UART_BT, "P %d D %d I %ld OP %d OR %d\n", (uint16_t)(pitch_rates.prop * 1000), (uint16_t)(pitch_rates.diff * 10), (uint32_t)(pitch_rates.integr * 100000L), 
                                                                  (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
 }
 #endif
-
-// p = p0*exp(-0.0341593/(t+273)*h)
-// h = ln(p0/p) * (t+273)/0.0341593
-
-/********** CONTROL SYSTEM FUNCTIONS **********/
-
-/*** Input ***/
-int16_t pitch_setpoint  = 0;
-int16_t roll_setpoint   = 0;
-int16_t yaw_setpoint    = 0;
-
-int16_t pitch_adjust    = 0;
-int16_t roll_adjust     = 0;
-
-/*** Output ***/
-int16_t pitch_control = 0;
-int16_t roll_control  = 0;
-int16_t yaw_control   = 0;
-
-#define ANGLE_ADJUST_RATE           100
-
-// Max angular speed = 40 deg/sec   (1000/25)
-const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/25;
-
-void calculate_PID_controls ()
-{
-    pitch_control   = PID_controller_generate_pitch_control( pitch_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.pitch, gyro_rates.pitch );
-
-//    roll_control    = PID_controller_generate_roll_control( roll_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.roll, gyro_rates.roll );
-
-//    yaw_control     = PID_controller_generate_yaw_control( yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.yaw );
-}
-
-#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
-                            control_values->rudder > (-1*START_ANGLES) && \
-                            control_values->roll < START_ANGLES && \
-                            control_values->pitch > (-1*START_ANGLES) )
-
-#define MAX_CONTROL_ANGLE       10L
-#define CONTROL_2_ANGLE_RATIO   10L
-#define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
-#define DEADZONE_LIMIT_ANGLE    30
-
-#define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT_ANGLE >= (x) && (x) <= DEADZONE_LIMIT_ANGLE) ? 0 : (x))
-
-const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
-
-int32_t motorPower = 0;
-
-#define TESTING_
-
-void process_control_system ( void )
-{
-    static bool         motors_armed                = false;
- 
-    static int16_t      stop_counter                = 0;
-    static bool         sticks_changed              = false;
-           bool         sticks_in_start_position    = START_STOP_COND;   
-#ifndef TESTING_   
-    if ( sticks_in_start_position != sticks_changed )
-    {   // If go from some position to corners (power on position) or from corners to some position
-        sticks_changed = sticks_in_start_position;
-        if ( sticks_in_start_position )
-        {   // If now in corner position
-            if ( !motors_armed )
-            {
-                PID_controller_reset_integral_sums();
-                motor_control_set_motors_started();
-                UART_write_string( UART_BT, "All motors started with power %d\n", motorPower );
-                motors_armed = true;
-            }
-            start_motors = false;
-        }
-    }
-#else
-    if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
-    {
-        if ( sticks_in_start_position != sticks_changed )
-        {   // If go from some position to corners (power on position) or from corners to some position
-            sticks_changed = sticks_in_start_position;
-            if ( sticks_in_start_position )
-            {   // If now in corner position
-                if ( !motors_armed )
-                {
-                    PID_controller_reset_integral_sums();
-                    motor_control_set_motors_started();
-                    UART_write_string( UART_BT, "All motors started with power %d\n", motorPower );
-                    motors_armed = true;
-                }
-                start_motors = false;
-            }
-        }
-//        if ( start_motors && !motors_armed )
-//        {
-//            PID_controller_reset_integral_sums();
-//            motor_control_set_motors_started();
-//            UART_write_string( UART_BT, "All motors started with power %ld\n", motorPower );
-//            motors_armed = true;
-//        }
-//        
-//        if ( stop_motors && motors_armed )
-//        {
-//            motor_control_set_motors_stopped();
-//            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
-//            motors_armed = false;            
-//        }
-    } else {
-        quadrotor_state.yaw = 0;
-        if ( motors_armed )
-        {
-            motor_control_set_motors_stopped();
-            UART_write_string( UART_BT, "All motors stopped\n", motorPower );
-            motors_armed = false;
-        }
-    }
-           
-//    start_motors = false;
-//    stop_motors = false;
-#endif
-    // -1000 --- 1000
-    pitch_setpoint  = CONTROL_DEADZONE( control_values->pitch );
-    roll_setpoint   = CONTROL_DEADZONE( control_values->roll );
-    yaw_setpoint    = CONTROL_DEADZONE( control_values->rudder );
-           
-    if ( motors_armed )
-    {
-        calculate_PID_controls();
-
-        // 0 --- 2000
-        motorPower      = control_values->throttle; // * 1.6f;   // * 32 / 20
-        
-        int32_t power = 0;
-        power = motorPower + pitch_control - roll_control - yaw_control;
-        quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-
-        power = motorPower + pitch_control + roll_control + yaw_control;
-        quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-
-        power = motorPower - pitch_control + roll_control - yaw_control;
-        quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-
-        power = motorPower - pitch_control - roll_control + yaw_control;
-        quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
-
-        motor_control_set_motor_powers( quadrotor_state.motor_power );
-        
-#ifdef RC_CONTROL_ENABLED
-
-        if ( control_values->throttle <= THROTTLE_START_LIMIT )
-        {
-            if ( stop_counter++ >= STOP_LIMIT )
-            {
-                UART_write_string( UART_BT, "All motors stopped\n" );
-                motors_armed = false;
-                motor_control_set_motors_stopped();
-                stop_counter = 0;
-            }
-        } else {
-            stop_counter = 0;       
-        }
-#endif // RC_CONTROL_ENABLED
-    } 
-    else 
-        memset( quadrotor_state.motor_power, 0, sizeof( quadrotor_state.motor_power ) );
-}
-
-#undef TESTING_
 
 /******************** FILTERING API ********************/
 
@@ -417,9 +430,9 @@ void complementary_filter_set_rotation_speed_rate( float rate_a )
 }
 
 #define SENS_TIME_MS       0.0025f          // 2500L/1000000
-#define GYR_COEF           131.0f           // INT16_MAX/250 - Taken from datasheet mpu6050
+#define GYR_COEF           65.5f           // INT16_MAX/500 - Taken from datasheet mpu6050
 
-const static float gyro_rate_raw_2_deg_per_sec    = 1.0f/GYR_COEF;
+const static float gyro_rate_raw_2_deg_per_sec    = 1/GYR_COEF;
 const static float gyro_rate_raw_2_degree         = SENS_TIME_MS/GYR_COEF;
 
 static void compute_IMU_data( void )
@@ -431,6 +444,8 @@ static void compute_IMU_data( void )
     gyro_rates.pitch            = complementary_filter_rotation_speed_rate_a * gyro_rates.pitch + complementary_filter_rotation_speed_rate_b * (g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec);
     gyro_rates.roll             = complementary_filter_rotation_speed_rate_a * gyro_rates.roll  + complementary_filter_rotation_speed_rate_b * (g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec);
     gyro_rates.yaw              = complementary_filter_rotation_speed_rate_a * gyro_rates.yaw   + complementary_filter_rotation_speed_rate_b * (g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec);    
+    
+    // Next count angle
     
     float   accel_angle_roll    = 0;
     float   accel_angle_pitch   = 0;
@@ -445,8 +460,8 @@ static void compute_IMU_data( void )
     euler_angles.roll    = (complementary_filter_angle_rate_a * (g_a->value.y_gyro * gyro_rate_raw_2_degree + euler_angles.roll))  + (complementary_filter_angle_rate_b * accel_angle_roll);
     euler_angles.yaw     =                                       g_a->value.z_gyro * gyro_rate_raw_2_degree + euler_angles.yaw;
 
-    euler_angles.pitch      -= pitch_offset;
-    euler_angles.roll       -= roll_offset;
+    euler_angles.pitch   -= pitch_offset;
+    euler_angles.roll    -= roll_offset;
 }
 
 /******************** FILTERING API END ********************/
@@ -628,30 +643,35 @@ void send_serial_data ( void )
     
     if ( data_switch )
     {
-#define DATA_SZ 1
-        uint16_t buffer[DATA_SZ];
+//        extern float        integr_sum_pitch;
+//        extern float        integr_sum_roll;
+//        extern float        integr_sum_yaw;
         
-        buffer[0] = euler_angles.pitch * 100;
+        int16_t buffer[4];
         
-        UART_write_words( UART_PYT, buffer, DATA_SZ );
+        buffer[0] = quadrotor_state.pitch;
+        buffer[1] = quadrotor_state.pitch_rate;
+        buffer[2] = motorPower;
+        buffer[3] = pitch_rate_setpoint;
+//        buffer[3] = integr_sum_pitch;
+        
+        UART_write_words( UART_PYT, buffer, 4 );
     }
     
-    if ( !UART_bytes_available( UART_PYT ) )
+    if ( UART_bytes_available( UART_PYT ) == 0 )
         return;
     else
     {
         byte = UART_get_byte( UART_PYT );
         UART_write_string( UART_BT, "Check: 0x%x\n", byte );
+        
+        if ( byte == '1' )
+        {
+            data_switch = !data_switch;
+            UART_write_string( UART_BT, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            UART_write_byte( UART_PYT, '0' );
+        }
     }
-    
-    if ( byte == '1' )
-    {
-        data_switch = !data_switch;
-        UART_write_string( UART_BT, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
-        UART_write_byte( UART_PYT, '0' );
-    }
-    
-
 }
 
 #endif
@@ -683,7 +703,7 @@ void control_system_timer_init( void )
 /******************** INTERRUPT HANDLER ********************/
 
 #define MEASURE_INT_TIME
-#define CHECK_SD_LOAD
+//#define CHECK_SD_LOAD
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {    
@@ -703,6 +723,13 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     compute_IMU_data();
     
+    quadrotor_state.pitch       = euler_angles.pitch * 10;
+    quadrotor_state.roll        = euler_angles.roll  * 10;
+    
+    quadrotor_state.pitch_rate  = gyro_rates.pitch;
+    quadrotor_state.roll_rate   = gyro_rates.roll;
+    quadrotor_state.yaw_rate    = gyro_rates.yaw;
+    
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();
     
@@ -714,11 +741,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     remote_control_update_control_values();
 #endif // RC_CONTROL_ENABLED
     process_control_system();
-    
-//    UART_write_string( UART_BT, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
-//    UART_write_string( UART_BT, "Control: %03d %03d %03d\n", control_values->pitch, control_values->roll, control_values->rudder );
-//    UART_write_string( UART_BT, "Angles: %d, %d\n", quadrotor_state.roll, quadrotor_state.pitch );
-    
+       
 #ifdef CHECK_SD_LOAD
     uint8_t load = file_get_buffers_loaded_count();
     if ( load >= 2 )

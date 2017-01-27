@@ -14,6 +14,7 @@
 volatile unsigned int   *aMotor_power_reg[]   = { &PDC1, &PDC2, &PDC3, &PDC4 };
 bool                    aMotor_armed[]        = { false, false, false, false };
 uint16_t                aMotor_PWM[]          = { 0, 0, 0, 0 };
+bool                    motors_armed          = false;
 
 inline uint16_t power_2_PWM( motor_power_t power )
 {
@@ -40,6 +41,9 @@ void motor_control_set_motor_power( motor_num_t nMotor, motor_power_t power )
 
 void motor_control_set_motor_powers( motor_power_t powers[4] )
 {
+    if ( !motors_armed )
+        return;
+    
     uint8_t i;
     for ( i = 0; i < 4; i++ ) 
     {
@@ -49,20 +53,28 @@ void motor_control_set_motor_powers( motor_power_t powers[4] )
     }
 }
 
+bool motor_control_is_armed( void )
+{
+    return motors_armed;
+}
+
 void motor_control_set_motor_started( motor_num_t nMotor )
 {
+    motors_armed         = true;
     aMotor_armed[nMotor] = true;
     set_motor_PWM( nMotor, MOTOR_ESC_MIN_PWM );
 }
 
 void motor_control_set_motor_stopped( motor_num_t nMotor )
 {
+    motors_armed         = false;
     aMotor_armed[nMotor] = false;
     set_motor_PWM( nMotor, MOTOR_ESC_STOP_PWM );
 }
 
 void motor_control_set_motors_started( void )
 {
+    motors_armed         = true;
     aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = true;
     set_motor_PWM( 0, MOTOR_ESC_MIN_PWM );
     set_motor_PWM( 1, MOTOR_ESC_MIN_PWM );
@@ -72,6 +84,7 @@ void motor_control_set_motors_started( void )
 
 void motor_control_set_motors_stopped( void )
 {
+    motors_armed         = false;
     aMotor_armed[0] = aMotor_armed[1] = aMotor_armed[2] = aMotor_armed[3] = false;
     set_motor_PWM( 0, MOTOR_ESC_STOP_PWM );
     set_motor_PWM( 1, MOTOR_ESC_STOP_PWM );

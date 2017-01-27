@@ -25,6 +25,8 @@ typedef struct
     uint8_t                 n_read_bytes_available;
     bool                    read_overflow;
     
+    volatile unsigned int   *reg_read;    
+    volatile unsigned int   *reg_write;    
 }UART_module_fd;
 
 volatile UART_module_fd  uart_fd[] = {  {   .initialized = false,
@@ -75,6 +77,9 @@ int UART_init( uint8_t module, UART_speed_t baud, Interrupt_priority_lvl_t prior
         
         U1MODEbits.UARTEN   = 1;            // And turn the peripheral on
         U1STAbits.UTXEN     = 1; 
+        
+        uart_fd[0].reg_read = &U1RXREG;
+        uart_fd[0].reg_write = &U1TXREG;        
     } 
     else
     {
@@ -101,6 +106,9 @@ int UART_init( uint8_t module, UART_speed_t baud, Interrupt_priority_lvl_t prior
         
         U2MODEbits.UARTEN   = 1;
         U2STAbits.UTXEN     = 1;
+        
+        uart_fd[1].reg_read = &U2RXREG;
+        uart_fd[1].reg_write = &U2TXREG;
     }
     
     uart_fd[module-1].initialized   = true;
@@ -121,16 +129,14 @@ void UART_write_set_endian ( uint8_t module, UART_write_endian_t mode )
 
 void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 {
-    if ( U1STAbits.URXDA ) 
+    volatile UART_module_fd  *p_fd = &uart_fd[UART_i1];
+    
+    if ( U1STAbits.URXDA && !p_fd->read_overflow ) 
     {
-        volatile UART_module_fd  *p_fd = &uart_fd[UART_i1];
-        
-        p_fd->read_buffer[p_fd->i_read_head_byte++] = U1RXREG;
+        p_fd->read_buffer[p_fd->i_read_head_byte++] = *p_fd->reg_read;
         
         if ( ++p_fd->n_read_bytes_available == UART_DATA_BUFFER_SIZE ) {
             p_fd->read_overflow = true;
-            while ( p_fd->n_read_bytes_available == UART_DATA_BUFFER_SIZE ) {};  // Wait for buffer free
-            p_fd->read_overflow = false;
         }
     } else
         _U1RXIF = 0;
@@ -138,16 +144,14 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1RXInterrupt()
 
 void __attribute__( (__interrupt__, auto_psv) ) _U2RXInterrupt()
 {
-    if ( U2STAbits.URXDA ) 
-    {
-        volatile UART_module_fd  *p_fd = &uart_fd[UART_i2];
-        
-        p_fd->read_buffer[p_fd->i_read_head_byte++] = U2RXREG;
+    volatile UART_module_fd  *p_fd = &uart_fd[UART_i2];
+    
+    if ( U2STAbits.URXDA && !p_fd->read_overflow ) 
+    {    
+        p_fd->read_buffer[p_fd->i_read_head_byte++] = *p_fd->reg_read;
         
         if ( ++p_fd->n_read_bytes_available == UART_DATA_BUFFER_SIZE ) {
             p_fd->read_overflow = true;
-            while ( p_fd->n_read_bytes_available == UART_DATA_BUFFER_SIZE ) {};  // Wait for buffer free
-            p_fd->read_overflow = false;
         }
     } else 
         _U2RXIF = 0;
@@ -163,6 +167,8 @@ uint8_t UART_get_byte( uint8_t module )
     if ( p_fd->n_read_bytes_available == 0 )
         return 0;
     
+    p_fd->read_overflow = false;
+    
     p_fd->n_read_bytes_available--;
     return p_fd->read_buffer[p_fd->i_read_tail_byte++];
 }
@@ -172,15 +178,12 @@ void UART_get_bytes( uint8_t module, uint8_t *out_buffer, uint8_t n_bytes )
     if ( !ASSERT_MODULE_NUMBER( module ) )
         return;
     
-    volatile UART_module_fd *p_fd = &uart_fd[module-1];
-    
     int16_t i = 0;
     for ( i = 0; i < n_bytes; i++ ) {
-        if ( p_fd->n_read_bytes_available == 0 )
+        if ( UART_bytes_available( module ) == 0 )
             return;
 
-        p_fd->n_read_bytes_available--;
-        out_buffer[i] = p_fd->read_buffer[p_fd->i_read_tail_byte++];
+        out_buffer[i] = UART_get_byte( module );
     }
 }
 
@@ -204,7 +207,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U1TXInterrupt()
     {
         if ( p_fd->n_write_bytes_available )
         {
-            U1TXREG = p_fd->write_buffer[p_fd->i_write_tail_byte++];
+            *p_fd->reg_write = p_fd->write_buffer[p_fd->i_write_tail_byte++];
             p_fd->n_write_bytes_available--;
         } else {
             _U1TXIF = 0;
@@ -220,7 +223,7 @@ void __attribute__( (__interrupt__, auto_psv) ) _U2TXInterrupt()
     {
         if ( p_fd->n_write_bytes_available )
         {
-            U2TXREG = p_fd->write_buffer[p_fd->i_write_tail_byte++];
+            *p_fd->reg_write = p_fd->write_buffer[p_fd->i_write_tail_byte++];
             p_fd->n_write_bytes_available--;
         } else {
             _U2TXIF = 0;

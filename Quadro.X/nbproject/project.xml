@@ -10,7 +10,7 @@
             <cpp-extensions/>
             <header-extensions>h</header-extensions>
             <asminc-extensions/>
-            <sourceEncoding>ISO-8859-1</sourceEncoding>
+            <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects>
                 <make-dep-project>../Libraries/SensorsLib.X</make-dep-project>
                 <make-dep-project>../Libraries/Periphery_lib.X</make-dep-project>

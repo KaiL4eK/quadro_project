@@ -16,7 +16,11 @@ typedef int16_t error_value_t;
 
 typedef struct
 {
-    euler_angle_degree_int_t    roll,           // Multiplyed by 100
+    int16_t                     pitch_rate,
+                                roll_rate,
+                                yaw_rate;
+    
+    euler_angle_degree_int_t    roll,
                                 pitch,
                                 yaw;
 

@@ -12,15 +12,15 @@ int mpu6050_init ( void )
 
     mpu6050_set_sleep_bit( 0 );
 //    mpu6050_set_clock_source( MPU6050_CLOCK_PLL_XGYRO );
-    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
 //    mpu6050_set_sample_rate_divider( 1 );
     
-    mpu6050_setXAccelOffset(-3877);
-    mpu6050_setYAccelOffset(464);
-    mpu6050_setZAccelOffset(1650);
+    mpu6050_setXAccelOffset(-3904);
+    mpu6050_setYAccelOffset(314);
+    mpu6050_setZAccelOffset(1656);
     
-    mpu6050_setXGyroOffset(105);
+    mpu6050_setXGyroOffset(106);
     mpu6050_setYGyroOffset(-13);
     mpu6050_setZGyroOffset(-21);
     

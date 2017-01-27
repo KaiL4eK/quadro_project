@@ -10,6 +10,7 @@ typedef enum {
     MOTOR_4
 } motor_num_t;
 
+bool motor_control_is_armed( void );
 void motor_control_init( void );
 void motor_control_set_motor_power( motor_num_t nMotor, int16_t power );
 void motor_control_set_motor_powers( int16_t powers[4] );
