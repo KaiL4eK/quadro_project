@@ -89,8 +89,8 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    complementary_filter_set_angle_rate( 0.99f );
-    complementary_filter_set_rotation_speed_rate( 0.7f );
+    complementary_filter_set_angle_rate( 0.995f );
+    complementary_filter_set_rotation_speed_rate( 0.8f );
     UART_write_string( UART_BT, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration( UART_BT );
@@ -157,14 +157,18 @@ int16_t pitch_control       = 0;
 int16_t roll_control        = 0;
 int16_t yaw_control         = 0;
 
-#define ANGLE_ADJUST_RATE           100
+#define ANGLE_ADJUST_RATE           50.0f
 
-// Max angular speed = 40 deg/sec   (1000/25)
-const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/25;
+// Max angular speed = 50 deg/sec   (1000/20)
+const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/20;
 
 void calculate_PID_controls ()
 {   
+#if 0
     pitch_rate_setpoint = pitch_setpoint * CONTROL_2_ANGLE_SPEED_RATE;
+#else
+    pitch_rate_setpoint = (pitch_setpoint - euler_angles.pitch * ANGLE_ADJUST_RATE) * CONTROL_2_ANGLE_SPEED_RATE;
+#endif
     pitch_control   = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch, gyro_rates.pitch );
 
 //    roll_control    = PID_controller_generate_roll_control( roll_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.roll, gyro_rates.roll );
@@ -322,20 +326,22 @@ static void process_UART_PID_tuning()
     extern PID_rates_float_t    roll_rates,
                                 pitch_rates;
     
+    if ( UART_bytes_available( UART_BT ) == 0 )
+        return;
+    
     switch ( UART_get_byte( UART_BT ) )
     {
-        case 0:
-            return;
+#define PROP_DELTA 0.1
         case 'Q': case 'q':
-            roll_rates.prop     += 0.02;
-            pitch_rates.prop    += 0.02;
+            roll_rates.prop     += PROP_DELTA;
+            pitch_rates.prop    += PROP_DELTA;
             break;
         case 'W': case 'w':
-            roll_rates.prop     -= 0.02;
-            pitch_rates.prop    -= 0.02;
+            roll_rates.prop     -= PROP_DELTA;
+            pitch_rates.prop    -= PROP_DELTA;
             break;
 //#define INTEGR_DELTA 200
-#define INTEGR_DELTA 0.00001
+#define INTEGR_DELTA 0.001
         case 'A': case 'a':
             roll_rates.integr   += INTEGR_DELTA;
             pitch_rates.integr  += INTEGR_DELTA;
@@ -346,13 +352,14 @@ static void process_UART_PID_tuning()
             pitch_rates.integr  -= INTEGR_DELTA;
             PID_controller_reset_integral_sums();
             break;
+#define DIFF_DELTA 0.1
         case 'Z': case 'z':
-            roll_rates.diff += 0.1;
-            pitch_rates.diff += 0.1;
+            roll_rates.diff += DIFF_DELTA;
+            pitch_rates.diff += DIFF_DELTA;
             break;
         case 'X': case 'x':
-            roll_rates.diff -= 0.1;
-            pitch_rates.diff -= 0.1;
+            roll_rates.diff -= DIFF_DELTA;
+            pitch_rates.diff -= DIFF_DELTA;
             break;
         case 'R': case 'r':
             pitch_offset += OFFSET_DELTA;
@@ -398,7 +405,7 @@ static void process_UART_PID_tuning()
             break;
     }
     
-    UART_write_string( UART_BT, "P %d D %d I %ld OP %d OR %d\n", (uint16_t)(pitch_rates.prop * 1000), (uint16_t)(pitch_rates.diff * 10), (uint32_t)(pitch_rates.integr * 100000L), 
+    UART_write_string( UART_BT, "P %d D %d I %d OP %d OR %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000), 
                                                                  (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
 }
 #endif

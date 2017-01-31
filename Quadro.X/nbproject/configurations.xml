@@ -231,7 +231,7 @@
       <C30Global>
         <property key="common-include-directories" value="../Libraries/SD_card.X"/>
         <property key="dual-boot-partition" value="0"/>
-        <property key="fast-math" value="false"/>
+        <property key="fast-math" value="true"/>
         <property key="generic-16-bit" value="false"/>
         <property key="legacy-libc" value="false"/>
         <property key="mpreserve-all" value="false"/>

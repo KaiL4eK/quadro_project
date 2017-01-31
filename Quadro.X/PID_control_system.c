@@ -7,8 +7,8 @@
 
 #include "core.h"
 
-PID_rates_float_t   roll_rates  = { .prop = 4.5,   .integr = 0.00000,    .diff = 20 },
-                    pitch_rates = { .prop = 4.5,   .integr = 0.00000,    .diff = 20 },
+PID_rates_float_t   roll_rates  = { .prop = 2.5,   .integr = 0.015,    .diff = 16 },
+                    pitch_rates = { .prop = 2.5,   .integr = 0.015,    .diff = 16 },
                     yaw_rates   = { .prop = 0.00,   .integr = 0.00000,    .diff = 0 };
 
 float       integr_sum_pitch = 0;
@@ -19,7 +19,7 @@ PID_parts_t pitch_parts,
             roll_parts,
             yaw_parts;
 
-#define CONTROL_LIMIT 1500
+#define CONTROL_LIMIT 1000
 
 void PID_controller_reset_integral_sums ( void )
 {
