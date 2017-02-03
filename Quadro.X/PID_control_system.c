@@ -9,7 +9,7 @@
 
 PID_rates_float_t   roll_rates  = { .prop = 2.5,   .integr = 0.015,    .diff = 16 },
                     pitch_rates = { .prop = 2.5,   .integr = 0.015,    .diff = 16 },
-                    yaw_rates   = { .prop = 0.00,   .integr = 0.00000,    .diff = 0 };
+                    yaw_rates   = { .prop = 0.5,   .integr = 0.002 };
 
 float       integr_sum_pitch = 0;
 float       integr_sum_roll  = 0;
@@ -71,7 +71,6 @@ int16_t PID_controller_generate_yaw_control( float error )
 
     yaw_parts.p = error * yaw_rates.prop;
     yaw_parts.i = integr_sum_yaw;
-    yaw_parts.d = 0;
     
     int32_t regul = (yaw_parts.p + yaw_parts.i);
 

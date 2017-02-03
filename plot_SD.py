@@ -7,7 +7,7 @@ import math as m
 import matplotlib.pyplot as plt
 import sys
 
-import common
+from common import bytes_2_int16
 
 angle_multiplyer = 1000.0
 
