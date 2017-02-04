@@ -17,17 +17,17 @@ serial_dspic.bytesize 	= serial.EIGHTBITS #number of bits per bytes
 serial_dspic.parity 	= serial.PARITY_NONE #set parity check: no parity
 serial_dspic.stopbits 	= serial.STOPBITS_ONE #number of stop bits
 
-angle 		= [0]
+angle 			= [0]
 rate 			= [0]
 rate_ref 		= [0]
 rate_integral	= [0]
 
-control 			= [0]
+control 		= [0]
 
-motor_power			= [0]
+motor_power		= [0]
 integr 			= [0]
 
-time_array = [0]
+time_array 		= [0]
 
 sensor_time = 2.5/1000
 angle_rate  = 10.0
@@ -52,23 +52,12 @@ def main():
 		if t.is_alive():
 
 			data = serial_dspic.read( 2 * 5 )
-			__angle			= common.bytes_2_int16( data[0:2] ) / angle_rate
-			angle.append( __angle )
 
-			__rate 			= common.bytes_2_int16( data[2:4] )
-			rate.append( __rate )
-
-			__integr		= common.bytes_2_int16( data[4:6] )
-			integr.append( __integr )
-
-			__rate_ref 	= common.bytes_2_int16( data[6:8] )
-			rate_ref.append( __rate_ref )
-			
-			# __rate_integral 	= common.bytes_2_int16( data[6:8] )
-			# rate_integral.append( __rate_integral )
-
-			__control 	= common.bytes_2_int16( data[6:8] )
-			control.append( __control )
+			angle.append( common.bytes_2_int16( data[0:2] ) / angle_rate )
+			rate.append( common.bytes_2_int16( data[2:4] ) )
+			integr.append( common.bytes_2_int16( data[4:6] ) )
+			rate_ref.append( common.bytes_2_int16( data[6:8] ) )
+			control.append( common.bytes_2_int16( data[8:10] ) )
 
 			fulltime += sensor_time
 			time_array.append(fulltime)

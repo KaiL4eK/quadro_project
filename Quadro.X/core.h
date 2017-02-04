@@ -88,5 +88,9 @@ void cmdProcessor_init ( uint8_t module );
 UART_frame_t *cmdProcessor_rcvFrame ( void );
 void cmdProcessor_write_cmd ( uint8_t module, uint8_t prefix, uint8_t code );
 
+int battery_charge_initialize ( void );
+void battery_charge_read_value ( void );
+uint16_t battery_charge_get_voltage_x10 ( void );
+
 #endif	/* Q_CORE_H_ */
 

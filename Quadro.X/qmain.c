@@ -17,8 +17,8 @@ void complementary_filter_set_rotation_speed_rate( float rate_a );
 #define PID_tuning
 #define RC_CONTROL_ENABLED
 
-#define UART_BT     2
-#define UART_SERIAL 1
+#define UART_BT     1
+#define UART_SERIAL 2
 
 #if 1
 #define UART_DEBUG  UART_SERIAL
@@ -26,7 +26,7 @@ void complementary_filter_set_rotation_speed_rate( float rate_a );
 #define UART_DEBUG  UART_BT
 #endif
 
-#define UART_PYT    2
+//#define UART_PYT    2
 
 #ifdef INTERFACE_COMMUNICATION
     #define UART_DATA   2
@@ -72,7 +72,8 @@ int main ( void )
     UART_write_string( UART_DEBUG, "UART initialized\n" );
     
     error_process_init( UART_DEBUG );
-
+//    battery_charge_initialize();
+    
     control_values = remote_control_init();
     UART_write_string( UART_DEBUG, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
@@ -99,7 +100,7 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    complementary_filter_set_angle_rate( 0.99f );
+    complementary_filter_set_angle_rate( 0.999f );
     complementary_filter_set_rotation_speed_rate( 0.8f );
     UART_write_string( UART_DEBUG, "MPU6050 initialized\n" );
     
@@ -292,10 +293,13 @@ void process_control_system ( void )
     
     if ( motor_control_is_armed() )
     {
-        calculate_PID_controls();
-
+        if ( control_values->throttle > THROTTLE_START_LIMIT )
+            calculate_PID_controls();
+        else
+            pitch_control = roll_control = yaw_control = 0;
+            
         // 0 --- 2000
-        motorPower      = control_values->throttle; // * 1.6f;   // * 32 / 20
+        motorPower      = control_values->throttle * 1.2f;   // * 32 / 20
         
         int32_t power = 0;
         power = motorPower + pitch_control - roll_control - yaw_control;
@@ -339,7 +343,7 @@ bool    SD_write                    = false;
 float pitch_offset                  = 0.0f;
 float roll_offset                   = 0.0f;
 
-static void process_UART_PID_tuning()
+static void UART_debug_interface()
 {
     extern PID_rates_float_t    roll_rates,
                                 pitch_rates,
@@ -391,7 +395,7 @@ static void process_UART_PID_tuning()
             roll_rates.diff -= DIFF_DELTA;
             pitch_rates.diff -= DIFF_DELTA;
             break;
-#define OFFSET_DELTA                0.1;
+#define OFFSET_DELTA                0.01;
         case 'R': case 'r':
             pitch_offset += OFFSET_DELTA;
             break;
@@ -447,6 +451,7 @@ static void process_UART_PID_tuning()
             break;
             
         case '0':
+            UART_write_string( UART_DEBUG, "Battery: %d V\n", battery_charge_get_voltage_x10() );
             return;
             break;
     }
@@ -650,19 +655,15 @@ void process_saving_data ( void )
 
         uint8_t             buffer[16];
         
-        WRITE_2_BYTE_VAL( buffer, gyro_rates.pitch,                 0 );
-        WRITE_2_BYTE_VAL( buffer, gyro_rates.roll,                  2 );
-        WRITE_2_BYTE_VAL( buffer, gyro_rates.yaw,                   4 );
-#define ANGLES_COEFF                100L        // each float is represented as integer *100 (2 decimals after point)
-        quadrotor_state.pitch   = euler_angles.pitch * ANGLES_COEFF;
-        quadrotor_state.roll    = euler_angles.roll  * ANGLES_COEFF;
-        quadrotor_state.yaw     = euler_angles.yaw   * ANGLES_COEFF;
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.pitch_rate,       0 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.roll_rate,        2 );
+        WRITE_2_BYTE_VAL( buffer, quadrotor_state.yaw_rate,         4 );
         
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.pitch,            6 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.roll,             8 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.yaw,              10 );
         
-//        WRITE_2_BYTE_VAL( buffer, pitch_control,                    12 );
+//        WRITE_2_BYTE_VAL( buffer, pitch_control,                  12 );
         WRITE_2_BYTE_VAL( buffer, yaw_control,                      12 );
         WRITE_2_BYTE_VAL( buffer, integr_sum_yaw,                   14 );
         
@@ -800,7 +801,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
         UART_write_string( UART_DEBUG, "Buffers loaded: %d\n", load );
 #endif
     
-    process_UART_PID_tuning();
+    UART_debug_interface();
     
 #ifdef UART_PYT
     send_serial_data();
@@ -813,6 +814,8 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #ifdef INTERFACE_COMMUNICATION
     process_sending_UART_data();
 #endif
+    
+//    battery_charge_read_value();
     
 #ifdef MEASURE_INT_TIME
     timer_stop();
