@@ -13,16 +13,20 @@ void process_UART_frame( void );
 void complementary_filter_set_angle_rate( float rate_a );
 void complementary_filter_set_rotation_speed_rate( float rate_a );
 
-#define SD_CARD
+//#define SD_CARD
 #define PID_tuning
 #define RC_CONTROL_ENABLED
 
-#define UART_BT     1
-#define UART_SERIAL 2
+#define UART_BT     2
+#define UART_SERIAL 1
 
+#if 1
 #define UART_DEBUG  UART_SERIAL
+#else
+#define UART_DEBUG  UART_BT
+#endif
 
-//#define UART_PYT    1
+#define UART_PYT    2
 
 #ifdef INTERFACE_COMMUNICATION
     #define UART_DATA   2
@@ -95,7 +99,7 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    complementary_filter_set_angle_rate( 0.995f );
+    complementary_filter_set_angle_rate( 0.99f );
     complementary_filter_set_rotation_speed_rate( 0.8f );
     UART_write_string( UART_DEBUG, "MPU6050 initialized\n" );
     
@@ -179,18 +183,23 @@ void calculate_PID_controls ( void )
     
     roll_rate_setpoint  = (roll_setpoint - euler_angles.roll * ANGLE_ADJUST_RATE) * CONTROL_2_ANGLE_SPEED_RATE;
     
-    roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.roll, gyro_rates.roll );
+    roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll, gyro_rates.roll );
 
     
     yaw_rate_setpoint   = yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE;
     
-    yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint * CONTROL_2_ANGLE_SPEED_RATE - gyro_rates.yaw );
+    yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
 }
 
+#if 0
 #define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
                             control_values->rudder > (-1*START_ANGLES) && \
                             control_values->roll < START_ANGLES && \
                             control_values->pitch > (-1*START_ANGLES) )
+#else
+#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
+                            control_values->rudder > (-1*START_ANGLES) )
+#endif
 
 #define MAX_CONTROL_ANGLE       10L
 #define CONTROL_2_ANGLE_RATIO   10L
@@ -213,7 +222,8 @@ void process_control_system ( void )
 { 
     static int16_t      stop_counter                = 0;
     static bool         sticks_changed              = false;
-           bool         sticks_in_start_position    = START_STOP_COND;   
+           bool         sticks_in_start_position    = START_STOP_COND;
+           
 #ifndef TESTING_   
     if ( sticks_in_start_position != sticks_changed )
     {   // If go from some position to corners (power on position) or from corners to some position
@@ -231,7 +241,7 @@ void process_control_system ( void )
         }
     }
 #else
-           
+    
 
     if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
     {
@@ -241,13 +251,12 @@ void process_control_system ( void )
             sticks_changed = sticks_in_start_position;
             if ( sticks_in_start_position )
             {   // If now in corner position
-                if ( !motor_control_is_armed() )
+                if ( !motor_control_is_armed() && control_values->throttle < THROTTLE_START_LIMIT )
                 {
                     PID_controller_reset_integral_sums();
                     motor_control_set_motors_started();
                     UART_write_string( UART_DEBUG, "All motors started with power %d\n", motorPower );
                 }
-                start_motors = false;
             }
         }
 #else
@@ -333,7 +342,8 @@ float roll_offset                   = 0.0f;
 static void process_UART_PID_tuning()
 {
     extern PID_rates_float_t    roll_rates,
-                                pitch_rates;
+                                pitch_rates,
+                                yaw_rates;
     
     if ( UART_bytes_available( UART_DEBUG ) == 0 )
         return;
@@ -349,6 +359,12 @@ static void process_UART_PID_tuning()
             roll_rates.prop     -= PROP_DELTA;
             pitch_rates.prop    -= PROP_DELTA;
             break;
+        case 'O': case 'o':
+            yaw_rates.prop      += PROP_DELTA;
+            break;
+        case 'P': case 'p':
+            yaw_rates.prop      -= PROP_DELTA;
+            break;
 #define INTEGR_DELTA 0.001
         case 'A': case 'a':
             roll_rates.integr   += INTEGR_DELTA;
@@ -359,6 +375,12 @@ static void process_UART_PID_tuning()
             roll_rates.integr   -= INTEGR_DELTA;
             pitch_rates.integr  -= INTEGR_DELTA;
             PID_controller_reset_integral_sums();
+            break;
+        case 'K': case 'k':
+            yaw_rates.integr    += INTEGR_DELTA;
+            break;
+        case 'L': case 'l':
+            yaw_rates.integr    -= INTEGR_DELTA;
             break;
 #define DIFF_DELTA 0.1
         case 'Z': case 'z':
@@ -400,12 +422,27 @@ static void process_UART_PID_tuning()
             break;
             
         case '3':
-            UART_write_string( UART_DEBUG, "Angles: %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch );
+            UART_write_string( UART_DEBUG, "Angles: %03d, %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch, quadrotor_state.yaw );
             return;
             break;
             
         case '4':
-            UART_write_string( UART_DEBUG, "Rates: %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate );
+            UART_write_string( UART_DEBUG, "Rates: %d, %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate, quadrotor_state.yaw_rate );
+            return;
+            break;
+            
+        case '5':
+            UART_write_string( UART_DEBUG, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            return;
+            break;
+            
+        case '6':
+            UART_write_string( UART_DEBUG, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            return;
+            break;
+            
+        case '7':
+            UART_write_string( UART_DEBUG, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             return;
             break;
             
@@ -413,9 +450,6 @@ static void process_UART_PID_tuning()
             return;
             break;
     }
-    
-    UART_write_string( UART_DEBUG, "P %d D %d I %d OP %d OR %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000), 
-                                                                 (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
 }
 #endif
 
@@ -610,11 +644,11 @@ void process_saving_data ( void )
     
     if ( writing_flag )
     {
-        extern float        integr_sum_pitch;
-        extern float        integr_sum_roll;
+//        extern float        integr_sum_pitch;
+//        extern float        integr_sum_roll;
         extern float        integr_sum_yaw;
 
-        uint8_t             buffer[32];
+        uint8_t             buffer[16];
         
         WRITE_2_BYTE_VAL( buffer, gyro_rates.pitch,                 0 );
         WRITE_2_BYTE_VAL( buffer, gyro_rates.roll,                  2 );
@@ -628,25 +662,25 @@ void process_saving_data ( void )
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.roll,             8 );
         WRITE_2_BYTE_VAL( buffer, quadrotor_state.yaw,              10 );
         
-        WRITE_2_BYTE_VAL( buffer, integr_sum_pitch,                 12 );
-        WRITE_2_BYTE_VAL( buffer, integr_sum_roll,                  14 );
-        WRITE_2_BYTE_VAL( buffer, integr_sum_yaw,                   16 );
+//        WRITE_2_BYTE_VAL( buffer, pitch_control,                    12 );
+        WRITE_2_BYTE_VAL( buffer, yaw_control,                      12 );
+        WRITE_2_BYTE_VAL( buffer, integr_sum_yaw,                   14 );
         
-        WRITE_2_BYTE_VAL( buffer, control_values->throttle,         18 );
-        WRITE_2_BYTE_VAL( buffer, pitch_setpoint,                   20 );
-        WRITE_2_BYTE_VAL( buffer, roll_setpoint,                    22 );
-        
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[0],   24 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[1],   26 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[2],   28 );
-        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[3],   30 );
+//        WRITE_2_BYTE_VAL( buffer, control_values->throttle,         18 );
+//        WRITE_2_BYTE_VAL( buffer, pitch_setpoint,                   20 );
+//        WRITE_2_BYTE_VAL( buffer, roll_setpoint,                    22 );
+//        
+//        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[0],   24 );
+//        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[1],   26 );
+//        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[2],   28 );
+//        WRITE_2_BYTE_VAL( buffer, quadrotor_state.motor_power[3],   30 );
         
         file_write( buffer, sizeof( buffer ) );
         counter = 0;
         
         uint8_t sd_load = file_get_buffers_loaded_count();
         if ( sd_load > 2 )
-            UART_write_string( UART_DEBUG, "Writed SD %d\n", sd_load );
+            UART_write_string( UART_DEBUG, "Load SD %d\n", sd_load );
     }
 }
 #endif /* SD_CARD */
@@ -662,17 +696,17 @@ void send_serial_data ( void )
     {
 //        extern float        integr_sum_pitch;
 //        extern float        integr_sum_roll;
-//        extern float        integr_sum_yaw;
+        extern float        integr_sum_yaw;
         
-        int16_t buffer[4];
+        int16_t buffer[5];
         
-        buffer[0] = quadrotor_state.pitch;
-        buffer[1] = quadrotor_state.pitch_rate;
-        buffer[2] = motorPower;
-        buffer[3] = pitch_rate_setpoint;
-//        buffer[3] = integr_sum_pitch;
+        buffer[0] = quadrotor_state.yaw;
+        buffer[1] = quadrotor_state.yaw_rate;
+        buffer[2] = integr_sum_yaw;
+        buffer[3] = yaw_rate_setpoint;
+        buffer[4] = yaw_control;
         
-        UART_write_words( UART_PYT, buffer, 4 );
+        UART_write_words( UART_PYT, buffer, 5 );
     }
     
     if ( UART_bytes_available( UART_PYT ) == 0 )
@@ -742,6 +776,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     quadrotor_state.pitch       = euler_angles.pitch * 10;
     quadrotor_state.roll        = euler_angles.roll  * 10;
+    quadrotor_state.yaw         = euler_angles.yaw   * 10;
     
     quadrotor_state.pitch_rate  = gyro_rates.pitch;
     quadrotor_state.roll_rate   = gyro_rates.roll;

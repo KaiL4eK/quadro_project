@@ -61,7 +61,7 @@ motor_4				= [0]
 
 filename = sys.argv[1]
 
-token_size = 32
+token_size = 16
 sensor_time = 2.5/1000
 gyro_sensitivity = 65535/2/250.0
 alpha = 0.98
@@ -83,23 +83,30 @@ with open( filename, 'r' ) as f:
 		_angle_roll 		= bytes_2_int16( rdata[8:10] )/angle_multiplyer
 		_angle_yaw 			= bytes_2_int16( rdata[10:12] )/angle_multiplyer
 
-		_integr_pitch 		= bytes_2_int16( rdata[12:14] )
+		# _integr_pitch 		= bytes_2_int16( rdata[12:14] )
+		# _integr_yaw 		= bytes_2_int16( rdata[16:18] )
 
-		_control_throttle	= bytes_2_int16( rdata[18:20] )
-		_control_pitch 		= bytes_2_int16( rdata[20:22] )
-		_control_roll 		= bytes_2_int16( rdata[22:24] )
+		# _control_throttle	= bytes_2_int16( rdata[18:20] )
+		# _control_pitch 		= bytes_2_int16( rdata[20:22] )
+		# _control_roll 		= bytes_2_int16( rdata[22:24] )
 
 
 		fulltime += sensor_time
 		time.append(fulltime)
 
 		gyro_pitch.append( _gyr_pitch )
-
-		control_throttle.append( _control_throttle )
-		control_pitch.append( _control_pitch )
-		integr_pitch.append( _integr_pitch )
+		gyro_yaw.append( _gyr_yaw )
 
 		angle_pitch.append( _angle_pitch )
+		angle_yaw.append( _angle_yaw )
+
+
+
+		# control_throttle.append( _control_throttle )
+		# control_pitch.append( _control_pitch )
+
+		# integr_pitch.append( _integr_pitch )
+		# integr_yaw.append( _integr_yaw )
 
 		# _acc_roll = m.atan2( -1 * acc_x, m.sqrt( acc_y*acc_y + acc_z*acc_z ) ) * 180 / m.pi
 		# _acc_pitch = m.atan2( acc_y, m.sqrt( acc_x*acc_x + acc_z*acc_z ) ) * 180 / m.pi
@@ -128,10 +135,13 @@ with open( filename, 'r' ) as f:
 # fig.subplots_adjust(right=0.99, left=0.04, top=0.98, bottom=0.06)
 
 # plt.plot( time, control_throttle, 'y-', label='Cntrl_t' )
-# plt.plot( time, integr_pitch, 'r-', label='Integr_p' )
+# plt.plot( time, integr_yaw, 'r-', label='Integr_y' )
 plt.plot( time, angle_pitch,  'k-', label='Angle_p' )
-# plt.plot( time, control_pitch,  'b-', label='Cntrl_p' )
 plt.plot( time, gyro_pitch,  'g-', label='Gyro_p' )
+# plt.plot( time, control_pitch,  'b-', label='Cntrl_p' )
+
+plt.plot( time, gyro_yaw,  'r-', label='Gyro_y' )
+plt.plot( time, angle_yaw,  'y-', label='Angle_y' )
 
 # # plt.axis([ 0, fulltime, -20, 20 ])
 plt.ylabel('Angle')

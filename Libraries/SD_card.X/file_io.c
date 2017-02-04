@@ -23,7 +23,7 @@ typedef struct task_
     struct task_    *next_task;
 } Task_t;
 
-#define BUFFERS_AMOUNT  4
+#define BUFFERS_AMOUNT  5
 
 static uint8_t          uart_debug                          = -1;
 static uint8_t          data_buffer[BUFFERS_AMOUNT][512],
