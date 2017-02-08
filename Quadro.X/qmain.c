@@ -26,7 +26,7 @@ void complementary_filter_set_rotation_speed_rate( float rate_a );
 #define UART_DEBUG  UART_BT
 #endif
 
-//#define UART_PYT    2
+#define UART_PYT    1
 
 #ifdef INTERFACE_COMMUNICATION
     #define UART_DATA   2
@@ -72,7 +72,7 @@ int main ( void )
     UART_write_string( UART_DEBUG, "UART initialized\n" );
     
     error_process_init( UART_DEBUG );
-//    battery_charge_initialize();
+    battery_charge_initialize();
     
     control_values = remote_control_init();
     UART_write_string( UART_DEBUG, "RC initialized\n" );
@@ -211,7 +211,7 @@ void calculate_PID_controls ( void )
 
 const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
 
-int32_t motorPower = 0;
+int16_t motorPower = 0;
 
 volatile bool   start_motors    = false,
                 stop_motors     = false;
@@ -298,10 +298,10 @@ void process_control_system ( void )
         else
             pitch_control = roll_control = yaw_control = 0;
             
-        // 0 --- 2000
-        motorPower      = control_values->throttle * 1.2f;   // * 32 / 20
+        motorPower      = control_values->throttle;   // * 32 / 20
         
-        int32_t power = 0;
+        int16_t power = 0;
+        
         power = motorPower + pitch_control - roll_control - yaw_control;
         quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
@@ -695,19 +695,30 @@ void send_serial_data ( void )
     
     if ( data_switch )
     {
-//        extern float        integr_sum_pitch;
-//        extern float        integr_sum_roll;
+        extern float        integr_sum_pitch;
+        extern float        integr_sum_roll;
         extern float        integr_sum_yaw;
+        int i = 0;
         
-        int16_t buffer[5];
+        int16_t buffer[14];
         
-        buffer[0] = quadrotor_state.yaw;
-        buffer[1] = quadrotor_state.yaw_rate;
-        buffer[2] = integr_sum_yaw;
-        buffer[3] = yaw_rate_setpoint;
-        buffer[4] = yaw_control;
+        buffer[i++] = quadrotor_state.pitch;
+        buffer[i++] = quadrotor_state.roll;
+        buffer[i++] = quadrotor_state.yaw;
+        buffer[i++] = quadrotor_state.pitch_rate;
+        buffer[i++] = quadrotor_state.roll_rate;
+        buffer[i++] = quadrotor_state.yaw_rate;
+        buffer[i++] = integr_sum_pitch;
+        buffer[i++] = integr_sum_roll;
+        buffer[i++] = integr_sum_yaw;
+        buffer[i++] = pitch_control;
+        buffer[i++] = roll_control;
+        buffer[i++] = yaw_control;
+        buffer[i++] = motorPower;
+        buffer[i++] = battery_charge_get_voltage_x10();
         
-        UART_write_words( UART_PYT, buffer, 5 );
+        
+        UART_write_words( UART_PYT, buffer, 14 );
     }
     
     if ( UART_bytes_available( UART_PYT ) == 0 )
@@ -815,7 +826,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     process_sending_UART_data();
 #endif
     
-//    battery_charge_read_value();
+    battery_charge_read_value();
     
 #ifdef MEASURE_INT_TIME
     timer_stop();

@@ -17,19 +17,28 @@ serial_dspic.bytesize 	= serial.EIGHTBITS #number of bits per bytes
 serial_dspic.parity 	= serial.PARITY_NONE #set parity check: no parity
 serial_dspic.stopbits 	= serial.STOPBITS_ONE #number of stop bits
 
-angle 			= [0]
-rate 			= [0]
-rate_ref 		= [0]
-rate_integral	= [0]
+angle_pitch 	= [0]
+angle_roll 		= [0]
+angle_yaw 		= [0]
 
-control 		= [0]
+rate_pitch		= [0]
+rate_roll		= [0]
+rate_yaw		= [0]
+
+integr_pitch	= [0]
+integr_roll		= [0]
+integr_yaw		= [0]
+
+control_pitch 	= [0]
+control_roll 	= [0]
+control_yaw 	= [0]
 
 motor_power		= [0]
-integr 			= [0]
+battery			= [0]
 
 time_array 		= [0]
 
-sensor_time = 2.5/1000
+sensor_time = 2.5/1000;
 angle_rate  = 10.0
 
 t = nb.waitOnInput()
@@ -51,13 +60,26 @@ def main():
 	while nb.program_run:
 		if t.is_alive():
 
-			data = serial_dspic.read( 2 * 5 )
+			data = serial_dspic.read( 2 * 14 )
 
-			angle.append( common.bytes_2_int16( data[0:2] ) / angle_rate )
-			rate.append( common.bytes_2_int16( data[2:4] ) )
-			integr.append( common.bytes_2_int16( data[4:6] ) )
-			rate_ref.append( common.bytes_2_int16( data[6:8] ) )
-			control.append( common.bytes_2_int16( data[8:10] ) )
+			angle_pitch.append( common.bytes_2_int16( data[0:2] ) / angle_rate )
+			angle_roll.append( common.bytes_2_int16( data[2:4] ) / angle_rate )
+			angle_yaw.append( common.bytes_2_int16( data[4:6] ) / angle_rate )
+
+			rate_pitch.append( common.bytes_2_int16( data[6:8] ) )
+			rate_roll.append( common.bytes_2_int16( data[8:10] ) )
+			rate_yaw.append( common.bytes_2_int16( data[10:12] ) )
+
+			integr_pitch.append( common.bytes_2_int16( data[12:14] ) )
+			integr_roll.append( common.bytes_2_int16( data[14:16] ) )
+			integr_yaw.append( common.bytes_2_int16( data[16:18] ) )
+
+			control_pitch.append( common.bytes_2_int16( data[18:20] ) )
+			control_roll.append( common.bytes_2_int16( data[20:22] ) )
+			control_yaw.append( common.bytes_2_int16( data[22:24] ) )
+
+			motor_power.append( common.bytes_2_int16( data[24:26] ) )
+			battery.append( common.bytes_2_int16( data[26:28] ) / 10.0 )
 
 			fulltime += sensor_time
 			time_array.append(fulltime)
@@ -68,20 +90,19 @@ def main():
 			serial_dspic.close()
 			break
 
-	out = np.array([time_array, angle, rate, integr, rate_ref])
+	out = np.array([time_array, angle_pitch, angle_roll, angle_yaw, rate_pitch, rate_roll, rate_yaw, integr_pitch, integr_roll, integr_yaw, control_pitch, control_roll, control_yaw, motor_power, battery])
 
-	csvfile = "{:%Y%d_%H_%M_%S}".format(datetime.now())
+	csvfile = "{:%Y%d%m_%H_%M_%S}".format(datetime.now())
 	csvfile = "logs/" + csvfile + ".csv"
 
 	with open(csvfile, "w") as output:
 		writer = csv.writer(output, lineterminator='\n')
 		writer.writerows(out.T)
 
-	plt.plot( time_array, rate,  'y-', label='Rate' )
-	plt.plot( time_array, angle,  'g-', label='Angle' )
-	plt.plot( time_array, integr,  'k-', label='Integr' )
-	plt.plot( time_array, rate_ref,  'r-', label='RateReference' )
-	plt.plot( time_array, control,  'b-', label='Control' )
+	plt.plot( time_array, rate_yaw,  'y-', label='Rate' )
+	plt.plot( time_array, angle_yaw,  'g-', label='Angle' )
+	plt.plot( time_array, integr_yaw,  'k-', label='Integr' )
+	plt.plot( time_array, control_yaw,  'r-', label='Control' )
 
 	plt.ylabel('Angle')
 	plt.xlabel('Time')
