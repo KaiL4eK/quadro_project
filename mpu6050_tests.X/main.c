@@ -14,12 +14,13 @@
 
 #include <MPU6050.h>
 
-volatile static uart_module_t   uart_debug      = NULL;
-volatile static uart_module_t   uart_interface  = NULL;
-volatile gyro_accel_data_t      *mpu_data       = NULL;
+volatile static uart_module_t       uart_debug      = NULL;
+volatile static uart_module_t       uart_interface  = NULL;
+volatile static gyro_accel_data_t   *mpu_data       = NULL;
 
 void timer_interrupt_initialization( void );
-void send_serial_data ( uart_module_t uart );
+void send_serial_data ( uart_module_t uart, uart_module_t debug );
+void uart_response ( uart_module_t uart );
 
 void error_loop ( const char *str )
 {
@@ -37,6 +38,9 @@ int main ( void )
     
     uart_debug      = UART_init( 2, UART_460800, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART ready\n" );
+    
+    i2c_init( 1, 400000L ); 
+    UART_write_string( uart_debug, "I2C ready\n" );
     
     if ( mpu6050_init( NULL, uart_debug ) != 0 )    
         error_loop( "MPU6050 initialize failed\n" );
@@ -83,33 +87,50 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
     if ( mpu6050_receive_gyro_accel_raw_data() )
         return;
     
-    send_serial_data( uart_interface );
+    uart_response( uart_debug );
+    send_serial_data( uart_interface, uart_debug );
     
     _T3IF = 0;
 }
 
-void send_serial_data ( uart_module_t uart )
+void uart_response ( uart_module_t uart )
+{
+    if ( UART_bytes_available( uart ) )
+    {
+        UART_write_string( uart, "Clicked: %c\n", UART_get_byte( uart ) );
+    }
+}
+
+void send_serial_data ( uart_module_t uart, uart_module_t debug )
 {
     static bool    data_switch = false;
+    static int16_t buffer[6];
     
     uint8_t byte    = 0;
     
     if ( data_switch )
     {
-        UART_write_words( uart, (uint16_t)mpu_data, 6 );
+        int i = 0;
+        
+        buffer[i++] = mpu_data->value.x_accel;
+        buffer[i++] = mpu_data->value.y_accel;
+        buffer[i++] = mpu_data->value.z_accel;
+        buffer[i++] = mpu_data->value.x_gyro;
+        buffer[i++] = mpu_data->value.y_gyro;
+        buffer[i++] = mpu_data->value.z_gyro;
+        
+        UART_write_words( uart, buffer, 6 );
     }
     
-    if ( UART_bytes_available( uart ) == 0 )
-        return;
-    else
+    if ( UART_bytes_available( uart ) )
     {
         byte = UART_get_byte( uart );
-        UART_write_string( uart, "Check: 0x%x\n", byte );
+        UART_write_string( debug, "Check: 0x%x\n", byte );
         
         if ( byte == '1' )
         {
             data_switch = !data_switch;
-            UART_write_string( uart, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            UART_write_string( debug, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
             UART_write_byte( uart, '0' );
         }
     }

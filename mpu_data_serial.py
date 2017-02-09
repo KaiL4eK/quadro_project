@@ -11,8 +11,11 @@ import nonblock as nb
 
 from datetime import datetime
 import csv
+import sys
 
-serial_dspic 			= serial.Serial(port='/dev/ttyUSB0', baudrate=460800, timeout=15.0)
+port_tty = sys.argv[1]
+
+serial_dspic 			= serial.Serial(port=port_tty, baudrate=460800, timeout=15.0)
 serial_dspic.bytesize 	= serial.EIGHTBITS 		#number of bits per bytes
 serial_dspic.parity 	= serial.PARITY_NONE 	#set parity check: no parity
 serial_dspic.stopbits 	= serial.STOPBITS_ONE 	#number of stop bits
@@ -25,7 +28,10 @@ gyro_x		= [0]
 gyro_y		= [0]
 gyro_z		= [0]
 
+gyro_sensitivity	= 65.5
+
 sensor_time = 2./1000;
+time_array	= [0]
 
 t = nb.waitOnInput()
 
@@ -52,9 +58,9 @@ def main():
 			accel_y.append( common.bytes_2_int16( data[2:4] ) )
 			accel_z.append( common.bytes_2_int16( data[4:6] ) )
 
-			gyro_x.append( common.bytes_2_int16( data[6:8] ) )
-			gyro_y.append( common.bytes_2_int16( data[8:10] ) )
-			gyro_z.append( common.bytes_2_int16( data[10:12] ) )
+			gyro_x.append( common.bytes_2_int16( data[6:8] ) / gyro_sensitivity )
+			gyro_y.append( common.bytes_2_int16( data[8:10] ) / gyro_sensitivity )
+			gyro_z.append( common.bytes_2_int16( data[10:12] ) / gyro_sensitivity )
 
 			fulltime += sensor_time
 			time_array.append(fulltime)

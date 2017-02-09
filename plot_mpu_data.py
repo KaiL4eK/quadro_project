@@ -23,8 +23,7 @@ def update(val):
     fig.canvas.draw_idle()
 
 alpha_slider.on_changed(update)
-
-
+				
 
 # Main program
 with open(filename, 'rb') as csvfile:
