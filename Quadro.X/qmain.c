@@ -101,7 +101,7 @@ int main ( void )
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     complementary_filter_set_angle_rate( 0.999f );
-    complementary_filter_set_rotation_speed_rate( 0.8f );
+    complementary_filter_set_rotation_speed_rate( 0.9f );
     UART_write_string( UART_DEBUG, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration( UART_DEBUG );
@@ -485,7 +485,7 @@ void complementary_filter_set_rotation_speed_rate( float rate_a )
 }
 
 #define SENS_TIME_MS       0.0025f          // 2500L/1000000
-#define GYR_COEF           65.5f           // INT16_MAX/500 - Taken from datasheet mpu6050
+#define GYR_COEF           131.0f           // INT16_MAX/250 - Taken from datasheet mpu6050
 
 const static float gyro_rate_raw_2_deg_per_sec    = 1/GYR_COEF;
 const static float gyro_rate_raw_2_degree         = SENS_TIME_MS/GYR_COEF;
@@ -786,13 +786,13 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     compute_IMU_data();
     
-    quadrotor_state.pitch       = euler_angles.pitch * 10;
-    quadrotor_state.roll        = euler_angles.roll  * 10;
-    quadrotor_state.yaw         = euler_angles.yaw   * 10;
+    quadrotor_state.pitch       = euler_angles.pitch * 100;
+    quadrotor_state.roll        = euler_angles.roll  * 100;
+    quadrotor_state.yaw         = euler_angles.yaw   * 100;
     
-    quadrotor_state.pitch_rate  = gyro_rates.pitch;
-    quadrotor_state.roll_rate   = gyro_rates.roll;
-    quadrotor_state.yaw_rate    = gyro_rates.yaw;
+    quadrotor_state.pitch_rate  = gyro_rates.pitch * 100;
+    quadrotor_state.roll_rate   = gyro_rates.roll * 100;
+    quadrotor_state.yaw_rate    = gyro_rates.yaw * 100;
     
 #ifdef ENABLE_BMP180
     bmp180_rcv_filtered_data();

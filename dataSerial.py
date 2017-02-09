@@ -39,7 +39,7 @@ battery			= [0]
 time_array 		= [0]
 
 sensor_time = 2.5/1000;
-angle_rate  = 10.0
+angle_rate  = 100.
 
 t = nb.waitOnInput()
 
@@ -66,9 +66,9 @@ def main():
 			angle_roll.append( common.bytes_2_int16( data[2:4] ) / angle_rate )
 			angle_yaw.append( common.bytes_2_int16( data[4:6] ) / angle_rate )
 
-			rate_pitch.append( common.bytes_2_int16( data[6:8] ) )
-			rate_roll.append( common.bytes_2_int16( data[8:10] ) )
-			rate_yaw.append( common.bytes_2_int16( data[10:12] ) )
+			rate_pitch.append( common.bytes_2_int16( data[6:8] ) / angle_rate )
+			rate_roll.append( common.bytes_2_int16( data[8:10] ) / angle_rate )
+			rate_yaw.append( common.bytes_2_int16( data[10:12] ) / angle_rate )
 
 			integr_pitch.append( common.bytes_2_int16( data[12:14] ) )
 			integr_roll.append( common.bytes_2_int16( data[14:16] ) )
