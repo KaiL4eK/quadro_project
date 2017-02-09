@@ -71,7 +71,8 @@ def main():
 			serial_dspic.close()
 			break
 
-	out = np.array([accel_x, accel_y, accel_z, 
+	out = np.array([time_array, 
+					accel_x, accel_y, accel_z, 
 					gyro_x, gyro_y, gyro_z])
 
 	csvfile = "{:%Y%d%m_%H_%M_%S}".format(datetime.now())

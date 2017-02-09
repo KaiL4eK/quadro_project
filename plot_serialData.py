@@ -11,7 +11,7 @@ with open(filename, 'rb') as csvfile:
 	reader = csv.reader(csvfile)
 	[ time_array, angle_pitch, angle_roll, angle_yaw, rate_pitch, 
 	  rate_roll, rate_yaw, integr_pitch, integr_roll, integr_yaw, 
-	  control_pitch, control_roll, control_yaw, motor_power, battery ] = np.array( list(reader) ).T
+	  control_pitch, control_roll, control_yaw, motor_power, battery ] = np.array( list(reader), dtype=float ).T
 
 plt.figure(1)
 plt.plot( time_array, rate_yaw,  'y-', label='Rate' )
