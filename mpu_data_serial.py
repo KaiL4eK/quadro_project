@@ -28,9 +28,11 @@ gyro_x		= [0]
 gyro_y		= [0]
 gyro_z		= [0]
 
+port_status	= [0]
+
 gyro_sensitivity	= 65.5
 
-sensor_time = 2./1000;
+sensor_time = 1./1000;
 time_array	= [0]
 
 t = nb.waitOnInput()
@@ -52,7 +54,7 @@ def main():
 	while nb.program_run:
 		if t.is_alive():
 
-			data = serial_dspic.read( 2 * 6 )
+			data = serial_dspic.read( 2 * 7 )
 
 			accel_x.append( common.bytes_2_int16( data[0:2] ) )
 			accel_y.append( common.bytes_2_int16( data[2:4] ) )
@@ -61,6 +63,8 @@ def main():
 			gyro_x.append( common.bytes_2_int16( data[6:8] ) / gyro_sensitivity )
 			gyro_y.append( common.bytes_2_int16( data[8:10] ) / gyro_sensitivity )
 			gyro_z.append( common.bytes_2_int16( data[10:12] ) / gyro_sensitivity )
+
+			port_status.append( common.bytes_2_int16( data[12:14] ) )
 
 			fulltime += sensor_time
 			time_array.append(fulltime)
@@ -73,7 +77,8 @@ def main():
 
 	out = np.array([time_array, 
 					accel_x, accel_y, accel_z, 
-					gyro_x, gyro_y, gyro_z])
+					gyro_x, gyro_y, gyro_z,
+					port_status])
 
 	csvfile = "{:%Y%d%m_%H_%M_%S}".format(datetime.now())
 	csvfile = "mpu_logs/" + csvfile + ".csv"
@@ -82,7 +87,8 @@ def main():
 		writer = csv.writer(output, lineterminator='\n')
 		writer.writerows(out.T)
 
-	plt.plot( time_array, gyro_x,  'y-', label='Rate' )
+	plt.plot( time_array, gyro_x,  		'y-', label='Rate' )
+	plt.plot( time_array, port_status,  'k-', label='Status' )
 
 	plt.ylabel('Angle')
 	plt.xlabel('Time')
