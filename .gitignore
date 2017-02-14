@@ -7,15 +7,10 @@ putty*
 **/nbproject/private/
 **/disassembly/
 **/Makefile-genesis.properties
-/Libraries/Periphery_lib.X/build/default/
-/Libraries/Periphery_lib.X/dist/default/
 /Libraries/Math_lib.X/nbproject/private/
 /Libraries/Math_lib.X/build/default/
 /Libraries/Math_lib.X/dist/default/
 /Libraries/Periphery_lib.X/nbproject/private/
-/Libraries/SensorsLib.X/dist/default/
-/Libraries/SensorsLib.X/build/default/
-/Libraries/SensorsLib.X/nbproject/private/
 /ThrustTorqueStand/ThrustTorqueStand.X/nbproject/private/
 /ThrustTorqueStand/ThrustTorqueStand.X/build/default/
 /ThrustTorqueStand/ThrustTorqueStand.X/dist/default/

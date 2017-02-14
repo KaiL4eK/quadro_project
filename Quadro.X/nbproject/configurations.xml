@@ -50,23 +50,6 @@
         <linkerTool>
           <linkerLibItems>
             <linkerLibProjectItem>
-              <makeArtifact PL="../Libraries/SensorsLib.X"
-                            CT="3"
-                            CN="default"
-                            AC="true"
-                            BL="true"
-                            WD="../Libraries/SensorsLib.X"
-                            BC="${MAKE}  -f Makefile CONF=default"
-                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
-                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
-                            OP="dist/default/production/SensorsLib.X.a"
-                            DOP="dist/default/debug/SensorsLib.X.a"
-                            FL="dist/default/production/SensorsLib.X.a"
-                            PD="dist/default/production/SensorsLib.X.a"
-                            DD="dist/default/debug/SensorsLib.X.a">
-              </makeArtifact>
-            </linkerLibProjectItem>
-            <linkerLibProjectItem>
               <makeArtifact PL="../Libraries/SD_card.X"
                             CT="3"
                             CN="default"
@@ -84,20 +67,37 @@
               </makeArtifact>
             </linkerLibProjectItem>
             <linkerLibProjectItem>
-              <makeArtifact PL="../Libraries/Periphery_lib.X"
+              <makeArtifact PL="../Libraries/dspic33fj256mc710_periphery"
                             CT="3"
                             CN="default"
                             AC="true"
                             BL="true"
-                            WD="../Libraries/Periphery_lib.X"
+                            WD="../Libraries/dspic33fj256mc710_periphery"
                             BC="${MAKE}  -f Makefile CONF=default"
                             DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
                             CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
-                            OP="dist/default/production/Periphery_lib.X.a"
-                            DOP="dist/default/debug/Periphery_lib.X.a"
-                            FL="dist/default/production/Periphery_lib.X.a"
-                            PD="dist/default/production/Periphery_lib.X.a"
-                            DD="dist/default/debug/Periphery_lib.X.a">
+                            OP="dist/default/production/dspic33fj256mc710_periphery.a"
+                            DOP="dist/default/debug/dspic33fj256mc710_periphery.a"
+                            FL="dist/default/production/dspic33fj256mc710_periphery.a"
+                            PD="dist/default/production/dspic33fj256mc710_periphery.a"
+                            DD="dist/default/debug/dspic33fj256mc710_periphery.a">
+              </makeArtifact>
+            </linkerLibProjectItem>
+            <linkerLibProjectItem>
+              <makeArtifact PL="../Libraries/ahrs_sensors"
+                            CT="3"
+                            CN="default"
+                            AC="true"
+                            BL="true"
+                            WD="../Libraries/ahrs_sensors"
+                            BC="${MAKE}  -f Makefile CONF=default"
+                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
+                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
+                            OP="dist/default/production/ahrs_sensors.a"
+                            DOP="dist/default/debug/ahrs_sensors.a"
+                            FL="dist/default/production/ahrs_sensors.a"
+                            PD="dist/default/production/ahrs_sensors.a"
+                            DD="dist/default/debug/ahrs_sensors.a">
               </makeArtifact>
             </linkerLibProjectItem>
           </linkerLibItems>
@@ -137,7 +137,7 @@
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="extra-include-directories"
-                  value="../Libraries/Math_lib.X;../Libraries/Periphery_lib.X;../common;../Libraries/SensorsLib.X;../Libraries/SD_card.X"/>
+                  value="../Libraries/Math_lib.X;../common;../Libraries/ahrs_sensors/public;../Libraries/SD_card.X;../Libraries/dspic33fj256mc710_periphery"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>

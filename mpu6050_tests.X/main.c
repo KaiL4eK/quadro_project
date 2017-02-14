@@ -48,7 +48,8 @@ int main ( void )
         error_loop( "MPU6050 initialize failed\n" );
 
 //    mpu6050_offsets_t mpu6050_offsets = { -3840, 1185, 1912, 21, -10, 81 };   // Home data
-    mpu6050_offsets_t mpu6050_offsets = { -3473, -3008, 1743, 44, -68, -17 };     // ASC data
+//    mpu6050_offsets_t mpu6050_offsets = { -3473, -3008, 1743, 44, -68, -17 };     // ASC data
+    mpu6050_offsets_t mpu6050_offsets = { -3909, 322, 1655, 107, -12, -21 };     // Quadro data
 
     
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );

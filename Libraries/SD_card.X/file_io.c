@@ -25,7 +25,7 @@ typedef struct task_
 
 #define BUFFERS_AMOUNT  5
 
-static uint8_t          uart_debug                          = -1;
+static uart_module_t    uart_debug                          = NULL;
 static uint8_t          data_buffer[BUFFERS_AMOUNT][512],
                         busy_buffers[BUFFERS_AMOUNT],
                         i_active_buffer                     = 0,
@@ -52,7 +52,7 @@ uint8_t file_get_buffers_loaded_count ( void )
 
 /*** FAT32 Dependent functions ***/
 
-int file_io_initialize ( uint8_t uart_module )
+int file_io_initialize ( uart_module_t uart_module )
 {
     if ( fat32_initialize( uart_module ) != 0 ) {
         return 1;

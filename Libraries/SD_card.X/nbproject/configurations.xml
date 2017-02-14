@@ -171,7 +171,8 @@
         <property key="warn-section-align" value="false"/>
       </C30-LD>
       <C30Global>
-        <property key="common-include-directories" value="../Periphery_lib.X"/>
+        <property key="common-include-directories"
+                  value="../dspic33fj256mc710_periphery"/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="true"/>
         <property key="generic-16-bit" value="false"/>

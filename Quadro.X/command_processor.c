@@ -1,9 +1,9 @@
 #include "core.h"
 #include "serial_protocol.h"
 
-uint8_t m_module = -1;
+uart_module_t m_module = -1;
 
-void cmdProcessor_init ( uint8_t module )
+void cmdProcessor_init ( uart_module_t module )
 {
     m_module = module;
 }
@@ -74,7 +74,7 @@ UART_frame_t *cmdProcessor_rcvFrame ( void )
     return( &frame );
 }
 
-void cmdProcessor_write_cmd ( uint8_t module, uint8_t prefix, uint8_t code )
+void cmdProcessor_write_cmd ( uart_module_t module, uint8_t prefix, uint8_t code )
 {
     uint16_t sendCommand = (uint16_t)prefix << 8 | code;
     UART_write_words( module, &sendCommand, 1 );

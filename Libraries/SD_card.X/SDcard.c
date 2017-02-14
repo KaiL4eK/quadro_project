@@ -1,7 +1,7 @@
 #include "SDcard.h"
 
-uint8_t                     SDHC_flag   = 0;
-static uint8_t              uart_debug  =   -1;
+uart_module_t                     SDHC_flag   = NULL;
+static uart_module_t              uart_debug  = NULL;
 
 #define CMD_BEGIN   0x40
 #define CRC         0x95
@@ -81,7 +81,7 @@ uint8_t SD_send_cmd ( SD_command_t command, uint32_t argument )
 
 #define IN_IDLE_STATE    0x01
 
-int SD_initialize ( uint8_t uart_module )
+int SD_initialize ( uart_module_t uart_module )
 {    
     uint8_t         response    = 0xFF;
     uint8_t         SD_version  = 2,

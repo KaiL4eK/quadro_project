@@ -12,9 +12,9 @@
             <asminc-extensions/>
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects>
-                <make-dep-project>../Libraries/SensorsLib.X</make-dep-project>
-                <make-dep-project>../Libraries/Periphery_lib.X</make-dep-project>
+                <make-dep-project>../Libraries/dspic33fj256mc710_periphery</make-dep-project>
                 <make-dep-project>../Libraries/SD_card.X</make-dep-project>
+                <make-dep-project>../Libraries/ahrs_sensors</make-dep-project>
             </make-dep-projects>
         </data>
     </configuration>

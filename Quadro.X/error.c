@@ -2,9 +2,9 @@
 
 #define SET_ERR_L   { ERR_LIGHT = 0; }
 
-uint8_t uart_debug = -1;
+uart_module_t uart_debug = NULL;
 
-void error_process_init ( uint8_t uart_module )
+void error_process_init ( uart_module_t uart_module )
 {
     uart_debug = uart_module;
 }

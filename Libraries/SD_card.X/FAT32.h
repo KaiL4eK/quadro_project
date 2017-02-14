@@ -146,7 +146,7 @@ typedef struct
 
 /************ API ***************/
 
-int fat32_initialize ( uint8_t uart_module );
+int fat32_initialize ( uart_module_t uart_module );
 int fat32_write_data_buffer ( uint8_t *buffer, uint16_t size );
 int fat32_create_new_file ( char *filename );
 uint16_t fat32_get_file_index ( void );

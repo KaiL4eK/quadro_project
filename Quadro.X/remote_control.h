@@ -25,12 +25,12 @@ typedef struct
 }Control_values_t;
 
 Control_values_t *remote_control_init( void );
-void remote_control_make_calibration( uint8_t module );
+void remote_control_make_calibration( uart_module_t module );
 bool remote_control_find_controller();
 int remote_control_update_control_values( void );
 
-void remote_control_send_UART_control_raw_data( uint8_t module );
-void remote_control_send_UART_control_values( uint8_t module );
+void remote_control_send_UART_control_raw_data( uart_module_t module );
+void remote_control_send_UART_control_values( uart_module_t module );
 
 
 #endif	/* INPUT_CONTROL_H_ */

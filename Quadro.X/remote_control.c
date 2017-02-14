@@ -148,7 +148,7 @@ turn_off_timer1_time_measurement()
 }
 
 // Change this after going to 80 MHz!!!
-void remote_control_make_calibration( uint8_t module )
+void remote_control_make_calibration( uart_module_t module )
 {
     _TRISA5 = 0;
     _LATA5 = 0;
@@ -249,13 +249,13 @@ int remote_control_update_control_values( void )
     return( 0 );
 }
 
-void remote_control_send_UART_control_values( uint8_t module )
+void remote_control_send_UART_control_values( uart_module_t module )
 {
     UART_write_string( module, "In: %04d, %04d, %04d, %04d, %01d\n", 
             dir_values.throttle, dir_values.rudder, dir_values.roll, dir_values.pitch, dir_values.two_pos_switch );
 }
 
-void remote_control_send_UART_control_raw_data( uint8_t module )
+void remote_control_send_UART_control_raw_data( uart_module_t module )
 {
     UART_write_string( module, "In: %04ld, %04ld, %04ld, %04ld, %04ld\n", 
             control_raw.channel_3, control_raw.channel_4, control_raw.channel_1, control_raw.channel_2, control_raw.channel_5 );

@@ -46,20 +46,23 @@ static euler_angles_t       euler_angles    = {0, 0, 0};
 static struct gyro_rates_ { float pitch, roll, yaw; }
                             gyro_rates      = {0, 0, 0};
     
+volatile static uart_module_t       uart_debug      = NULL;
+volatile static uart_module_t       uart_interface  = NULL;
+                            
 int main ( void ) 
 {
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
 #if UART_DEBUG == UART_BT
-    UART_init( UART_DEBUG, UART_115200, INT_PRIO_MID );
+    uart_debug = UART_init( UART_DEBUG, UART_115200, INT_PRIO_MID );
 #else
-    UART_init( UART_DEBUG, UART_460800, INT_PRIO_MID );
+    uart_debug = UART_init( UART_DEBUG, UART_460800, INT_PRIO_MID );
 #endif 
     
 #ifdef UART_PYT
-    UART_init( UART_PYT, UART_460800, INT_PRIO_HIGH );
-    UART_write_set_endian( UART_PYT, UART_big_endian );
+    uart_interface = UART_init( UART_PYT, UART_460800, INT_PRIO_HIGH );
+    UART_write_set_big_endian_mode( uart_interface, true );
 #endif
     
 #ifdef INTERFACE_COMMUNICATION
@@ -68,41 +71,48 @@ int main ( void )
     cmdProcessor_init( UART_DATA );
 #endif
     
-    UART_write_string( UART_DEBUG, "/------------------------/\n" );
-    UART_write_string( UART_DEBUG, "UART initialized\n" );
+    UART_write_string( uart_debug, "/------------------------/\n" );
+    UART_write_string( uart_debug, "UART initialized\n" );
     
-    error_process_init( UART_DEBUG );
+    error_process_init( uart_debug );
     battery_charge_initialize();
     
     control_values = remote_control_init();
-    UART_write_string( UART_DEBUG, "RC initialized\n" );
+    UART_write_string( uart_debug, "RC initialized\n" );
 #ifdef RC_CONTROL_ENABLED
 //    while ( !remote_control_find_controller() ) {
-//        UART_write_string( UART_DEBUG, "RC search\n" );
+//        UART_write_string( uart_debug, "RC search\n" );
 //        delay_ms( 500 );
 //    }
-//    UART_write_string( UART_DEBUG, "RC found\n" );
+//    UART_write_string( uart_debug, "RC found\n" );
 #endif // RC_CONTROL_ENABLED
     
-//    remote_control_make_calibration( UART_DEBUG );
+//    remote_control_make_calibration( uart_debug );
 
 #ifdef SD_CARD
     spi_init( 0 );
-    UART_write_string( UART_DEBUG, "SPI initialized\n" );
-    file_io_initialize( UART_DEBUG );
-    UART_write_string( UART_DEBUG, "SD initialized\n" );
+    UART_write_string( uart_debug, "SPI initialized\n" );
+    file_io_initialize( uart_debug );
+    UART_write_string( uart_debug, "SD initialized\n" );
 #endif /* SD_CARD */
-    i2c_init( 400000 );
-    UART_write_string( UART_DEBUG, "I2C initialized\n" );
+    i2c_init( 1, 400000 );
+    UART_write_string( uart_debug, "I2C initialized\n" );
 
-    if ( mpu6050_init() < 0 )
+    if ( mpu6050_init( NULL, uart_debug ) < 0 )
         error_process( "MPU6050 initialization" );
+    
+    mpu6050_offsets_t mpu6050_offsets = { -3909, 322, 1655, 107, -12, -21 };     // Quadro data
+
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    mpu6050_set_offsets( &mpu6050_offsets );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
     g_a = mpu6050_get_raw_data();
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     complementary_filter_set_angle_rate( 0.999f );
     complementary_filter_set_rotation_speed_rate( 0.9f );
-    UART_write_string( UART_DEBUG, "MPU6050 initialized\n" );
+    UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration( UART_DEBUG );
     
@@ -126,10 +136,10 @@ int main ( void )
     UART_write_string( UART_DEBUG, "HMC5883L initialized\n" );
 #endif
     motor_control_init();
-    UART_write_string( UART_DEBUG, "Motors initialized\n" );
+    UART_write_string( uart_debug, "Motors initialized\n" );
     
     control_system_timer_init();
-    UART_write_string( UART_DEBUG, "Let`s begin!\n" );
+    UART_write_string( uart_debug, "Let`s begin!\n" );
 //    ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
     while( 1 ) {
@@ -235,7 +245,7 @@ void process_control_system ( void )
             {
                 PID_controller_reset_integral_sums();
                 motor_control_set_motors_started();
-                UART_write_string( UART_DEBUG, "All motors started with power %d\n", motorPower );
+                UART_write_string( uart_debug, "All motors started with power %d\n", motorPower );
                 motors_armed = true;
             }
             start_motors = false;
@@ -256,7 +266,7 @@ void process_control_system ( void )
                 {
                     PID_controller_reset_integral_sums();
                     motor_control_set_motors_started();
-                    UART_write_string( UART_DEBUG, "All motors started with power %d\n", motorPower );
+                    UART_write_string( uart_debug, "All motors started with power %d\n", motorPower );
                 }
             }
         }
@@ -265,13 +275,13 @@ void process_control_system ( void )
         {
             PID_controller_reset_integral_sums();
             motor_control_set_motors_started();
-            UART_write_string( UART_DEBUG, "All motors started with power %ld\n", motorPower );
+            UART_write_string( uart_debug, "All motors started with power %ld\n", motorPower );
         }
         
         if ( stop_motors && motor_control_is_armed() )
         {
             motor_control_set_motors_stopped();
-            UART_write_string( UART_DEBUG, "All motors stopped\n", motorPower );        
+            UART_write_string( uart_debug, "All motors stopped\n", motorPower );        
         }
         
         start_motors = false;
@@ -281,7 +291,7 @@ void process_control_system ( void )
         if ( motor_control_is_armed() )
         {
             motor_control_set_motors_stopped();
-            UART_write_string( UART_DEBUG, "All motors stopped\n", motorPower );
+            UART_write_string( uart_debug, "All motors stopped\n", motorPower );
         }
     }
 #endif
@@ -321,7 +331,7 @@ void process_control_system ( void )
         {
             if ( stop_counter++ >= STOP_LIMIT )
             {
-                UART_write_string( UART_DEBUG, "All motors stopped\n" );
+                UART_write_string( uart_debug, "All motors stopped\n" );
                 motor_control_set_motors_stopped();
                 stop_counter = 0;
             }
@@ -343,16 +353,16 @@ bool    SD_write                    = false;
 float pitch_offset                  = 0.0f;
 float roll_offset                   = 0.0f;
 
-static void UART_debug_interface()
+static void UART_debug_interface( uart_module_t uart )
 {
     extern PID_rates_float_t    roll_rates,
                                 pitch_rates,
                                 yaw_rates;
     
-    if ( UART_bytes_available( UART_DEBUG ) == 0 )
+    if ( UART_bytes_available( uart ) == 0 )
         return;
     
-    switch ( UART_get_byte( UART_DEBUG ) )
+    switch ( UART_get_byte( uart ) )
     {
 #define PROP_DELTA 0.1
         case 'Q': case 'q':
@@ -416,42 +426,42 @@ static void UART_debug_interface()
             break;
 
         case '1':
-            UART_write_string( UART_DEBUG, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
+            UART_write_string( uart, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
             return;
             break;
             
         case '2':
-            UART_write_string( UART_DEBUG, "Control: %03d %03d %03d\n", control_values->pitch, control_values->roll, control_values->rudder );
+            UART_write_string( uart, "Control: %03d %03d %03d\n", control_values->pitch, control_values->roll, control_values->rudder );
             return;
             break;
             
         case '3':
-            UART_write_string( UART_DEBUG, "Angles: %03d, %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch, quadrotor_state.yaw );
+            UART_write_string( uart, "Angles: %03d, %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch, quadrotor_state.yaw );
             return;
             break;
             
         case '4':
-            UART_write_string( UART_DEBUG, "Rates: %d, %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate, quadrotor_state.yaw_rate );
+            UART_write_string( uart, "Rates: %d, %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate, quadrotor_state.yaw_rate );
             return;
             break;
             
         case '5':
-            UART_write_string( UART_DEBUG, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
             return;
             break;
             
         case '6':
-            UART_write_string( UART_DEBUG, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
             return;
             break;
             
         case '7':
-            UART_write_string( UART_DEBUG, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             return;
             break;
             
         case '0':
-            UART_write_string( UART_DEBUG, "Battery: %d V\n", battery_charge_get_voltage_x10() );
+            UART_write_string( uart, "Battery: %d V\n", battery_charge_get_voltage_x10() );
             return;
             break;
     }
@@ -542,34 +552,34 @@ void process_UART_frame( void )
             cmdProcessor_write_cmd( UART_DATA, RESPONSE_PREFIX, RESP_NOERROR );
             dataSend = false;
             stop_motors = true;
-            UART_write_string( UART_DEBUG, "Connect\n" );
+            UART_write_string( uart_debug, "Connect\n" );
             break;
         case DISCONNECT:
             dataSend = false;
             stop_motors = true;
-            UART_write_string( UART_DEBUG, "Disconnect\n" );
+            UART_write_string( uart_debug, "Disconnect\n" );
             break;
         case DATA_START:
             time_tick_2ms5_count = 0;
             send_timer_divider_count = 0;
             dataSend = true;
-            UART_write_string( UART_DEBUG, "DStart\n" );
+            UART_write_string( uart_debug, "DStart\n" );
             break;
         case DATA_STOP:
             dataSend = false;
-            UART_write_string( UART_DEBUG, "DStop\n" );
+            UART_write_string( uart_debug, "DStop\n" );
             break;
         case MOTOR_START:
             start_motors = true;
-            UART_write_string( UART_DEBUG, "MStart\n" );
+            UART_write_string( uart_debug, "MStart\n" );
             break;
         case MOTOR_STOP:
             stop_motors = true;
-            UART_write_string( UART_DEBUG, "MStop\n" );
+            UART_write_string( uart_debug, "MStop\n" );
             break;
         case MOTOR_SET_POWER:
             motorPower = frame->motorPower * INPUT_POWER_MAX / 100L;
-            UART_write_string( UART_DEBUG, "MSetPower\n" );
+            UART_write_string( uart_debug, "MSetPower\n" );
             break;
     }
 }
@@ -603,7 +613,7 @@ void process_sending_UART_data( void )
         if ( ++time_tick_2ms5_count == UINT16_MAX )
         {
             cmdProcessor_write_cmd( UART_DATA, RESPONSE_PREFIX, RESP_ENDDATA );
-            UART_write_string( UART_DEBUG, "DStop1\n" );
+            UART_write_string( uart_debug, "DStop1\n" );
             dataSend = false;
             start_motors = false;
         }
@@ -635,14 +645,14 @@ void process_saving_data ( void )
         if ( writing_flag )
         {
             file_open( "log%d.txt" );
-            UART_write_string( UART_DEBUG, "SD file opened\n" );
+            UART_write_string( uart_debug, "SD file opened\n" );
             counter = 0;
             return;
         }
         else
         {
             file_close();
-            UART_write_string( UART_DEBUG, "SD file closed\n" );
+            UART_write_string( uart_debug, "SD file closed\n" );
             return;
         }
     }
@@ -681,13 +691,13 @@ void process_saving_data ( void )
         
         uint8_t sd_load = file_get_buffers_loaded_count();
         if ( sd_load > 2 )
-            UART_write_string( UART_DEBUG, "Load SD %d\n", sd_load );
+            UART_write_string( uart_debug, "Load SD %d\n", sd_load );
     }
 }
 #endif /* SD_CARD */
 
 #ifdef UART_PYT
-void send_serial_data ( void )
+void send_serial_data_full ( uart_module_t uart, uart_module_t debug )
 {
     static bool    data_switch = false;
     
@@ -718,21 +728,21 @@ void send_serial_data ( void )
         buffer[i++] = battery_charge_get_voltage_x10();
         
         
-        UART_write_words( UART_PYT, buffer, 14 );
+        UART_write_words( uart, (uint16_t *)buffer, 14 );
     }
     
-    if ( UART_bytes_available( UART_PYT ) == 0 )
+    if ( UART_bytes_available( uart ) == 0 )
         return;
     else
     {
-        byte = UART_get_byte( UART_PYT );
-        UART_write_string( UART_DEBUG, "Check: 0x%x\n", byte );
+        byte = UART_get_byte( uart );
+        UART_write_string( debug, "Check: 0x%x\n", byte );
         
         if ( byte == '1' )
         {
             data_switch = !data_switch;
-            UART_write_string( UART_DEBUG, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
-            UART_write_byte( UART_PYT, '0' );
+            UART_write_string( debug, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            UART_write_byte( uart, '0' );
         }
     }
 }
@@ -750,35 +760,121 @@ void bmp180_rcv_filtered_data ( void )
 }
 #endif
 
+const float INTERRUPT_PERIOD = 1.0/1000;
+
 // Generates interrupt each 2.5 msec
 void control_system_timer_init( void )
 {
+    uint32_t timer_counter_limit = FCY * INTERRUPT_PERIOD;
+    
     T4CONbits.TON   = 0;
     T4CONbits.T32   = 1;
     T4CONbits.TCKPS = TIMER_DIV_1;
     _T5IP           = INT_PRIO_HIGHEST;
     _T5IE           = 1;
-    PR5             = (((FCY/FREQ_CONTROL_SYSTEM) >> 16) & 0xffff);
-    PR4             = ((FCY/FREQ_CONTROL_SYSTEM) & 0xffff);
+    PR5             = ((timer_counter_limit >> 16) & 0xffff);
+    PR4             = (timer_counter_limit & 0xffff);
     T4CONbits.TON   = 1;
 }
 
+static uint16_t motor_power = 0;
+
+void send_serial_data ( uart_module_t uart, uart_module_t debug )
+{
+    static bool    data_switch = false;
+    static int16_t buffer[7];
+    
+    uint8_t byte    = 0;
+    
+    if ( data_switch )
+    {
+        gyro_accel_data_t *mpu_data = g_a;
+        int i = 0;
+        
+        buffer[i++] = mpu_data->value.x_accel;
+        buffer[i++] = mpu_data->value.y_accel;
+        buffer[i++] = mpu_data->value.z_accel;
+        buffer[i++] = mpu_data->value.x_gyro;
+        buffer[i++] = mpu_data->value.y_gyro;
+        buffer[i++] = mpu_data->value.z_gyro;   
+        buffer[i++] = motor_power;   
+        
+        UART_write_words( uart, (uint16_t *)buffer, sizeof( buffer )/sizeof( *buffer ) );
+    }
+    
+    if ( UART_bytes_available( uart ) )
+    {
+        byte = UART_get_byte( uart );
+        UART_write_string( debug, "Check: 0x%x\n", byte );
+        
+        if ( byte == '1' )
+        {
+            data_switch = !data_switch;
+            UART_write_string( debug, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            UART_write_byte( uart, '0' );
+        }
+    }
+}
+
 /******************** INTERRUPT HANDLER ********************/
+
+void process_motor_control ( void )
+{
+    static uint16_t counter     = 0;
+    
+    if ( start_motors && !motor_control_is_armed() )
+    {
+        motor_control_set_motors_started();
+        UART_write_string( uart_debug, "Motors armed\n" );
+        counter = motor_power = 0;
+    }
+
+    if ( stop_motors && motor_control_is_armed() )
+    {
+        motor_control_set_motors_stopped();
+        UART_write_string( uart_debug, "Motors disarmed\n" );
+        motor_power = 0;
+    }
+    
+    start_motors    = false;
+    stop_motors     = false;
+    
+    if ( motor_control_is_armed() && ++counter == 100 )
+    {
+        counter = 0;
+        motor_power += 32;
+        
+        quadrotor_state.motor_power[MOTOR_1] =
+        quadrotor_state.motor_power[MOTOR_2] =
+        quadrotor_state.motor_power[MOTOR_3] =
+        quadrotor_state.motor_power[MOTOR_4] = clip_value( motor_power, INPUT_POWER_MIN, INPUT_POWER_MAX );
+        
+        motor_control_set_motor_powers( quadrotor_state.motor_power );
+        
+        if ( motor_power > 3200 )
+        {
+            stop_motors = true;
+        }
+    }    
+}
 
 #define MEASURE_INT_TIME
 //#define CHECK_SD_LOAD
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
-{    
+{        
 #ifdef MEASURE_INT_TIME
     static uint16_t max_time = 0;
     timer_start();
 #endif
 
-#ifndef MPU6050_DMP
     if ( mpu6050_receive_gyro_accel_raw_data() )
         return;
-#endif
+#if 1    
+    UART_debug_interface( uart_debug );
+    send_serial_data( uart_interface, uart_debug );
+    process_motor_control();
+#else
     
 #ifdef ENABLE_HMC5883
     int16_t angle_deg = hmc5883l_get_yaw_angle();
@@ -798,7 +894,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     bmp180_rcv_filtered_data();
     
     bmp180_altitude = log( bmp180_initial_press*1.0/bmp180_press ) * 1.0 * ((bmp180_temp+273*TEMP_MULTIPLYER) / 0.0341593F);
-    UART_write_string( UART_DEBUG, "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
+    UART_write_string( uart_debug, "Pressure: %ld %ld %ld\n", bmp180_altitude, bmp180_press, bmp180_temp );
 #endif
     
 #ifdef RC_CONTROL_ENABLED
@@ -809,7 +905,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #ifdef CHECK_SD_LOAD
     uint8_t load = file_get_buffers_loaded_count();
     if ( load >= 2 )
-        UART_write_string( UART_DEBUG, "Buffers loaded: %d\n", load );
+        UART_write_string( uart_debug, "Buffers loaded: %d\n", load );
 #endif
     
     UART_debug_interface();
@@ -827,14 +923,14 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     
     battery_charge_read_value();
-    
+#endif
 #ifdef MEASURE_INT_TIME
     timer_stop();
     uint16_t time_elapsed_us = timer_get_us();
     uint16_t prev_max        = max_time;
     max_time = max( max_time, time_elapsed_us );
     if ( prev_max != max_time )
-        UART_write_string( UART_DEBUG, "Time: new maximum = %d\n", max_time );
+        UART_write_string( uart_debug, "Time: new maximum = %d\n", max_time );
 #endif
     _T5IF = 0;
 }

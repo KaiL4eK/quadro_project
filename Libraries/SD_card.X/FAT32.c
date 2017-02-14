@@ -37,14 +37,14 @@ Sector_t                        data_first_sector       = 0,
 
 Cluster_t                       next_free_cluster       = 0;
 
-static uint8_t                  uart_debug              =   -1;
+static uart_module_t                  uart_debug              = NULL;
 /**********************************************************/
 
 static Cluster_t    FAT_get_next_free_cluster ( Cluster_t startCluster );
 static int          dir_set_next_empty_entry ( void );
 
 /**********************************************************/
-int fat32_initialize ( uint8_t uart_module )
+int fat32_initialize ( uart_module_t uart_module )
 {
     struct BS_Structure *bpb; //mapping the buffer onto the structure
     struct MBRinfo_Structure *mbr;
