@@ -50,7 +50,7 @@ int main ( void )
 //    mpu6050_offsets_t mpu6050_offsets = { -3840, 1185, 1912, 21, -10, 81 };   // Home data
     mpu6050_offsets_t mpu6050_offsets = { -3473, -3008, 1743, 44, -68, -17 };     // ASC data
     
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_98 );
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     mpu6050_set_offsets( &mpu6050_offsets );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
