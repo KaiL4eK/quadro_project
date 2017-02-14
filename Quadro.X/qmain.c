@@ -109,7 +109,6 @@ int main ( void )
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
     g_a = mpu6050_get_raw_data();
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     complementary_filter_set_angle_rate( 0.999f );
     complementary_filter_set_rotation_speed_rate( 0.9f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
@@ -425,6 +424,27 @@ static void UART_debug_interface( uart_module_t uart )
             stop_motors = true;
             break;
 
+        case 'Y': case 'y':
+            mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
+            UART_write_string( uart, "BW: 20\n" );
+            break;
+        case 'H': case 'h':
+            mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+            UART_write_string( uart, "BW: 20\n" );
+            break;
+        case 'N': case 'n':
+            mpu6050_set_bandwidth( MPU6050_DLPF_BW_98 );
+            UART_write_string( uart, "BW: 20\n" );
+            break;
+        case 'U': case 'u':
+            mpu6050_set_bandwidth( MPU6050_DLPF_BW_188 );
+            UART_write_string( uart, "BW: 20\n" );
+            break;
+        case 'J': case 'j':
+            mpu6050_set_bandwidth( MPU6050_DLPF_BW_256 );
+            UART_write_string( uart, "BW: 20\n" );
+            break;
+            
         case '1':
             UART_write_string( uart, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
             return;
@@ -839,7 +859,7 @@ void process_motor_control ( void )
     start_motors    = false;
     stop_motors     = false;
     
-    if ( motor_control_is_armed() && ++counter == 100 )
+    if ( motor_control_is_armed() && ++counter == 50 )
     {
         counter = 0;
         motor_power += 32;
@@ -850,6 +870,8 @@ void process_motor_control ( void )
         quadrotor_state.motor_power[MOTOR_4] = clip_value( motor_power, INPUT_POWER_MIN, INPUT_POWER_MAX );
         
         motor_control_set_motor_powers( quadrotor_state.motor_power );
+        
+        UART_write_string( uart_debug, "Motors speed: %d\n", motor_power );
         
         if ( motor_power > 3200 )
         {
@@ -868,8 +890,8 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     timer_start();
 #endif
 
-    if ( mpu6050_receive_gyro_accel_raw_data() )
-        return;
+    mpu6050_receive_gyro_accel_raw_data();
+    
 #if 1    
     UART_debug_interface( uart_debug );
     send_serial_data( uart_interface, uart_debug );
