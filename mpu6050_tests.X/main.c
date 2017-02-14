@@ -48,11 +48,9 @@ int main ( void )
         error_loop( "MPU6050 initialize failed\n" );
 
 //    mpu6050_offsets_t mpu6050_offsets = { -3840, 1185, 1912, 21, -10, 81 };   // Home data
-//    mpu6050_offsets_t mpu6050_offsets = { -3473, -3008, 1743, 44, -68, -17 };     // ASC data
-    mpu6050_offsets_t mpu6050_offsets = { -3909, 322, 1655, 107, -12, -21 };     // Quadro data
-
+    mpu6050_offsets_t mpu6050_offsets = { -3473, -3008, 1743, 44, -68, -17 };     // ASC data
     
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_98 );
     mpu6050_set_offsets( &mpu6050_offsets );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
@@ -63,7 +61,7 @@ int main ( void )
 
 //    mpu6050_calibration();
     
-    _TRISA9 = 1;
+    _TRISF12 = 1;
     
     timer_interrupt_initialization();
     
@@ -106,7 +104,7 @@ void uart_response ( uart_module_t uart )
 {
     if ( UART_bytes_available( uart ) )
     {
-        UART_write_string( uart, "Clicked: %c\n", UART_get_byte( uart ) );
+        UART_write_string( uart, "Clicked: %c %d %d\n", UART_get_byte( uart ), _RF12, mpu_data->value.x_gyro );
     }
 }
 
@@ -127,7 +125,7 @@ void send_serial_data ( uart_module_t uart, uart_module_t debug )
         buffer[i++] = mpu_data->value.x_gyro;
         buffer[i++] = mpu_data->value.y_gyro;
         buffer[i++] = mpu_data->value.z_gyro;   
-        buffer[i++] = _RA9;   
+        buffer[i++] = _RF12;   
         
         UART_write_words( uart, buffer, sizeof( buffer )/sizeof( *buffer ) );
     }
@@ -141,6 +139,10 @@ void send_serial_data ( uart_module_t uart, uart_module_t debug )
         {
             data_switch = !data_switch;
             UART_write_string( debug, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            
+            if ( !data_switch )
+                _LATF12 = 0;
+            
             UART_write_byte( uart, '0' );
         }
     }
