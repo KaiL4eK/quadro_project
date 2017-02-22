@@ -3,11 +3,32 @@
 
 #include <per_proto.h>
 
+#include "MPU6050.h"
 #include "motor_control.h"
 
 #define CONTROL_BYTE    0xff
 
 #define FREQ_CONTROL_SYSTEM   400L
+
+
+//#define SD_CARD
+#define PID_tuning
+#define RC_CONTROL_ENABLED
+
+#define UART_BT     1
+#define UART_SERIAL 2
+
+#if 1
+#define UART_DEBUG  UART_SERIAL
+#else
+#define UART_DEBUG  UART_BT
+#endif
+
+#define UART_PYT    1
+
+#ifdef INTERFACE_COMMUNICATION
+    #define UART_DATA   2
+#endif
 
 /********** DEFINES **********/
 typedef int16_t euler_angle_degree_int_t;
@@ -75,6 +96,15 @@ typedef struct {
 typedef struct {
     int16_t p, i, d;
 } PID_parts_t;
+
+void control_system_timer_init( void );
+void process_UART_frame( void );
+
+void complementary_filter_set_angle_rate( float rate_a );
+void complementary_filter_set_rotation_speed_rate( float rate_a );
+
+void UART_debug_interface( uart_module_t uart );
+void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_state_t *q_state );
 
 
 void PID_controller_reset_integral_sums ( void );
