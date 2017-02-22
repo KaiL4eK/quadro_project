@@ -11,25 +11,6 @@
 #define FREQ_CONTROL_SYSTEM   400L
 
 
-//#define SD_CARD
-#define PID_tuning
-#define RC_CONTROL_ENABLED
-
-#define UART_BT     1
-#define UART_SERIAL 2
-
-#if 1
-#define UART_DEBUG  UART_SERIAL
-#else
-#define UART_DEBUG  UART_BT
-#endif
-
-#define UART_PYT    1
-
-#ifdef INTERFACE_COMMUNICATION
-    #define UART_DATA   2
-#endif
-
 /********** DEFINES **********/
 typedef int16_t euler_angle_degree_int_t;
 typedef int16_t motor_power_t;

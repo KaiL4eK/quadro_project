@@ -1,17 +1,27 @@
 #include "core.h"
 
 #include "remote_control.h"
-#include "motor_control.h"
-
 #include <file_io.h>
 
-#include "pragmas.h"
+#include <pragmas.h>
 
-#ifdef ENABLE_BMP180
-static float        bmp180_initial_altitude = 0.0;
-static uint32_t     bmp180_press = 0,
-                    bmp180_temp = 0;    // Temperature is multiplied by TEMP_MULTIPLYER
-static int32_t      bmp180_altitude = 0;
+//#define SD_CARD
+#define PID_tuning
+#define RC_CONTROL_ENABLED
+
+#define UART_BT     1
+#define UART_SERIAL 2
+
+#if 1
+#define UART_DEBUG  UART_SERIAL
+#else
+#define UART_DEBUG  UART_BT
+#endif
+
+#define UART_PYT    1
+
+#ifdef INTERFACE_COMMUNICATION
+    #define UART_DATA   2
 #endif
 
 static Control_values_t     *control_values = NULL;
@@ -76,7 +86,7 @@ int main ( void )
     if ( mpu6050_init( NULL, uart_debug ) < 0 )
         error_process( "MPU6050 initialization" );
     
-    mpu6050_offsets_t mpu6050_offsets = { -3909, 322, 1655, 107, -12, -21 };     // Quadro data
+    mpu6050_offsets_t mpu6050_offsets = { -3886, 334, 1644, 105, -14, -21 };     // Quadro data
 
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
     mpu6050_set_offsets( &mpu6050_offsets );
@@ -84,11 +94,11 @@ int main ( void )
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
     g_a = mpu6050_get_raw_data();
-    complementary_filter_set_angle_rate( 0.98f );
+    complementary_filter_set_angle_rate( 0.99f );
     complementary_filter_set_rotation_speed_rate( 0.9f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
-//    mpu6050_calibration( UART_DEBUG );
+//    mpu6050_calibration();
     
     motor_control_init();
     UART_write_string( uart_debug, "Motors initialized\n" );
@@ -134,8 +144,8 @@ int16_t yaw_control         = 0;
 
 #define ANGLE_ADJUST_RATE           50.0f
 
-// Max angular speed = 50 deg/sec   (1000/20)
-const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/20;
+// Max angular speed = 40 deg/sec   (1000/25)
+const static float CONTROL_2_ANGLE_SPEED_RATE = 1.0f/25;
 
 void calculate_PID_controls ( void )
 {   
@@ -482,6 +492,64 @@ void UART_debug_interface( uart_module_t uart )
             break;
     }
 }
+
+
+#ifdef UART_PYT
+void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_state_t *q_state )
+{
+    extern int16_t pitch_control;
+    extern int16_t roll_control;
+    extern int16_t yaw_control;
+    
+    static bool    data_switch = false;
+    
+    uint8_t byte    = 0;
+    
+    if ( data_switch )
+    {
+        extern int16_t      motorPower;
+        extern float        integr_sum_pitch;
+        extern float        integr_sum_roll;
+        extern float        integr_sum_yaw;
+        int i = 0;
+        
+        int16_t buffer[14];
+        
+        buffer[i++] = q_state->pitch;
+        buffer[i++] = q_state->roll;
+        buffer[i++] = q_state->yaw;
+        buffer[i++] = q_state->pitch_rate;
+        buffer[i++] = q_state->roll_rate;
+        buffer[i++] = q_state->yaw_rate;
+        buffer[i++] = integr_sum_pitch;
+        buffer[i++] = integr_sum_roll;
+        buffer[i++] = integr_sum_yaw;
+        buffer[i++] = pitch_control;
+        buffer[i++] = roll_control;
+        buffer[i++] = yaw_control;
+        buffer[i++] = motorPower;
+        buffer[i++] = battery_charge_get_voltage_x10();
+        
+        
+        UART_write_words( uart, (uint16_t *)buffer, 14 );
+    }
+    
+    if ( UART_bytes_available( uart ) )
+    {
+        byte = UART_get_byte( uart );
+        if ( byte )
+            UART_write_string( debug, "Check: 0x%x\n", byte );
+        
+        if ( byte == '1' )
+        {
+            data_switch = !data_switch;
+            UART_write_string( debug, "Serial data changed state to %s\n", data_switch ? "online" : "offline" );
+            UART_write_byte( uart, '0' );
+        }
+    }
+}
+
+#endif
 
 const float INTERRUPT_PERIOD = 2.5/1000;
 
