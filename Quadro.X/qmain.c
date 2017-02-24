@@ -394,10 +394,14 @@ void UART_debug_interface( uart_module_t uart )
         case 'Q': case 'q':
             roll_rates.prop     += PROP_DELTA;
             pitch_rates.prop    += PROP_DELTA;
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
         case 'W': case 'w':
             roll_rates.prop     -= PROP_DELTA;
             pitch_rates.prop    -= PROP_DELTA;
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
         case 'O': case 'o':
             yaw_rates.prop      += PROP_DELTA;
@@ -410,11 +414,15 @@ void UART_debug_interface( uart_module_t uart )
             roll_rates.integr   += INTEGR_DELTA;
             pitch_rates.integr  += INTEGR_DELTA;
             PID_controller_reset_integral_sums();
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
         case 'S': case 's':
             roll_rates.integr   -= INTEGR_DELTA;
             pitch_rates.integr  -= INTEGR_DELTA;
             PID_controller_reset_integral_sums();
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
         case 'K': case 'k':
             yaw_rates.integr    += INTEGR_DELTA;
@@ -426,23 +434,31 @@ void UART_debug_interface( uart_module_t uart )
         case 'Z': case 'z':
             roll_rates.diff += DIFF_DELTA;
             pitch_rates.diff += DIFF_DELTA;
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
         case 'X': case 'x':
             roll_rates.diff -= DIFF_DELTA;
             pitch_rates.diff -= DIFF_DELTA;
+            UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
+            
             break;
 #define OFFSET_DELTA                0.01;
         case 'R': case 'r':
             pitch_offset += OFFSET_DELTA;
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             break;
         case 'F': case 'f':
             pitch_offset -= OFFSET_DELTA;
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );            
             break;
         case 'D': case 'd':
             roll_offset += OFFSET_DELTA;
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             break;
         case 'G': case 'g':
             roll_offset -= OFFSET_DELTA;
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             break;
         case 'C': case 'c':
             start_motors = true;
@@ -454,42 +470,34 @@ void UART_debug_interface( uart_module_t uart )
         case '1':
             UART_write_string( uart, "Setpoints: %03d %03d %03d\n", pitch_setpoint, roll_setpoint, yaw_setpoint );
             return;
-            break;
             
         case '2':
             UART_write_string( uart, "Control: %03d %03d %03d\n", control_values->pitch, control_values->roll, control_values->rudder );
             return;
-            break;
             
         case '3':
             UART_write_string( uart, "Angles: %03d, %03d, %03d\n", quadrotor_state.roll, quadrotor_state.pitch, quadrotor_state.yaw );
             return;
-            break;
             
         case '4':
             UART_write_string( uart, "Rates: %d, %d, %d\n", quadrotor_state.roll_rate, quadrotor_state.pitch_rate, quadrotor_state.yaw_rate );
             return;
-            break;
             
         case '5':
             UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
             return;
-            break;
             
         case '6':
             UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
             return;
-            break;
             
         case '7':
             UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
             return;
-            break;
             
         case '0':
             UART_write_string( uart, "Battery: %d V\n", battery_charge_get_voltage_x10() );
             return;
-            break;
     }
 }
 
