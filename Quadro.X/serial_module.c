@@ -7,6 +7,10 @@
 
 #include "core.h"
 
+
+// p = p0*exp(-0.0341593/(t+273)*h)
+// h = ln(p0/p) * (t+273)/0.0341593
+
 /********** COMMUNICATION FUNCTIONS **********/
 #ifdef INTERFACE_COMMUNICATION
 

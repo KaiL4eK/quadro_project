@@ -3,7 +3,7 @@
 #include "remote_control.h"
 #include <file_io.h>
 
-#include <pragmas.h>
+#include "pragmas_wd.h"
 
 //#define SD_CARD
 #define PID_tuning
@@ -20,10 +20,6 @@
 
 #define UART_PYT    1
 
-#ifdef INTERFACE_COMMUNICATION
-    #define UART_DATA   2
-#endif
-
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state;
@@ -33,27 +29,31 @@ static struct gyro_rates_ { float pitch, roll, yaw; }
     
 volatile static uart_module_t       uart_debug      = NULL;
 volatile static uart_module_t       uart_interface  = NULL;
-                            
+
+void enable_wdt ( void )
+{
+    _SWDTEN = 1;
+}
+
+void clear_wdt ( void )
+{
+    ClrWdt();
+}
+
 int main ( void ) 
 {
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
 #if UART_DEBUG == UART_BT
-    uart_debug = UART_init( UART_DEBUG, UART_115200, INT_PRIO_MID );
+    uart_debug = UART_init( UART_DEBUG, UART_115200, INT_PRIO_HIGH );
 #else
-    uart_debug = UART_init( UART_DEBUG, UART_460800, INT_PRIO_MID );
+    uart_debug = UART_init( UART_DEBUG, UART_460800, INT_PRIO_HIGH );
 #endif 
     
 #ifdef UART_PYT
     uart_interface = UART_init( UART_PYT, UART_460800, INT_PRIO_HIGH );
     UART_write_set_big_endian_mode( uart_interface, true );
-#endif
-    
-#ifdef INTERFACE_COMMUNICATION
-    UART_init( UART_DATA, UART_115200, INT_PRIO_HIGHEST );
-    UART_write_set_endian( UART_DATA, UART_big_endian );
-    cmdProcessor_init( UART_DATA );
 #endif
     
     UART_write_string( uart_debug, "/------------------------/\n" );
@@ -82,7 +82,7 @@ int main ( void )
 #endif /* SD_CARD */
     i2c_init( 1, 400000 );
     UART_write_string( uart_debug, "I2C initialized\n" );
-
+    
     if ( mpu6050_init( NULL, uart_debug ) < 0 )
         error_process( "MPU6050 initialization" );
     
@@ -90,12 +90,12 @@ int main ( void )
 
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
     mpu6050_set_offsets( &mpu6050_offsets );
-    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_250 );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
     
     g_a = mpu6050_get_raw_data();
     complementary_filter_set_angle_rate( 0.99f );
-    complementary_filter_set_rotation_speed_rate( 0.9f );
+    complementary_filter_set_rotation_speed_rate( 0.8f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration();
@@ -104,6 +104,7 @@ int main ( void )
     UART_write_string( uart_debug, "Motors initialized\n" );
     
     control_system_timer_init();
+    enable_wdt();
     UART_write_string( uart_debug, "Let`s begin!\n" );
 //    ERR_LIGHT = ERR_LIGHT_NO_ERR;
     
@@ -111,17 +112,10 @@ int main ( void )
 #ifdef SD_CARD
         file_process_tasks();
 #endif
-
-#ifdef INTERFACE_COMMUNICATION
-        process_UART_frame();
-#endif
     }
     
     return( 0 );
 }
-
-// p = p0*exp(-0.0341593/(t+273)*h)
-// h = ln(p0/p) * (t+273)/0.0341593
 
 /********** CONTROL SYSTEM FUNCTIONS **********/
 
@@ -191,7 +185,6 @@ int16_t motorPower = 0;
 volatile bool   start_motors    = false,
                 stop_motors     = false;
 
-#define TESTING_
 #define HANDS_START
 
 void process_control_system ( void )
@@ -199,25 +192,6 @@ void process_control_system ( void )
     static int16_t      stop_counter                = 0;
     static bool         sticks_changed              = false;
            bool         sticks_in_start_position    = START_STOP_COND;
-           
-#ifndef TESTING_   
-    if ( sticks_in_start_position != sticks_changed )
-    {   // If go from some position to corners (power on position) or from corners to some position
-        sticks_changed = sticks_in_start_position;
-        if ( sticks_in_start_position )
-        {   // If now in corner position
-            if ( !motors_armed )
-            {
-                PID_controller_reset_integral_sums();
-                motor_control_set_motors_started();
-                UART_write_string( uart_debug, "All motors started with power %d\n", motorPower );
-                motors_armed = true;
-            }
-            start_motors = false;
-        }
-    }
-#else
-    
 
     if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
     {
@@ -259,7 +233,6 @@ void process_control_system ( void )
             UART_write_string( uart_debug, "All motors stopped\n", motorPower );
         }
     }
-#endif
     // -1000 --- 1000
            
     pitch_setpoint  = CONTROL_DEADZONE( control_values->pitch );
@@ -343,7 +316,7 @@ void complementary_filter_set_rotation_speed_rate( float rate_a )
 }
 
 #define SENS_TIME_MS       0.0025f          // 2500L/1000000
-#define GYR_COEF           131.0f           // INT16_MAX/250 - Taken from datasheet mpu6050
+#define GYR_COEF           65.5f            // INT16_MAX/500 - Taken from datasheet mpu6050
 
 const static float gyro_rate_raw_2_deg_per_sec    = 1/GYR_COEF;
 const static float gyro_rate_raw_2_degree         = SENS_TIME_MS/GYR_COEF;
@@ -538,7 +511,6 @@ void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_
         buffer[i++] = motorPower;
         buffer[i++] = battery_charge_get_voltage_x10();
         
-        
         UART_write_words( uart, (uint16_t *)buffer, 14 );
     }
     
@@ -583,6 +555,8 @@ void control_system_timer_init( void )
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {        
+    clear_wdt();
+    
 #ifdef MEASURE_INT_TIME
     static uint16_t max_time = 0;
     timer_start();
@@ -619,10 +593,6 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
-    
-#ifdef INTERFACE_COMMUNICATION
-    process_sending_UART_data();
-#endif
     
     battery_charge_read_value();
 

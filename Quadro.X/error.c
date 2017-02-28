@@ -13,7 +13,7 @@ void error_process ( const char *err_str )
 {
     SET_ERR_L;
     while ( 1 ) { 
-        UART_write_string( uart_debug, "Error: %s\n", err_str ); 
+        UART_write_string( uart_debug, "Error: %s\n", err_str );
         delay_ms( 500 ); 
     };
 }
