@@ -8,7 +8,7 @@
 #include "core.h"
 
 #define PROP_RATE       16
-#define INTEGR_RATE     0.03
+#define INTEGR_RATE     0.04
 #define DIFF_RATE       30
 
 PID_rates_float_t   roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },

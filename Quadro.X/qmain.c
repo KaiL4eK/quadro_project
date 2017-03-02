@@ -286,8 +286,8 @@ void process_control_system ( void )
 
 bool    SD_write                    = false;
 
-float pitch_offset                  = 0.0f;
-float roll_offset                   = 0.0f;
+float pitch_offset                  = 0.01f;
+float roll_offset                   = -0.02f;
 
 /******************** FILTERING API ********************/
 
@@ -419,19 +419,19 @@ void UART_debug_interface( uart_module_t uart )
 #define OFFSET_DELTA                0.01;
         case 'R': case 'r':
             pitch_offset += OFFSET_DELTA;
-            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 100), (int16_t)(roll_offset * 100) );
             break;
         case 'F': case 'f':
             pitch_offset -= OFFSET_DELTA;
-            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );            
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 100), (int16_t)(roll_offset * 100) );            
             break;
         case 'D': case 'd':
             roll_offset += OFFSET_DELTA;
-            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 100), (int16_t)(roll_offset * 100) );
             break;
         case 'G': case 'g':
             roll_offset -= OFFSET_DELTA;
-            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 100), (int16_t)(roll_offset * 100) );
             break;
         case 'C': case 'c':
             start_motors = true;
@@ -465,7 +465,7 @@ void UART_debug_interface( uart_module_t uart )
             return;
             
         case '7':
-            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 10), (int16_t)(roll_offset * 10) );
+            UART_write_string( uart, "OP %d OR %d\n", (int16_t)(pitch_offset * 100), (int16_t)(roll_offset * 100) );
             return;
             
         case '0':
