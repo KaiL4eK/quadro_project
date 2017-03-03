@@ -7,9 +7,9 @@
 
 #include "core.h"
 
-#define PROP_RATE       16
+#define PROP_RATE       15
 #define INTEGR_RATE     0.04
-#define DIFF_RATE       30
+#define DIFF_RATE       20
 
 PID_rates_float_t   roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
                     pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
@@ -23,7 +23,7 @@ PID_parts_t pitch_parts,
             roll_parts,
             yaw_parts;
 
-#define CONTROL_LIMIT 1300
+#define CONTROL_LIMIT 1000
 #define CONTROL_LIMIT_INTEGR 1000
 
 void PID_controller_reset_integral_sums ( void )

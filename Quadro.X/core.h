@@ -102,6 +102,7 @@ void cmdProcessor_write_cmd ( uart_module_t module, uint8_t prefix, uint8_t code
 int battery_charge_initialize ( void );
 void battery_charge_read_value ( void );
 uint16_t battery_charge_get_voltage_x10 ( void );
+void battery_charge_set_filter_value ( float value );
 
 #endif	/* Q_CORE_H_ */
 

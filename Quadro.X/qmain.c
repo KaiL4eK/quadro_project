@@ -61,6 +61,7 @@ int main ( void )
     
     error_process_init( uart_debug );
     battery_charge_initialize();
+    battery_charge_set_filter_value( 0.9f );
     
     control_values = remote_control_init();
     UART_write_string( uart_debug, "RC initialized\n" );
@@ -171,14 +172,10 @@ void calculate_PID_controls ( void )
                             control_values->rudder > (-1*START_ANGLES) )
 #endif
 
-#define MAX_CONTROL_ANGLE       10L
-#define CONTROL_2_ANGLE_RATIO   10L
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
 #define DEADZONE_LIMIT          30
 
 #define CONTROL_DEADZONE(x)     ((-DEADZONE_LIMIT <= (x) && (x) <= DEADZONE_LIMIT) ? 0 : (x))
-
-const static float control_2_angle_rate = MAX_CONTROL_ANGLE/(float)CONTROL_2_ANGLE_RATIO;
 
 int16_t motorPower = 0;
 
@@ -186,13 +183,17 @@ volatile bool   start_motors    = false,
                 stop_motors     = false;
 
 #define HANDS_START
+#define VOLTAGE_COMPENSATION
 
 void process_control_system ( void )
 { 
     static int16_t      stop_counter                = 0;
     static bool         sticks_changed              = false;
            bool         sticks_in_start_position    = START_STOP_COND;
-
+#ifdef VOLTAGE_COMPENSATION
+    static float        voltage_rate                = 0;
+#endif
+    
     if ( control_values->two_pos_switch == TWO_POS_SWITCH_ON )
     {
 #ifdef HANDS_START
@@ -247,19 +248,34 @@ void process_control_system ( void )
             pitch_control = roll_control = yaw_control = 0;
             
         motorPower      = control_values->throttle;   // * 32 / 20
+#ifdef VOLTAGE_COMPENSATION        
+        voltage_rate    = 150.0/battery_charge_get_voltage_x10();
+#endif
         
         int16_t power = 0;
         
         power = motorPower + pitch_control - roll_control - yaw_control;
+#ifdef VOLTAGE_COMPENSATION
+        power *= voltage_rate;
+#endif
         quadrotor_state.motor_power[MOTOR_1] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
         power = motorPower + pitch_control + roll_control + yaw_control;
+#ifdef VOLTAGE_COMPENSATION
+        power *= voltage_rate; 
+#endif
         quadrotor_state.motor_power[MOTOR_2] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
         power = motorPower - pitch_control + roll_control - yaw_control;
+#ifdef VOLTAGE_COMPENSATION
+        power *= voltage_rate;
+#endif
         quadrotor_state.motor_power[MOTOR_3] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
         power = motorPower - pitch_control - roll_control + yaw_control;
+#ifdef VOLTAGE_COMPENSATION
+        power *= voltage_rate;
+#endif
         quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
         motor_control_set_motor_powers( quadrotor_state.motor_power );

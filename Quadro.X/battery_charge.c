@@ -40,11 +40,19 @@ uint16_t battery_charge_get_voltage_x10 ( void )
     return raw_battery_voltage * translate_rate;
 }
 
+static float filter_value = 0.0;
+
+void battery_charge_set_filter_value ( float value )
+{
+    filter_value = value;
+}
+
 void battery_charge_read_value ( void )
 {
     if ( AD1CON1bits.DONE ) {
         AD1CON1bits.DONE    = 0;            // reset DONE bit
-        raw_battery_voltage = ADC1BUF0;
+        
+        raw_battery_voltage = filter_value * raw_battery_voltage + (1 - filter_value) * ADC1BUF0;
     }
 }
 
