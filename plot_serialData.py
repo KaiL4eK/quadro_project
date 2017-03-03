@@ -41,7 +41,7 @@ plt.figure(3)
 plt.plot( time_array, rate_pitch,  'y-', label='Rate' )
 plt.plot( time_array, angle_pitch,  'g-', label='Angle' )
 plt.plot( time_array, integr_pitch,  'k-', label='Integr' )
-# plt.plot( time_array, control_pitch,  'r-', label='Control' )
+plt.plot( time_array, control_pitch,  'r-', label='Control' )
 
 plt.ylabel('Angle')
 plt.xlabel('Time')

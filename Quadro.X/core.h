@@ -75,7 +75,7 @@ typedef struct {
 } PID_rates_float_t;
 
 typedef struct {
-    int16_t p, i, d;
+    float p, i, d;
 } PID_parts_t;
 
 void control_system_timer_init( void );

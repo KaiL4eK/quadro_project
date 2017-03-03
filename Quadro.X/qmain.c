@@ -61,7 +61,7 @@ int main ( void )
     
     error_process_init( uart_debug );
     battery_charge_initialize();
-    battery_charge_set_filter_value( 0.9f );
+    battery_charge_set_filter_value( 0.95f );
     
     control_values = remote_control_init();
     UART_write_string( uart_debug, "RC initialized\n" );
@@ -92,11 +92,11 @@ int main ( void )
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
     mpu6050_set_offsets( &mpu6050_offsets );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
-    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
     
     g_a = mpu6050_get_raw_data();
     complementary_filter_set_angle_rate( 0.99f );
-    complementary_filter_set_rotation_speed_rate( 0.8f );
+    complementary_filter_set_rotation_speed_rate( 0.85f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration();
@@ -183,7 +183,7 @@ volatile bool   start_motors    = false,
                 stop_motors     = false;
 
 #define HANDS_START
-#define VOLTAGE_COMPENSATION
+//#define VOLTAGE_COMPENSATION
 
 void process_control_system ( void )
 { 
@@ -249,7 +249,7 @@ void process_control_system ( void )
             
         motorPower      = control_values->throttle;   // * 32 / 20
 #ifdef VOLTAGE_COMPENSATION        
-        voltage_rate    = 150.0/battery_charge_get_voltage_x10();
+        voltage_rate    = 157.0 / battery_charge_get_voltage_x10(); // 143 * 1.1
 #endif
         
         int16_t power = 0;
@@ -394,30 +394,38 @@ void UART_debug_interface( uart_module_t uart )
             break;
         case 'O': case 'o':
             yaw_rates.prop      += PROP_DELTA;
+            UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            
             break;
         case 'P': case 'p':
             yaw_rates.prop      -= PROP_DELTA;
+            UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            
             break;
 #define INTEGR_DELTA 0.001
         case 'A': case 'a':
             roll_rates.integr   += INTEGR_DELTA;
             pitch_rates.integr  += INTEGR_DELTA;
-            PID_controller_reset_integral_sums();
+//            PID_controller_reset_integral_sums();
             UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
             
             break;
         case 'S': case 's':
             roll_rates.integr   -= INTEGR_DELTA;
             pitch_rates.integr  -= INTEGR_DELTA;
-            PID_controller_reset_integral_sums();
+//            PID_controller_reset_integral_sums();
             UART_write_string( uart, "R/P: P %d D %d I %d\n", (uint16_t)(pitch_rates.prop * 10), (uint16_t)(pitch_rates.diff * 10), (uint16_t)(pitch_rates.integr * 1000) );
             
             break;
         case 'K': case 'k':
             yaw_rates.integr    += INTEGR_DELTA;
+            UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            
             break;
         case 'L': case 'l':
             yaw_rates.integr    -= INTEGR_DELTA;
+            UART_write_string( uart, "Yaw: P %d D %d I %d\n", (uint16_t)(yaw_rates.prop * 10), (uint16_t)(yaw_rates.diff * 10), (uint16_t)(yaw_rates.integr * 1000) );
+            
             break;
 #define DIFF_DELTA 0.1
         case 'Z': case 'z':
