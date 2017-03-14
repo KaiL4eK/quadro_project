@@ -23,7 +23,7 @@ PID_parts_t pitch_parts,
             roll_parts,
             yaw_parts;
 
-#define CONTROL_LIMIT 1000
+#define CONTROL_LIMIT 1500
 #define CONTROL_LIMIT_INTEGR 1000
 
 void PID_controller_reset_integral_sums ( void )

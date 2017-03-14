@@ -162,16 +162,6 @@ void calculate_PID_controls ( void )
     yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
 }
 
-#if 0
-#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
-                            control_values->rudder > (-1*START_ANGLES) && \
-                            control_values->roll < START_ANGLES && \
-                            control_values->pitch > (-1*START_ANGLES) )
-#else
-#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
-                            control_values->rudder > (-1*START_ANGLES) )
-#endif
-
 #define STOP_LIMIT              1000L       // 1k * 2.5 ms = 2.5 sec - low thrust limit
 #define DEADZONE_LIMIT          30
 
@@ -184,6 +174,20 @@ volatile bool   start_motors    = false,
 
 #define HANDS_START
 //#define VOLTAGE_COMPENSATION
+
+#define THROTLE_OFF_LIMIT      (800)
+#define THROTLE_START_LIMIT    (200)
+#define START_ANGLES            (-800)
+
+#if 0
+#define START_STOP_COND (   control_values->throttle < THROTTLE_START_LIMIT && \
+                            control_values->rudder > (-1*START_ANGLES) && \
+                            control_values->roll < START_ANGLES && \
+                            control_values->pitch > (-1*START_ANGLES) )
+#else
+#define START_STOP_COND (   control_values->throttle < THROTLE_START_LIMIT && \
+                            control_values->rudder > (-1*START_ANGLES) )
+#endif
 
 void process_control_system ( void )
 { 
@@ -202,7 +206,7 @@ void process_control_system ( void )
             sticks_changed = sticks_in_start_position;
             if ( sticks_in_start_position )
             {   // If now in corner position
-                if ( !motor_control_is_armed() && control_values->throttle < THROTTLE_START_LIMIT )
+                if ( !motor_control_is_armed() && control_values->throttle < THROTLE_START_LIMIT )
                 {
                     PID_controller_reset_integral_sums();
                     motor_control_set_motors_started();
@@ -242,7 +246,7 @@ void process_control_system ( void )
     
     if ( motor_control_is_armed() )
     {
-        if ( control_values->throttle > THROTTLE_START_LIMIT )
+        if ( control_values->throttle > THROTLE_START_LIMIT )
             calculate_PID_controls();
         else
             pitch_control = roll_control = yaw_control = 0;
@@ -281,7 +285,7 @@ void process_control_system ( void )
         motor_control_set_motor_powers( quadrotor_state.motor_power );
         
 #ifdef HANDS_START
-        if ( control_values->throttle <= THROTTLE_START_LIMIT )
+        if ( control_values->throttle <= THROTLE_START_LIMIT )
         {
             if ( stop_counter++ >= STOP_LIMIT )
             {
@@ -305,68 +309,7 @@ bool    SD_write                    = false;
 float pitch_offset                  = 0.01f;
 float roll_offset                   = -0.02f;
 
-/******************** FILTERING API ********************/
-
-static float complementary_filter_angle_rate_a = 0.95f;
-static float complementary_filter_angle_rate_b = 0.05f;
-
-static float complementary_filter_rotation_speed_rate_a = 0.7f;
-static float complementary_filter_rotation_speed_rate_b = 0.3f;
-
-void complementary_filter_set_angle_rate( float rate_a )
-{
-    if ( rate_a >= 1.0f )
-        return;
-    
-    complementary_filter_angle_rate_a = rate_a;
-    complementary_filter_angle_rate_b = 1.0f - rate_a;
-}
-
-void complementary_filter_set_rotation_speed_rate( float rate_a )
-{
-    if ( rate_a >= 1.0f )
-        return;
-    
-    complementary_filter_rotation_speed_rate_a = rate_a;
-    complementary_filter_rotation_speed_rate_b = 1.0f - rate_a;
-}
-
-#define SENS_TIME_MS       0.0025f          // 2500L/1000000
-#define GYR_COEF           65.5f            // INT16_MAX/500 - Taken from datasheet mpu6050
-
-const static float gyro_rate_raw_2_deg_per_sec    = 1/GYR_COEF;
-const static float gyro_rate_raw_2_degree         = SENS_TIME_MS/GYR_COEF;
-
-static void compute_IMU_data( void )
-{    
-    float   acc_x               = g_a->value.x_accel,
-            acc_y               = g_a->value.y_accel,
-            acc_z               = g_a->value.z_accel;
-    
-    gyro_rates.pitch            = complementary_filter_rotation_speed_rate_a * gyro_rates.pitch + complementary_filter_rotation_speed_rate_b * (g_a->value.x_gyro * gyro_rate_raw_2_deg_per_sec);
-    gyro_rates.roll             = complementary_filter_rotation_speed_rate_a * gyro_rates.roll  + complementary_filter_rotation_speed_rate_b * (g_a->value.y_gyro * gyro_rate_raw_2_deg_per_sec);
-    gyro_rates.yaw              = complementary_filter_rotation_speed_rate_a * gyro_rates.yaw   + complementary_filter_rotation_speed_rate_b * (g_a->value.z_gyro * gyro_rate_raw_2_deg_per_sec);    
-    
-    // Next count angle
-    
-    float   accel_angle_roll    = 0;
-    float   accel_angle_pitch   = 0;
-    
-    if ( acc_x != 0 && acc_y != 0 )
-    {
-        accel_angle_roll    = atan2(-acc_x, sqrt(acc_y*acc_y + acc_z*acc_z)) * RADIANS_TO_DEGREES;
-        accel_angle_pitch   = atan2( acc_y, sqrt(acc_x*acc_x + acc_z*acc_z)) * RADIANS_TO_DEGREES;
-    }
-    
-    euler_angles.pitch   = (complementary_filter_angle_rate_a * (g_a->value.x_gyro * gyro_rate_raw_2_degree + euler_angles.pitch)) + (complementary_filter_angle_rate_b * accel_angle_pitch);
-    euler_angles.roll    = (complementary_filter_angle_rate_a * (g_a->value.y_gyro * gyro_rate_raw_2_degree + euler_angles.roll))  + (complementary_filter_angle_rate_b * accel_angle_roll);
-    euler_angles.yaw     =                                       g_a->value.z_gyro * gyro_rate_raw_2_degree + euler_angles.yaw;
-
-    euler_angles.pitch   -= pitch_offset;
-    euler_angles.roll    -= roll_offset;
-}
-
-/******************** FILTERING API END ********************/
+#define SENS_TIME_MS       0.005f          // 2500L/1000000
 
 void UART_debug_interface( uart_module_t uart )
 {
@@ -555,12 +498,13 @@ void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_
 
 #endif
 
-const float INTERRUPT_PERIOD = 2.5/1000;
+const float INTERRUPT_PERIOD = 5.0/1000;
 
-// Generates interrupt each 2.5 msec
+// Generates interrupt each 5 msec
 void control_system_timer_init( void )
 {
     uint32_t timer_counter_limit = FCY * INTERRUPT_PERIOD;
+    UART_write_string( uart_debug, "Timer setup: %ld\n", timer_counter_limit );
     
     T4CONbits.TON   = 0;
     T4CONbits.T32   = 1;
@@ -577,8 +521,14 @@ void control_system_timer_init( void )
 #define MEASURE_INT_TIME
 //#define CHECK_SD_LOAD
 
+uint16_t time_elapsed_us = 0;
+
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {        
+    timer_stop();
+    time_elapsed_us = timer_get_us();
+    UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
+    
     clear_wdt();
     
 #ifdef MEASURE_INT_TIME
@@ -587,7 +537,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     mpu6050_receive_gyro_accel_raw_data();
 
-    compute_IMU_data();
+    compute_IMU_data( g_a, &euler_angles );
+    euler_angles.pitch   -= pitch_offset;
+    euler_angles.roll    -= roll_offset;
     
     quadrotor_state.pitch       = euler_angles.pitch * 100;
     quadrotor_state.roll        = euler_angles.roll  * 100;
@@ -622,11 +574,13 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 
 #ifdef MEASURE_INT_TIME
     timer_stop();
-    uint16_t time_elapsed_us = timer_get_us();
+    time_elapsed_us = timer_get_us();
     uint16_t prev_max        = max_time;
     max_time = max( max_time, time_elapsed_us );
     if ( prev_max != max_time )
         UART_write_string( uart_debug, "Time: new maximum = %d\n", max_time );
 #endif
     _T5IF = 0;
+    
+    timer_start();
 }
