@@ -4,3 +4,6 @@
 [submodule "Libraries/ahrs_sensors"]
 	path = Libraries/ahrs_sensors
 	url = git@bitbucket.org:KaiL4eK/ahrs_sensors.git
+[submodule "Libraries/filters"]
+	path = Libraries/filters
+	url = git@bitbucket.org:KaiL4eK/filters.git

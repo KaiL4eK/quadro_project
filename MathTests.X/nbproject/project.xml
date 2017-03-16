@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>com.microchip.mplab.nbide.embedded.makeproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/make-project/1">
+            <name>MathTests</name>
+            <creation-uuid>ea459eff-6b06-47d9-a14f-7f5e51366699</creation-uuid>
+            <make-project-type>0</make-project-type>
+            <c-extensions>c</c-extensions>
+            <cpp-extensions/>
+            <header-extensions/>
+            <asminc-extensions/>
+            <sourceEncoding>UTF-8</sourceEncoding>
+            <make-dep-projects>
+                <make-dep-project>../Libraries/dspic33fj256mc710_periphery</make-dep-project>
+                <make-dep-project>../Libraries/Math_lib.X</make-dep-project>
+            </make-dep-projects>
+        </data>
+    </configuration>
+</project>

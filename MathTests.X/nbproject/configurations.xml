@@ -4,10 +4,6 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>core.h</itemPath>
-      <itemPath>motor_control.h</itemPath>
-      <itemPath>remote_control.h</itemPath>
-      <itemPath>pragmas_wd.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -16,25 +12,14 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>qmain.c</itemPath>
-      <itemPath>motor_control.c</itemPath>
-      <itemPath>error.c</itemPath>
-      <itemPath>command_processor.c</itemPath>
-      <itemPath>PID_control_system.c</itemPath>
-      <itemPath>remote_control.c</itemPath>
-      <itemPath>battery_charge.c</itemPath>
-      <itemPath>serial_module.c</itemPath>
+      <itemPath>main.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false">
       <itemPath>Makefile</itemPath>
     </logicalFolder>
-    <itemPath>Info.txt</itemPath>
   </logicalFolder>
-  <sourceRootList>
-    <Elem>.</Elem>
-  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="2">
@@ -51,23 +36,6 @@
       <compileType>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibProjectItem>
-              <makeArtifact PL="../Libraries/SD_card.X"
-                            CT="3"
-                            CN="default"
-                            AC="true"
-                            BL="true"
-                            WD="../Libraries/SD_card.X"
-                            BC="${MAKE}  -f Makefile CONF=default"
-                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
-                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
-                            OP="dist/default/production/SD_card.X.a"
-                            DOP="dist/default/debug/SD_card.X.a"
-                            FL="dist/default/production/SD_card.X.a"
-                            PD="dist/default/production/SD_card.X.a"
-                            DD="dist/default/debug/SD_card.X.a">
-              </makeArtifact>
-            </linkerLibProjectItem>
             <linkerLibProjectItem>
               <makeArtifact PL="../Libraries/dspic33fj256mc710_periphery"
                             CT="3"
@@ -86,20 +54,20 @@
               </makeArtifact>
             </linkerLibProjectItem>
             <linkerLibProjectItem>
-              <makeArtifact PL="../Libraries/ahrs_sensors"
+              <makeArtifact PL="../Libraries/Math_lib.X"
                             CT="3"
                             CN="default"
                             AC="true"
                             BL="true"
-                            WD="../Libraries/ahrs_sensors"
+                            WD="../Libraries/Math_lib.X"
                             BC="${MAKE}  -f Makefile CONF=default"
                             DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
                             CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
-                            OP="dist/default/production/ahrs_sensors.a"
-                            DOP="dist/default/debug/ahrs_sensors.a"
-                            FL="dist/default/production/ahrs_sensors.a"
-                            PD="dist/default/production/ahrs_sensors.a"
-                            DD="dist/default/debug/ahrs_sensors.a">
+                            OP="dist/default/production/Math_lib.X.a"
+                            DOP="dist/default/debug/Math_lib.X.a"
+                            FL="dist/default/production/Math_lib.X.a"
+                            PD="dist/default/production/Math_lib.X.a"
+                            DD="dist/default/debug/Math_lib.X.a">
               </makeArtifact>
             </linkerLibProjectItem>
           </linkerLibItems>
@@ -138,8 +106,7 @@
         <property key="enable-short-double" value="false"/>
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
-        <property key="extra-include-directories"
-                  value="../Libraries/Math_lib.X;../common;../Libraries/ahrs_sensors/public;../Libraries/SD_card.X;../Libraries/dspic33fj256mc710_periphery"/>
+        <property key="extra-include-directories" value=""/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -167,25 +134,6 @@
       <C30-AR>
         <property key="additional-options-chop-files" value="false"/>
       </C30-AR>
-      <C30-AS>
-        <property key="assembler-symbols" value=""/>
-        <property key="expand-macros" value="false"/>
-        <property key="extra-include-directories-for-assembler" value=""/>
-        <property key="extra-include-directories-for-preprocessor" value=""/>
-        <property key="false-conditionals" value="false"/>
-        <property key="keep-locals" value="false"/>
-        <property key="list-assembly" value="false"/>
-        <property key="list-section-info" value="false"/>
-        <property key="list-source" value="false"/>
-        <property key="list-symbols" value="false"/>
-        <property key="oXC16asm-extra-opts" value=""/>
-        <property key="oXC16asm-list-to-file" value="false"/>
-        <property key="omit-debug-dirs" value="false"/>
-        <property key="omit-forms" value="false"/>
-        <property key="preprocessor-macros" value=""/>
-        <property key="relax" value="false"/>
-        <property key="warning-level" value="emit-warnings"/>
-      </C30-AS>
       <C30-LD>
         <property key="additional-options-use-response-files" value="false"/>
         <property key="boot-eeprom" value="no_eeprom"/>
@@ -208,7 +156,7 @@
         <property key="general-code-protect" value="no_code_protect"/>
         <property key="general-write-protect" value="no_write_protect"/>
         <property key="generate-cross-reference-file" value="false"/>
-        <property key="heap-size" value="4096"/>
+        <property key="heap-size" value=""/>
         <property key="input-libraries" value=""/>
         <property key="linker-stack" value="true"/>
         <property key="linker-symbols" value=""/>
@@ -232,7 +180,8 @@
         <property key="warn-section-align" value="false"/>
       </C30-LD>
       <C30Global>
-        <property key="common-include-directories" value="../Libraries/SD_card.X"/>
+        <property key="common-include-directories"
+                  value="../Libraries/dspic33fj256mc710_periphery;../Libraries/Math_lib.X"/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="true"/>
         <property key="generic-16-bit" value="false"/>
@@ -245,13 +194,6 @@
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
       </C30Global>
-      <PICkit2PlatformTool>
-        <property key="pk2settings.3state" value="false"/>
-        <property key="pk2settings.preserveee" value="false"/>
-        <property key="pk2settings.setvddvoltage" value="3.25"/>
-        <property key="pk2settings.userpgmexec" value="true"/>
-        <property key="pk2settings.usetargetpower" value="false"/>
-      </PICkit2PlatformTool>
       <PICkit3PlatformTool>
         <property key="ADC 1" value="true"/>
         <property key="ADC 2" value="true"/>
@@ -294,7 +236,6 @@
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

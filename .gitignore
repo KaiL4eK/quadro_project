@@ -40,3 +40,4 @@ putty*
 *.map
 /Libraries/SD_card.X/nbproject/private/
 /Libraries/SD_card.X/dist/default/
+/Libraries/filters/nbproject/private/
