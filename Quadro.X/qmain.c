@@ -96,7 +96,7 @@ int main ( void )
     
     g_a = mpu6050_get_raw_data();
     complementary_filter_set_angle_rate( 0.99f );
-    complementary_filter_set_rotation_speed_rate( 0.85f );
+    lowpass_filter_set_velocity_rate( 0.85f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
 //    mpu6050_calibration();
@@ -537,7 +537,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     mpu6050_receive_gyro_accel_raw_data();
 
-    compute_IMU_data( g_a, &euler_angles );
+//    compute_IMU_data( g_a, &euler_angles );
     euler_angles.pitch   -= pitch_offset;
     euler_angles.roll    -= roll_offset;
     

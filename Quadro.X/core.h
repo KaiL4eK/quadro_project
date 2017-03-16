@@ -3,7 +3,9 @@
 
 #include <per_proto.h>
 
-#include "MPU6050.h"
+#include <filters.h>
+
+#include <MPU6050.h>
 #include "motor_control.h"
 
 #define CONTROL_BYTE    0xff

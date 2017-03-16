@@ -102,6 +102,40 @@
                             DD="dist/default/debug/ahrs_sensors.a">
               </makeArtifact>
             </linkerLibProjectItem>
+            <linkerLibProjectItem>
+              <makeArtifact PL="../Libraries/filters"
+                            CT="3"
+                            CN="default"
+                            AC="true"
+                            BL="true"
+                            WD="../Libraries/filters"
+                            BC="${MAKE}  -f Makefile CONF=default"
+                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
+                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
+                            OP="dist/default/production/filters.a"
+                            DOP="dist/default/debug/filters.a"
+                            FL="dist/default/production/filters.a"
+                            PD="dist/default/production/filters.a"
+                            DD="dist/default/debug/filters.a">
+              </makeArtifact>
+            </linkerLibProjectItem>
+            <linkerLibProjectItem>
+              <makeArtifact PL="../Libraries/Math_lib.X"
+                            CT="3"
+                            CN="default"
+                            AC="true"
+                            BL="true"
+                            WD="../Libraries/Math_lib.X"
+                            BC="${MAKE}  -f Makefile CONF=default"
+                            DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
+                            CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
+                            OP="dist/default/production/Math_lib.X.a"
+                            DOP="dist/default/debug/Math_lib.X.a"
+                            FL="dist/default/production/Math_lib.X.a"
+                            PD="dist/default/production/Math_lib.X.a"
+                            DD="dist/default/debug/Math_lib.X.a">
+              </makeArtifact>
+            </linkerLibProjectItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -139,7 +173,7 @@
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="extra-include-directories"
-                  value="../Libraries/Math_lib.X;../common;../Libraries/ahrs_sensors/public;../Libraries/SD_card.X;../Libraries/dspic33fj256mc710_periphery"/>
+                  value="../Libraries/Math_lib.X;../common;../Libraries/ahrs_sensors;../Libraries/SD_card.X;../Libraries/dspic33fj256mc710_periphery;../Libraries/filters"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -294,7 +328,6 @@
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
