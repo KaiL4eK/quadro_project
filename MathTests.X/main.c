@@ -22,7 +22,7 @@ void process_mpu_filter_benchmark ( bool manual );
 
 #define HELP_MESSAGE    "\nBenchmark is ready:\n\tclick '1' to start <inv_sqrt> benchmark\n" \
                                                "\tclick '2' to start <filters> benchmark\n" \
-                                               "\tclick '3' to start <filters_manual> benchmark\n"
+                                               "\tclick '3' to start <filters_man> benchmark\n"
 
 int main ( void ) 
 {
@@ -41,7 +41,8 @@ int main ( void )
     } else {
 //        mpu6050_calibration();
 //        mpu6050_offsets_t mpu6050_offsets = { -3886, 334, 1644, 105, -14, -21 };     // Quadro data
-        mpu6050_offsets_t mpu6050_offsets = { -3401, -2901, 1730, 48, -67, -25 };     // MPU in orange case data
+//        mpu6050_offsets_t mpu6050_offsets = { -3401, -2901, 1730, 48, -67, -25 };     // MPU in orange case data
+        mpu6050_offsets_t mpu6050_offsets = { -3728, 1209, 1927, 24, -13, 80 };     // MPU
 
         mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
         mpu6050_set_offsets( &mpu6050_offsets );
@@ -50,6 +51,9 @@ int main ( void )
 
         g_a                 = mpu6050_get_raw_data();
         gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
+        
+        filter_initialize( 1.0/1000 );
+        madgwick_filter_set_angle_rate( 0.9 );
     }
     
     while ( 1 )
@@ -123,6 +127,7 @@ void process_mpu_filter_benchmark ( bool manual )
     {
         timer_start();
         mpu6050_receive_gyro_accel_raw_data();
+                
         imu_input.acc_x = g_a->value.x_accel;
         imu_input.acc_y = g_a->value.y_accel;
         imu_input.acc_z = g_a->value.z_accel;
@@ -145,6 +150,21 @@ void process_mpu_filter_benchmark ( bool manual )
         timer_stop();
         time_elapsed_us = timer_get_us();
         max_time_madgwick = max( max_time_madgwick, time_elapsed_us );
+        
+        if ( reading_counter % 100 == 0 )
+        {
+            UART_write_string( uart_interface, "Read data: %05d, %05d, %05d, %f, %f, %f\n",   
+                                                                                    g_a->value.x_accel, 
+                                                                                    g_a->value.y_accel, 
+                                                                                    g_a->value.z_accel, 
+                                                                                    g_a->value.x_gyro * gyro_sensitivity,
+                                                                                    g_a->value.y_gyro * gyro_sensitivity,
+                                                                                    g_a->value.z_gyro * gyro_sensitivity );
+            UART_write_string( uart_interface, "Angles complementary: %f, %f\n",    complementary_angles.pitch, 
+                                                                                    complementary_angles.roll );
+            UART_write_string( uart_interface, "Angles madgwick: %f, %f\n",         madgwick_angles.pitch, 
+                                                                                    madgwick_angles.roll );
+        }
     }
     
     UART_write_string( uart_interface, "\nMax reading time = %ld us\n", max_mpu_time );
