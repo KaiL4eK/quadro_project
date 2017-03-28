@@ -5,6 +5,8 @@
  * Created on March 16, 2017, 2:52 PM
  */
 
+#include <dsp.h>
+
 #include <per_proto.h>
 #include <pragmas.h>
 
@@ -19,10 +21,12 @@ static float                gyro_sensitivity    = 0.0;
 
 void process_inv_sqrt_benchmark ( void );
 void process_mpu_filter_benchmark ( bool manual );
+void dsp_tect_benchmark ( void );
 
 #define HELP_MESSAGE    "\nBenchmark is ready:\n\tclick '1' to start <inv_sqrt> benchmark\n" \
                                                "\tclick '2' to start <filters> benchmark\n" \
-                                               "\tclick '3' to start <filters_man> benchmark\n"
+                                               "\tclick '3' to start <filters_man> benchmark\n" \
+                                               "\tclick '4' to start <dsp_test> benchmark\n"
 
 int main ( void ) 
 {
@@ -95,12 +99,31 @@ int main ( void )
                     UART_clean_input( uart_interface );
                     show_notif = false;
                 }
-            } else 
+            } else if ( input == '4' )
+            {
+                dsp_tect_benchmark();
+                show_notif = false;
+            } else
                 UART_write_string( uart_interface, HELP_MESSAGE );
         }
     }
     
     return 0;
+}
+
+void dsp_tect_benchmark ( void )
+{
+    // Float2Fract -- [-1.0 / 1.0]
+    fractional test_data[4] = {Float2Fract(0.1), Float2Fract(1.0), Float2Fract(0.7), Float2Fract(0.3)};
+    int max_index = 0;
+    
+    UART_write_string( uart_interface, "Input: %d\n", test_data[0] );
+    
+    fractional res = VectorPower( 4, test_data );
+    fractional max_ = VectorMax( 4, test_data, &max_index );
+
+    UART_write_string( uart_interface, "Result: %d\n", res );
+    UART_write_string( uart_interface, "Max: %d / index: %d\n", max_, max_index );
 }
 
 void process_mpu_filter_benchmark ( bool manual )

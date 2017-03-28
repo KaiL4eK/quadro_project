@@ -104,6 +104,7 @@
                             DD="dist/default/debug/ahrs_sensors.a">
               </makeArtifact>
             </linkerLibProjectItem>
+            <linkerLibFileItem>/opt/microchip/xc16/v1.30/lib/libdsp-elf.a</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
         <archiverTool>
@@ -138,7 +139,7 @@
         <property key="enable-omit-frame-pointer" value="false"/>
         <property key="enable-procedural-abstraction" value="false"/>
         <property key="enable-short-double" value="false"/>
-        <property key="enable-symbols" value="true"/>
+        <property key="enable-symbols" value="false"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="extra-include-directories" value=""/>
         <property key="isolate-each-function" value="false"/>
