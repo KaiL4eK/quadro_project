@@ -111,19 +111,54 @@ int main ( void )
     return 0;
 }
 
+#define DSP_TEST_SAMPLES_COUNT  10000
+
 void dsp_tect_benchmark ( void )
 {
+    uint32_t            dsp_time_max_us     = 0;
+    uint32_t            man_time_max_us     = 0;
+    int                 dsp_max_index       = 0;
+    int                 man_max_index       = 0;
+    fractional          dsp_max             = INT16_MIN;
+    fractional          man_max             = INT16_MIN;
+    
+#if 1
+    fractional  test_data[DSP_TEST_SAMPLES_COUNT];
+    uint16_t    i;
+    for ( i = 0; i < DSP_TEST_SAMPLES_COUNT; i++ )
+    {
+        float rand_float = rand() * 1.0 / INT16_MAX;
+        test_data[i] = Float2Fract( rand_float );
+    }
+#endif
+    
+    timer_start();
+    dsp_max = VectorMax( DSP_TEST_SAMPLES_COUNT, test_data, &dsp_max_index );
+    timer_stop();
+    dsp_time_max_us = timer_get_us();
+    
+    timer_start();
+    for ( i = 0; i < DSP_TEST_SAMPLES_COUNT; i++ )
+        if ( test_data[i] > man_max ) {
+            man_max         = test_data[i];
+            man_max_index   = i;
+        }
+    timer_stop();
+    man_time_max_us = timer_get_us();
+    
     // Float2Fract -- [-1.0 / 1.0]
-    fractional test_data[4] = {Float2Fract(0.1), Float2Fract(1.0), Float2Fract(0.7), Float2Fract(0.3)};
-    int max_index = 0;
+//    fractional test_data[4] = {Float2Fract(0.1), Float2Fract(1.0), Float2Fract(0.7), Float2Fract(0.3)};
+//    
     
-    UART_write_string( uart_interface, "Input: %d\n", test_data[0] );
+//    UART_write_string( uart_interface, "Input: %d\n", test_data[0] );
     
-    fractional res = VectorPower( 4, test_data );
-    fractional max_ = VectorMax( 4, test_data, &max_index );
+//    fractional res = VectorPower( 4, test_data );
+//    fractional max_ = VectorMax( 4, test_data, &max_index );
 
-    UART_write_string( uart_interface, "Result: %d\n", res );
-    UART_write_string( uart_interface, "Max: %d / index: %d\n", max_, max_index );
+    UART_write_string( uart_interface, "DSP Max time: %ld\n", dsp_time_max_us );
+    UART_write_string( uart_interface, "Manual Max time: %ld\n", man_time_max_us );
+    UART_write_string( uart_interface, "DSP Max: %d / index: %d\n", dsp_max, dsp_max_index );
+    UART_write_string( uart_interface, "Manual Max: %d / index: %d\n", man_max, man_max_index );
 }
 
 void process_mpu_filter_benchmark ( bool manual )
