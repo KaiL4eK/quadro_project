@@ -20,12 +20,13 @@
 
 #define UART_PYT    1
 
+#define SAMPLE_PERIOD_S     5.0/1000.0f
+
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state;
-static euler_angles_t       euler_angles    = {0, 0, 0};
-static struct gyro_rates_ { float pitch, roll, yaw; }
-                            gyro_rates      = {0, 0, 0};
+static euler_angles_t       euler_angles    = { 0, 0, 0 };
+static euler_angles_t       gyro_rates      = { 0, 0, 0 };
     
 volatile static uart_module_t       uart_debug      = NULL;
 volatile static uart_module_t       uart_interface  = NULL;
@@ -95,9 +96,13 @@ int main ( void )
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
     
     g_a = mpu6050_get_raw_data();
-    complementary_filter_set_angle_rate( 0.99f );
-    lowpass_filter_set_velocity_rate( 0.85f );
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
+    
+    madgwick_filter_set_inv_sqrt_method_manual( true );
+    madgwick_filter_set_angle_rate( 1.8f );
+    complementary_filter_set_angle_rate( 0.99f );
+    lowpass_filter_set_velocity_rate( 0.8f );
+    filter_initialize( SAMPLE_PERIOD_S );
     
 //    mpu6050_calibration();
     
@@ -521,13 +526,14 @@ void control_system_timer_init( void )
 #define MEASURE_INT_TIME
 //#define CHECK_SD_LOAD
 
-uint16_t time_elapsed_us = 0;
+uint16_t            time_elapsed_us = 0;
+imu_filter_input_t  filter_input;
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {        
-    timer_stop();
-    time_elapsed_us = timer_get_us();
-    UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
+//    timer_stop();
+//    time_elapsed_us = timer_get_us();
+//    UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
     
     clear_wdt();
     
@@ -536,18 +542,20 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     timer_start();
 #endif
     mpu6050_receive_gyro_accel_raw_data();
-
-//    compute_IMU_data( g_a, &euler_angles );
+    
+    filter_input.acc_x = g_a->value.x_accel;
+    filter_input.acc_y = g_a->value.y_accel;
+    filter_input.acc_z = g_a->value.z_accel;
+    filter_input.gyr_x = g_a->value.x_gyro;
+    filter_input.gyr_y = g_a->value.y_gyro;
+    filter_input.gyr_z = g_a->value.z_gyro;
+    
+//    complementary_filter_position_execute( &filter_input, &euler_angles );
+    madgwick_filter_position_execute( &filter_input, &euler_angles );
+    lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
+    
     euler_angles.pitch   -= pitch_offset;
     euler_angles.roll    -= roll_offset;
-    
-    quadrotor_state.pitch       = euler_angles.pitch * 100;
-    quadrotor_state.roll        = euler_angles.roll  * 100;
-    quadrotor_state.yaw         = euler_angles.yaw   * 100;
-    
-    quadrotor_state.pitch_rate  = gyro_rates.pitch * 100;
-    quadrotor_state.roll_rate   = gyro_rates.roll * 100;
-    quadrotor_state.yaw_rate    = gyro_rates.yaw * 100;
 
 #ifdef RC_CONTROL_ENABLED
     remote_control_update_control_values();
@@ -562,6 +570,15 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     
     UART_debug_interface( uart_debug );
     
+    // Set to integer values
+    quadrotor_state.pitch       = euler_angles.pitch * 100;
+    quadrotor_state.roll        = euler_angles.roll  * 100;
+    quadrotor_state.yaw         = euler_angles.yaw   * 100;  
+    quadrotor_state.pitch_rate  = gyro_rates.pitch   * 100;
+    quadrotor_state.roll_rate   = gyro_rates.roll    * 100;
+    quadrotor_state.yaw_rate    = gyro_rates.yaw     * 100;
+    battery_charge_read_value();
+    
 #ifdef UART_PYT
     send_serial_data_full( uart_interface, uart_debug, &quadrotor_state );
 #endif
@@ -569,8 +586,6 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #ifdef SD_CARD
     process_saving_data();
 #endif /* SD_CARD */
-    
-    battery_charge_read_value();
 
 #ifdef MEASURE_INT_TIME
     timer_stop();
@@ -582,5 +597,5 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     _T5IF = 0;
     
-    timer_start();
+//    timer_start();
 }
