@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>com.microchip.mplab.nbide.embedded.makeproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/make-project/1">
+            <name>QuadroControl</name>
+            <creation-uuid>483a0588-f081-43a1-92cb-7d01c55af522</creation-uuid>
+            <make-project-type>0</make-project-type>
+            <c-extensions>c</c-extensions>
+            <cpp-extensions/>
+            <header-extensions>h</header-extensions>
+            <asminc-extensions/>
+            <sourceEncoding>UTF-8</sourceEncoding>
+            <make-dep-projects>
+                <make-dep-project>../Libraries/dspic33fj256mc710_periphery</make-dep-project>
+                <make-dep-project>../Libraries/Math_lib.X</make-dep-project>
+                <make-dep-project>../Libraries/filters</make-dep-project>
+                <make-dep-project>../Libraries/ahrs_sensors</make-dep-project>
+            </make-dep-projects>
+        </data>
+    </configuration>
+</project>
