@@ -5,9 +5,15 @@
 
 #include "pragmas_wd.h"
 
+/************** INFO **************/
+// Timer 4-5    - Interrupt
+// Timer 8-9    - Time counter (periphery library)
+/**********************************/
+
 //#define SD_CARD
 #define PID_tuning
 #define RC_CONTROL_ENABLED
+#define MPU_DATA_COLLECTION
 
 #define UART_BT     1
 #define UART_SERIAL 2
@@ -20,14 +26,15 @@
 
 #define UART_PYT    1
 
-#define SAMPLE_PERIOD_S     5.0/1000.0f
+const  float                SAMPLE_PERIOD_S = 5.0/1000;
 
 static Control_values_t     *control_values = NULL;
 static gyro_accel_data_t    *g_a            = NULL;
 static quadrotor_state_t    quadrotor_state;
 static euler_angles_t       euler_angles    = { 0, 0, 0 };
 static euler_angles_t       gyro_rates      = { 0, 0, 0 };
-    
+static float                gyro_sensitivity;    
+
 volatile static uart_module_t       uart_debug      = NULL;
 volatile static uart_module_t       uart_interface  = NULL;
 
@@ -95,7 +102,8 @@ int main ( void )
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
     mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
     
-    g_a = mpu6050_get_raw_data();
+    g_a              = mpu6050_get_raw_data();
+    gyro_sensitivity = mpu6050_get_gyro_sensitivity_rate();
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
     madgwick_filter_set_inv_sqrt_method_manual( true );
@@ -309,10 +317,10 @@ void process_control_system ( void )
 
 #undef TESTING_
 
-bool    SD_write                    = false;
+bool    SD_write        = false;
 
-float pitch_offset                  = 0.01f;
-float roll_offset                   = -0.02f;
+float   pitch_offset    = 0.01f;
+float   roll_offset     = -0.02f;
 
 #define SENS_TIME_MS       0.005f          // 2500L/1000000
 
@@ -446,44 +454,69 @@ void UART_debug_interface( uart_module_t uart )
     }
 }
 
+// Replace to distinct module
+void send_data_package_quadro_state ( uart_module_t uart, quadrotor_state_t *q_state )
+{
+    extern int16_t      pitch_control;
+    extern int16_t      roll_control;
+    extern int16_t      yaw_control;
+    extern int16_t      motorPower;
+    extern float        integr_sum_pitch;
+    extern float        integr_sum_roll;
+    extern float        integr_sum_yaw;
+ 
+    int     i = 0;
+    int16_t buffer[14];
+
+    buffer[i++] = q_state->pitch;
+    buffer[i++] = q_state->roll;
+    buffer[i++] = q_state->yaw;
+    buffer[i++] = q_state->pitch_rate;
+    buffer[i++] = q_state->roll_rate;
+    buffer[i++] = q_state->yaw_rate;
+    buffer[i++] = integr_sum_pitch;
+    buffer[i++] = integr_sum_roll;
+    buffer[i++] = integr_sum_yaw;
+    buffer[i++] = pitch_control;
+    buffer[i++] = roll_control;
+    buffer[i++] = yaw_control;
+    buffer[i++] = motorPower;
+    buffer[i++] = battery_charge_get_voltage_x10();
+
+    UART_write_words( uart, (uint16_t *)buffer, sizeof(buffer) / 2 );
+}
+
+#define MPU_GYRO_STATE_MULT_RATE     100
+
+void send_data_package_imu_state ( uart_module_t uart, gyro_accel_data_t *imu_state )
+{
+    int     i = 0;
+    int16_t buffer[6];
+
+    buffer[i++] = imu_state->value.x_accel;
+    buffer[i++] = imu_state->value.y_accel;
+    buffer[i++] = imu_state->value.z_accel;
+    buffer[i++] = imu_state->value.x_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = imu_state->value.y_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = imu_state->value.z_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+
+    UART_write_words( uart, (uint16_t *)buffer, sizeof(buffer) / 2 );
+}
+
 
 #ifdef UART_PYT
 void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_state_t *q_state )
 {
-    extern int16_t pitch_control;
-    extern int16_t roll_control;
-    extern int16_t yaw_control;
+    static bool         data_switch = false;
     
-    static bool    data_switch = false;
-    
-    uint8_t byte    = 0;
+    uint8_t             byte    = 0;
     
     if ( data_switch )
     {
-        extern int16_t      motorPower;
-        extern float        integr_sum_pitch;
-        extern float        integr_sum_roll;
-        extern float        integr_sum_yaw;
-        int i = 0;
-        
-        int16_t buffer[14];
-        
-        buffer[i++] = q_state->pitch;
-        buffer[i++] = q_state->roll;
-        buffer[i++] = q_state->yaw;
-        buffer[i++] = q_state->pitch_rate;
-        buffer[i++] = q_state->roll_rate;
-        buffer[i++] = q_state->yaw_rate;
-        buffer[i++] = integr_sum_pitch;
-        buffer[i++] = integr_sum_roll;
-        buffer[i++] = integr_sum_yaw;
-        buffer[i++] = pitch_control;
-        buffer[i++] = roll_control;
-        buffer[i++] = yaw_control;
-        buffer[i++] = motorPower;
-        buffer[i++] = battery_charge_get_voltage_x10();
-        
-        UART_write_words( uart, (uint16_t *)buffer, 14 );
+#ifndef MPU_DATA_COLLECTION
+        send_data_package_quadro_state( uart, q_state );
+#else
+        send_data_package_imu_state( uart, g_a );
     }
     
     if ( UART_bytes_available( uart ) )
@@ -503,12 +536,10 @@ void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_
 
 #endif
 
-const float INTERRUPT_PERIOD = 5.0/1000;
-
 // Generates interrupt each 5 msec
 void control_system_timer_init( void )
 {
-    uint32_t timer_counter_limit = FCY * INTERRUPT_PERIOD;
+    uint32_t timer_counter_limit = FCY * SAMPLE_PERIOD_S;
     UART_write_string( uart_debug, "Timer setup: %ld\n", timer_counter_limit );
     
     T4CONbits.TON   = 0;
@@ -523,7 +554,7 @@ void control_system_timer_init( void )
 
 /******************** INTERRUPT HANDLER ********************/
 
-#define MEASURE_INT_TIME
+//#define MEASURE_INT_TIME
 //#define CHECK_SD_LOAD
 
 uint16_t            time_elapsed_us = 0;
@@ -531,9 +562,10 @@ imu_filter_input_t  filter_input;
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {        
-//    timer_stop();
-//    time_elapsed_us = timer_get_us();
-//    UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
+    timer_stop();
+    time_elapsed_us = timer_get_us();
+    timer_start();
+    UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
     
     clear_wdt();
     
@@ -546,9 +578,9 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     filter_input.acc_x = g_a->value.x_accel;
     filter_input.acc_y = g_a->value.y_accel;
     filter_input.acc_z = g_a->value.z_accel;
-    filter_input.gyr_x = g_a->value.x_gyro;
-    filter_input.gyr_y = g_a->value.y_gyro;
-    filter_input.gyr_z = g_a->value.z_gyro;
+    filter_input.gyr_x = g_a->value.x_gyro * gyro_sensitivity;
+    filter_input.gyr_y = g_a->value.y_gyro * gyro_sensitivity;
+    filter_input.gyr_z = g_a->value.z_gyro * gyro_sensitivity;
     
 //    complementary_filter_position_execute( &filter_input, &euler_angles );
     madgwick_filter_position_execute( &filter_input, &euler_angles );
@@ -597,5 +629,4 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     _T5IF = 0;
     
-//    timer_start();
 }
