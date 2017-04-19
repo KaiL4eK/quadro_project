@@ -1,7 +1,0 @@
-Timers:
-<Need to update>
-
-Current project working on external 32 MHz!!
-When starting changing this must be fixed timers times!
-
-Set AR leg to diode for looking when calibration is active!

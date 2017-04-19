@@ -30,15 +30,17 @@ gyro_z		= [0]
 
 port_status	= [0]
 
-gyro_sensitivity	= 65.5
+gyro_mult_rate	= 100.
 
-sensor_time = 1./1000;
+package_word_count = 7
+
+sample_time = 5./1000;
 time_array	= [0]
 
 t = nb.waitOnInput()
 
 def main():
-	print "Hello!"
+	print "Sending ping package"
 	
 	serial_dspic.write( '1' )
 	response = serial_dspic.read( 1 );
@@ -46,34 +48,34 @@ def main():
 	if response != '0':
 		exit()
 
-	print "Ok!"
+	print "Response received, start working"
 	fulltime = 0
 
 	t.start()
 
-	while nb.program_run:
-		if t.is_alive():
+	try:
+		while nb.program_run:
+			if t.is_alive():
 
-			data = serial_dspic.read( 2 * 7 )
+				data = serial_dspic.read( 2 * package_word_count ) # bytes
 
-			accel_x.append( common.bytes_2_int16( data[0:2] ) )
-			accel_y.append( common.bytes_2_int16( data[2:4] ) )
-			accel_z.append( common.bytes_2_int16( data[4:6] ) )
+				accel_x.append( common.bytes_2_int16( data[0:2] ) )
+				accel_y.append( common.bytes_2_int16( data[2:4] ) )
+				accel_z.append( common.bytes_2_int16( data[4:6] ) )
 
-			gyro_x.append( common.bytes_2_int16( data[6:8] ) / gyro_sensitivity )
-			gyro_y.append( common.bytes_2_int16( data[8:10] ) / gyro_sensitivity )
-			gyro_z.append( common.bytes_2_int16( data[10:12] ) / gyro_sensitivity )
+				gyro_x.append( common.bytes_2_int16( data[6:8] ) / gyro_mult_rate )
+				gyro_y.append( common.bytes_2_int16( data[8:10] ) / gyro_mult_rate )
+				gyro_z.append( common.bytes_2_int16( data[10:12] ) / gyro_mult_rate )
 
-			port_status.append( common.bytes_2_int16( data[12:14] ) )
+				port_status.append( common.bytes_2_int16( data[12:14] ) )
 
-			fulltime += sensor_time
-			time_array.append(fulltime)
-
-		else:
-
-			serial_dspic.write( '1' )
-			serial_dspic.close()
-			break
+				fulltime += sample_time
+				time_array.append(fulltime)
+			else:
+				break
+	finally:
+		serial_dspic.write( '1' )
+		serial_dspic.close()
 
 	out = np.array([time_array, 
 					accel_x, accel_y, accel_z, 

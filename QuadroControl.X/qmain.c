@@ -295,6 +295,13 @@ void process_control_system ( void )
 #endif
         quadrotor_state.motor_power[MOTOR_4] = clip_value( power, INPUT_POWER_MIN, INPUT_POWER_MAX );
 
+#ifdef MPU_DATA_COLLECTION
+        quadrotor_state.motor_power[MOTOR_1] =
+        quadrotor_state.motor_power[MOTOR_2] =
+        quadrotor_state.motor_power[MOTOR_3] =
+        quadrotor_state.motor_power[MOTOR_4] = motorPower;
+#endif
+        
         motor_control_set_motor_powers( quadrotor_state.motor_power );
         
 #ifdef HANDS_START
@@ -491,7 +498,7 @@ void send_data_package_quadro_state ( uart_module_t uart, quadrotor_state_t *q_s
 void send_data_package_imu_state ( uart_module_t uart, gyro_accel_data_t *imu_state )
 {
     int     i = 0;
-    int16_t buffer[6];
+    int16_t buffer[7];
 
     buffer[i++] = imu_state->value.x_accel;
     buffer[i++] = imu_state->value.y_accel;
@@ -499,6 +506,7 @@ void send_data_package_imu_state ( uart_module_t uart, gyro_accel_data_t *imu_st
     buffer[i++] = imu_state->value.x_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
     buffer[i++] = imu_state->value.y_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
     buffer[i++] = imu_state->value.z_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = motorPower;    // Free variable
 
     UART_write_words( uart, (uint16_t *)buffer, sizeof(buffer) / 2 );
 }
@@ -555,7 +563,7 @@ void control_system_timer_init( void )
 
 /******************** INTERRUPT HANDLER ********************/
 
-//#define MEASURE_INT_TIME
+#define MEASURE_INT_TIME
 //#define CHECK_SD_LOAD
 
 uint16_t            time_elapsed_us = 0;
@@ -563,11 +571,12 @@ imu_filter_input_t  filter_input;
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {        
+#if 0
     timer_stop();
     time_elapsed_us = timer_get_us();
     timer_start();
     UART_write_string( uart_debug, "Time: interrupt = %d\n", time_elapsed_us );
-    
+#endif
     clear_wdt();
     
 #ifdef MEASURE_INT_TIME
