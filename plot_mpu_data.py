@@ -82,9 +82,10 @@ def update_nomag(accel, gyro, beta, q):    # 3-tuples (x, y, z) for accel, gyro
 
 filename = sys.argv[1]
 
-fig, ax = plt.subplots()
-# ax = fig.add_subplot(111)
-ax.autoscale(axis='x')
+fig = plt.figure(1)
+ax = plt.subplot(211)
+
+ax.autoscale(axis='y')
 fig.subplots_adjust(left=0.15, bottom=0.25)
 
 # Main program
@@ -114,11 +115,14 @@ plt.plot(time_array, runningMeanFast(accel_angle_pitch, 50), label='Filtered')
 # plt.plot( time_array, angle_yaw,  'g-', label='Angle' )
 
 plt.ylabel('Angle')
-plt.xlabel('Time')
+# plt.xlabel('Time')
 plt.grid()
 plt.title('Pitch')
 plt.legend()
 
+plt.subplot(212)
+plt.plot(time_array, gyro_x)
+plt.grid()
 
 # Slider initialization
 axcolor = 'lightgoldenrodyellow'

@@ -7,13 +7,13 @@
 
 #include "core.h"
 
-#define PROP_RATE       15
-#define INTEGR_RATE     0.054
+#define PROP_RATE       13
+#define INTEGR_RATE     0
 #define DIFF_RATE       20
 
 PID_rates_float_t   roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
                     pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
-                    yaw_rates   = { .prop = 43,   .integr = 0.030 };
+                    yaw_rates   = { .prop = 30,   .integr = 0.01 };
 
 float       integr_sum_pitch = 0;
 float       integr_sum_roll  = 0;

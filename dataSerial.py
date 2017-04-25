@@ -42,7 +42,7 @@ battery			= [0]
 
 time_array 		= [0]
 
-sensor_time = 2.5/1000;
+sensor_time = 5./1000;
 angle_rate  = 100.
 
 t = nb.waitOnInput()

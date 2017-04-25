@@ -13,7 +13,7 @@
 //#define SD_CARD
 #define PID_tuning
 #define RC_CONTROL_ENABLED
-#define MPU_DATA_COLLECTION
+//#define MPU_DATA_COLLECTION
 
 #define UART_BT     1
 #define UART_SERIAL 2
@@ -95,7 +95,7 @@ int main ( void )
     if ( mpu6050_init( NULL, uart_debug ) < 0 )
         error_process( "MPU6050 initialization" );
     
-    mpu6050_offsets_t mpu6050_offsets = { -3886, 334, 1644, 105, -14, -21 };     // Quadro data
+    mpu6050_offsets_t mpu6050_offsets = { -3893, 302, 1656, 111, -13, -19 };     // Quadro data
 
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
     mpu6050_set_offsets( &mpu6050_offsets );
@@ -107,9 +107,9 @@ int main ( void )
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
     madgwick_filter_set_inv_sqrt_method_manual( true );
-    madgwick_filter_set_angle_rate( 1.8f );
+    madgwick_filter_set_angle_rate( 0.9f );
     complementary_filter_set_angle_rate( 0.99f );
-    lowpass_filter_set_velocity_rate( 0.8f );
+    lowpass_filter_set_velocity_rate( 0.7f );
     filter_initialize( SAMPLE_PERIOD_S );
     
 //    mpu6050_calibration();
