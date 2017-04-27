@@ -336,6 +336,16 @@
         <property key="voltagevalue" value="3.5"/>
       </PICkit3PlatformTool>
       <item path="command_processor.c" ex="true" overriding="false">
+        <C30>
+        </C30>
+        <C30-AR>
+        </C30-AR>
+        <C30-AS>
+        </C30-AS>
+        <C30-LD>
+        </C30-LD>
+        <C30Global>
+        </C30Global>
       </item>
     </conf>
   </confs>

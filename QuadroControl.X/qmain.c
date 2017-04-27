@@ -69,7 +69,7 @@ int main ( void )
     
     error_process_init( uart_debug );
     battery_charge_initialize();
-    battery_charge_set_filter_value( 0.95f );
+    battery_charge_set_filter_value( 0.2f );
     
     control_values = remote_control_init();
     UART_write_string( uart_debug, "RC initialized\n" );
@@ -107,7 +107,7 @@ int main ( void )
     UART_write_string( uart_debug, "MPU6050 initialized\n" );
     
     madgwick_filter_set_inv_sqrt_method_manual( true );
-    madgwick_filter_set_angle_rate( 0.9f );
+    madgwick_filter_set_angle_rate( 0.5f );
     complementary_filter_set_angle_rate( 0.99f );
     lowpass_filter_set_velocity_rate( 0.7f );
     filter_initialize( SAMPLE_PERIOD_S );
@@ -116,6 +116,13 @@ int main ( void )
     
     motor_control_init();
     UART_write_string( uart_debug, "Motors initialized\n" );
+    
+    // Read battery value with low filter rate
+    int i;
+    for (i = 0; i < 100; i++)
+        battery_charge_read_value();
+    UART_write_string( uart_debug, "Battery status x10: %d V\n", battery_charge_get_voltage_x10() );
+    battery_charge_set_filter_value( 0.95f );
     
     control_system_timer_init();
     enable_wdt();
