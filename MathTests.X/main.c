@@ -23,10 +23,11 @@ void process_inv_sqrt_benchmark ( void );
 void process_mpu_filter_benchmark ( bool manual );
 void dsp_tect_benchmark ( void );
 
-#define HELP_MESSAGE    "\nBenchmark is ready:\n\tclick '1' to start <inv_sqrt> benchmark\n" \
-                                               "\tclick '2' to start <filters> benchmark\n" \
-                                               "\tclick '3' to start <filters_man> benchmark\n" \
-                                               "\tclick '4' to start <dsp_test> benchmark\n"
+#define HELP_MESSAGE    "\nBenchmark is ready:\n\t'1' to start <inv_sqrt> benchmark\n" \
+                                               "\t'2' to start <filters> benchmark\n" \
+                                               "\t'3' to start <filters_man> benchmark\n" \
+                                               "\t'4' to start <dsp_test> benchmark\n" \
+                                               "\t'5' to ititialize MPU6050 on main (AD0 - low) channel\n"
 
 int main ( void ) 
 {
@@ -38,27 +39,6 @@ int main ( void )
     
     i2c_init( 1, 400000 );
     UART_write_string( uart_interface, "I2C initialized\n" );
-    
-    if ( mpu6050_init( NULL, uart_interface ) < 0 )
-    {
-        UART_write_string( uart_interface, "MPU6050 initialization failed" );
-    } else {
-//        mpu6050_calibration();
-//        mpu6050_offsets_t mpu6050_offsets = { -3886, 334, 1644, 105, -14, -21 };     // Quadro data
-//        mpu6050_offsets_t mpu6050_offsets = { -3401, -2901, 1730, 48, -67, -25 };     // MPU in orange case data
-        mpu6050_offsets_t mpu6050_offsets = { -3728, 1209, 1927, 24, -13, 80 };     // MPU
-
-        mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
-        mpu6050_set_offsets( &mpu6050_offsets );
-        mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
-        mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
-
-        g_a                 = mpu6050_get_raw_data();
-        gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
-        
-        filter_initialize( 1.0/1000 );
-        madgwick_filter_set_angle_rate( 0.9 );
-    }
     
     while ( 1 )
     {
@@ -82,27 +62,57 @@ int main ( void )
                 if ( g_a == NULL )
                 {
                     UART_write_string( uart_interface, "MPU6050 is not initialized" );
-                } else {
-                    process_mpu_filter_benchmark( false );
-
-                    UART_clean_input( uart_interface );
-                    show_notif = false;
+                    continue;
                 }
+                
+                process_mpu_filter_benchmark( false );
+
+                UART_clean_input( uart_interface );
+                show_notif = false;
+                
             } else if ( input == '3' )
             {
                 if ( g_a == NULL )
                 {
                     UART_write_string( uart_interface, "MPU6050 is not initialized" );
-                } else {
-                    process_mpu_filter_benchmark( true );
+                    continue;
+                } 
+                
+                process_mpu_filter_benchmark( true );
 
-                    UART_clean_input( uart_interface );
-                    show_notif = false;
-                }
+                UART_clean_input( uart_interface );
+                show_notif = false;
+                
             } else if ( input == '4' )
             {
                 dsp_tect_benchmark();
                 show_notif = false;
+            } else if ( input == '5' )
+            {
+                if ( g_a != NULL )
+                {
+                    UART_write_string( uart_interface, "MPU6050 is already initialized" );
+                    continue;
+                }
+                
+                if ( mpu6050_init( NULL, uart_interface ) < 0 )
+                {
+                    UART_write_string( uart_interface, "MPU6050 initialization failed" );
+                } else {
+//                    mpu6050_calibration();
+                    mpu6050_offsets_t mpu6050_offsets = { -3728, 1209, 1927, 24, -13, 80 };     // MPU
+
+                    mpu6050_set_bandwidth( MPU6050_DLPF_BW_20 );
+                    mpu6050_set_offsets( &mpu6050_offsets );
+                    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
+                    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_8 );
+
+                    g_a                 = mpu6050_get_raw_data();
+                    gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
+
+                    filter_initialize( 1.0/1000 );
+                    madgwick_filter_set_angle_rate( 0.9 );
+                }
             } else
                 UART_write_string( uart_interface, HELP_MESSAGE );
         }
