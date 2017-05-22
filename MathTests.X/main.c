@@ -39,7 +39,7 @@ int main ( void )
     
     i2c_init( 1, 400000 );
     UART_write_string( uart_interface, "I2C initialized\n" );
-    
+           
     while ( 1 )
     {
         if ( !show_notif )
@@ -61,7 +61,7 @@ int main ( void )
             {
                 if ( g_a == NULL )
                 {
-                    UART_write_string( uart_interface, "MPU6050 is not initialized" );
+                    UART_write_string( uart_interface, "MPU6050 is not initialized\n" );
                     continue;
                 }
                 
@@ -74,7 +74,7 @@ int main ( void )
             {
                 if ( g_a == NULL )
                 {
-                    UART_write_string( uart_interface, "MPU6050 is not initialized" );
+                    UART_write_string( uart_interface, "MPU6050 is not initialized\n" );
                     continue;
                 } 
                 
@@ -91,13 +91,13 @@ int main ( void )
             {
                 if ( g_a != NULL )
                 {
-                    UART_write_string( uart_interface, "MPU6050 is already initialized" );
+                    UART_write_string( uart_interface, "MPU6050 is already initialized\n" );
                     continue;
                 }
                 
                 if ( mpu6050_init( NULL, uart_interface ) < 0 )
                 {
-                    UART_write_string( uart_interface, "MPU6050 initialization failed" );
+                    UART_write_string( uart_interface, "MPU6050 initialization failed\n" );
                 } else {
 //                    mpu6050_calibration();
                     mpu6050_offsets_t mpu6050_offsets = { -3728, 1209, 1927, 24, -13, 80 };     // MPU
@@ -112,7 +112,11 @@ int main ( void )
 
                     filter_initialize( 1.0/1000 );
                     madgwick_filter_set_angle_rate( 0.9 );
+                    
+                    UART_write_string( uart_interface, "MPU6050 ready\n" );
                 }
+                
+                show_notif = false;
             } else
                 UART_write_string( uart_interface, HELP_MESSAGE );
         }
