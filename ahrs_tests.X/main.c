@@ -5,11 +5,15 @@
  * Created on February 9, 2017, 11:40 PM
  */
 
-
 #include <per_proto.h>
-#include <xc.h>
-#include <pragmas.h>
 
+#ifdef DSPIC_ENABLE_PLL
+    #include <pragmas_pll.h>   
+#else
+    #include <pragmas.h>    
+#endif
+
+#include <xc.h>
 #include <stdbool.h>
 
 #include <MPU6050.h>
@@ -33,15 +37,17 @@ void error_loop ( const char *str )
 
 int main ( void ) 
 {
-    delay_ms( 300 );
+//    delay_ms( 300 );
     
-    uart_interface  = UART_init( 2, UART_BAUD_IDX_460800, INT_PRIO_HIGH );
+    setup_PLL_oscillator();
+    
+    uart_interface  = UART_init( 1, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_set_big_endian_mode( uart_interface, true ); 
     
-    uart_debug      = UART_init( 1, UART_BAUD_IDX_460800, INT_PRIO_HIGH );
+    uart_debug      = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART ready\n" );
     
-    i2c_init( 1, 400000L ); 
+    i2c_init( 1 ); 
     UART_write_string( uart_debug, "I2C ready\n" );
     
     if ( mpu6050_init( NULL, uart_debug ) != 0 )    
