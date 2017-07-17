@@ -8,13 +8,10 @@
 #include <per_proto.h>
 
 #ifdef DSPIC_ENABLE_PLL
-    #include <pragmas_pll.h>   
+    #include "pragmas_pll.h"  
 #else
-    #include <pragmas.h>    
+    #include "pragmas.h"
 #endif
-
-#include <xc.h>
-#include <stdbool.h>
 
 #include <MPU6050.h>
 

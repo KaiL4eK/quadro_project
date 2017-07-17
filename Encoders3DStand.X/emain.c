@@ -6,34 +6,92 @@
  */
 
 #include "core.h"
-#include "pragmas.h"
-#include "serial_protocol.h"
 
-void command_translator_init ( UART_moduleNum_t module_from, UART_moduleNum_t module_to );
-void command_translator ( void );
-void data_translator ( int32_t enc_roll, int32_t enc_pitch );
+#ifdef DSPIC_ENABLE_PLL
+    #include "pragmas_pll.h"  
+#else
+    #include "pragmas.h"
+#endif
+
+//#include "serial_protocol.h"
+
+volatile static uart_module_t               uart_debug      = NULL;
+volatile static uart_module_t               uart_interface  = NULL;
+
+void initialize_encoders( void );
+void timer_interrupt_initialization( void );
+
+//void command_translator_init ( UART_moduleNum_t module_from, UART_moduleNum_t module_to );
+//void command_translator ( void );
+//void data_translator ( int32_t enc_roll, int32_t enc_pitch );
 
 #define ENCODERS_ENABLED
 
-uint8_t     sendFlag = 0;
-int32_t     encoderRoll = 0,
-            encoderPitch = 0;
+uint8_t                 sendFlag = 0;
+
+volatile int32_t        encoderRoll = 0,
+                        encoderPitch = 0;
 
 int main ( void ) 
 {
     OFF_ALL_ANALOG_INPUTS;
-    // UARTm1 - USB
-    // UARTm2 - dsPIC on Quadro
-    UART_init( UARTm1, UART_19200, INT_PRIO_HIGHEST );
-    UART_init( UARTm2, UART_9600, INT_PRIO_HIGHEST );
-    UART_write_string( UARTm1, "UART initialized\n" );
+
+    setup_PLL_oscillator();
     
-    command_translator_init( UARTm1, UARTm2 );
-    UART_write_string( UARTm1, "Start!\n" );
+    uart_debug      = UART_init( 2, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );
+    uart_interface  = UART_init( 1, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
+    UART_write_string( uart_debug, "UART initialized\n" );
     
+//    command_translator_init( UARTm1, UARTm2 );
+    UART_write_string( uart_debug, "Start!\n" );
+    
+    initialize_encoders();
+    timer_interrupt_initialization();
+    
+    UART_write_string( uart_debug, "Initialization completed!\n" );
+
+    while ( 1 ) 
+    {
+//        command_translator();
+//        data_translator( encoderRoll, encoderPitch );
+
+//        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
+//        delay_ms( 100 );
+    }
+    
+    return ( 0 );
+}
+
+const float INTERRUPT_PERIOD_S = 1000.0/1000000;
+
+// Generates interrupt each 1 msec
+void timer_interrupt_initialization( void )
+{
+    uint32_t timer_counter_limit = FCY * INTERRUPT_PERIOD_S;
+    
+    T4CONbits.TON   = 0;
+    T4CONbits.T32   = 1;
+    T4CONbits.TCKPS = TIMER_DIV_1;
+    _T5IP           = INT_PRIO_HIGHEST;
+    _T5IE           = 1;
+    PR5             = ((timer_counter_limit >> 16) & 0xffff);
+    PR4             = (timer_counter_limit & 0xffff);
+    T4CONbits.TON   = 1;
+}
+
+void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
+{
+    UART_write_string( uart_debug, "Hello, %03d\n", sendFlag++ );
+    
+    _T5IF = 0;
+}
+
+void initialize_encoders( void )
+{
 #ifdef ENCODERS_ENABLED 
-    _TRISD9 = _TRISD8 = _TRISD10 = _TRISD11 = 1;
     
+    _TRISD9 = _TRISD8 = _TRISD10 = _TRISD11 = 1;
+
     IC1CONbits.ICM = IC_CE_MODE_DISABLED;
     IC1CONbits.ICTMR = IC_TIMER_2;
     IC1CONbits.ICI = IC_INT_MODE_1ST_CE;
@@ -50,19 +108,9 @@ int main ( void )
     _IC3IF = 0;     // Zero interrupt flag
     _IC3IE = 1;     // Enable interrupt
 
-#endif
-
-    while ( 1 ) 
-    {
-        command_translator();
-        data_translator( encoderRoll, encoderPitch );
-
-//        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
-//        delay_ms( 100 );
-    }
-    
-    return ( 0 );
+#endif  
 }
+
 #ifdef ENCODERS_ENABLED 
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC1Interrupt()
 {
