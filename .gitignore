@@ -30,3 +30,5 @@ putty*
 **/nbproject/Makefile-*
 **/disassembly/
 *.map
+/3DStand/Encoders.X/nbproject/private/
+/3DStand/Encoders.X/dist/default/

@@ -3,7 +3,7 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>Encoders3DStand</name>
+            <name>Encoders</name>
             <creation-uuid>7cc04840-c4e8-498b-9958-1713ad4930bd</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
