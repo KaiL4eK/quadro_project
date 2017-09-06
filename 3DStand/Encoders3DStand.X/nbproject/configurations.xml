@@ -31,19 +31,19 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.30</languageToolchainVersion>
+        <languageToolchainVersion>1.32</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
           <linkerLibItems>
             <linkerLibProjectItem>
-              <makeArtifact PL="../Libraries/dspic33fj256mc710_periphery"
+              <makeArtifact PL="../../Libraries/dspic33fj256mc710_periphery"
                             CT="3"
                             CN="default"
                             AC="true"
                             BL="true"
-                            WD="../Libraries/dspic33fj256mc710_periphery"
+                            WD="../../Libraries/dspic33fj256mc710_periphery"
                             BC="${MAKE}  -f Makefile CONF=default"
                             DBC="${MAKE}  -f Makefile CONF=default TYPE_IMAGE=DEBUG_RUN"
                             CC="rm -rf &quot;build/default&quot; &quot;dist/default&quot;"
@@ -166,7 +166,7 @@
       </C30-LD>
       <C30Global>
         <property key="common-include-directories"
-                  value="../Libraries/dspic33fj256mc710_periphery"/>
+                  value="../../Libraries/dspic33fj256mc710_periphery"/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="true"/>
         <property key="generic-16-bit" value="false"/>
@@ -221,7 +221,6 @@
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
         <property key="UART 1" value="true"/>
         <property key="UART 2" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

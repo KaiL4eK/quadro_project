@@ -13,24 +13,20 @@
     #include "pragmas.h"
 #endif
 
-//#include "serial_protocol.h"
-
 volatile static uart_module_t               uart_debug      = NULL;
 volatile static uart_module_t               uart_interface  = NULL;
 
 void initialize_encoders( void );
 void timer_interrupt_initialization( void );
 
-//void command_translator_init ( UART_moduleNum_t module_from, UART_moduleNum_t module_to );
-//void command_translator ( void );
-//void data_translator ( int32_t enc_roll, int32_t enc_pitch );
-
 #define ENCODERS_ENABLED
 
 uint8_t                 sendFlag = 0;
 
-volatile int32_t        encoderRoll = 0,
-                        encoderPitch = 0;
+volatile int32_t        encoderRoll     = 0,
+                        encoderPitch    = 0;
+
+const float             encoderRate     = 360/1000; // 1k for a rotation
 
 int main ( void ) 
 {
@@ -38,8 +34,8 @@ int main ( void )
 
     setup_PLL_oscillator();
     
-    uart_debug      = UART_init( 2, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );
-    uart_interface  = UART_init( 1, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
+    uart_debug      = UART_init( 1, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );
+//    uart_interface  = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART initialized\n" );
     
 //    command_translator_init( UARTm1, UARTm2 );
@@ -51,12 +47,16 @@ int main ( void )
     UART_write_string( uart_debug, "Initialization completed!\n" );
 
     while ( 1 ) 
-    {
-//        command_translator();
-//        data_translator( encoderRoll, encoderPitch );
-
-//        UART_write_string( UARTm1, "%ld %ld\n", encoderRoll, encoderPitch );
-//        delay_ms( 100 );
+    {        
+        // External input
+        if ( UART_bytes_available( uart_debug ) )
+        {
+            uint8_t input_char = UART_get_byte( uart_debug );
+            if ( input_char == 'r' )
+            {
+                encoderPitch = encoderRoll = 0;
+            }
+        }
     }
     
     return ( 0 );
@@ -81,7 +81,7 @@ void timer_interrupt_initialization( void )
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {
-    UART_write_string( uart_debug, "Hello, %03d\n", sendFlag++ );
+    UART_write_string( uart_debug, "%ld %ld\n", encoderRoll, encoderPitch  );
     
     _T5IF = 0;
 }
@@ -96,7 +96,7 @@ void initialize_encoders( void )
     IC1CONbits.ICTMR = IC_TIMER_2;
     IC1CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC1CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC1IP = INT_PRIO_MID;
+    _IC1IP = INT_PRIO_HIGHEST;
     _IC1IF = 0;     // Zero interrupt flag
     _IC1IE = 1;     // Enable interrupt
 
@@ -104,7 +104,7 @@ void initialize_encoders( void )
     IC3CONbits.ICTMR = IC_TIMER_2;
     IC3CONbits.ICI = IC_INT_MODE_1ST_CE;
     IC3CONbits.ICM = IC_CE_MODE_EDGE;
-    _IC3IP = INT_PRIO_MID;
+    _IC3IP = INT_PRIO_HIGHEST;
     _IC3IF = 0;     // Zero interrupt flag
     _IC3IE = 1;     // Enable interrupt
 
