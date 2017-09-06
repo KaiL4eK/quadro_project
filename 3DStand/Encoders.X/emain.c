@@ -21,12 +21,10 @@ void timer_interrupt_initialization( void );
 
 #define ENCODERS_ENABLED
 
-uint8_t                 sendFlag = 0;
-
-volatile int32_t        encoderRoll     = 0,
-                        encoderPitch    = 0;
-
-const float             encoderRate     = 360/1000; // 1k for a rotation
+#define ENCODER_DATA_ARR_SIZE   4
+volatile uint16_t       encodersData[ENCODER_DATA_ARR_SIZE]     = {0};
+volatile int32_t        *encoderRollPtr     = (int32_t *)&encodersData[0],
+                        *encoderPitchPtr    = (int32_t *)&encodersData[2];
 
 int main ( void ) 
 {
@@ -34,7 +32,7 @@ int main ( void )
 
     setup_PLL_oscillator();
     
-    uart_debug      = UART_init( 1, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );
+    uart_debug      = UART_init( 1, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );    
 //    uart_interface  = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART initialized\n" );
     
@@ -54,7 +52,7 @@ int main ( void )
             uint8_t input_char = UART_get_byte( uart_debug );
             if ( input_char == 'r' )
             {
-                encoderPitch = encoderRoll = 0;
+                *encoderPitchPtr = *encoderRollPtr = 0;
             }
         }
     }
@@ -80,8 +78,9 @@ void timer_interrupt_initialization( void )
 }
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
-{
-    UART_write_string( uart_debug, "%ld %ld\n", encoderRoll, encoderPitch  );
+{  
+//    UART_write_string( uart_debug, "%ld %ld\n", *encoderRollPtr, *encoderPitchPtr  );
+    UART_write_words( uart_debug, (uint16_t *)encodersData, ENCODER_DATA_ARR_SIZE );
     
     _T5IF = 0;
 }
@@ -115,22 +114,20 @@ void initialize_encoders( void )
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC1Interrupt()
 {
     if ( _RD8 )
-        encoderRoll += (_RD9<<1)-1;
+        *encoderRollPtr += (_RD9<<1)-1;
     else
-        encoderRoll += 1-(_RD9<<1);
+        *encoderRollPtr += 1-(_RD9<<1);
     
-    uint16_t trash = IC1BUF;
     _IC1IF = 0;
 }
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC3Interrupt()
 {
     if ( _RD10 )
-        encoderPitch += (_RD11<<1)-1;
+        *encoderPitchPtr += (_RD11<<1)-1;
     else
-        encoderPitch += 1-(_RD11<<1);
+        *encoderPitchPtr += 1-(_RD11<<1);
     
-    uint16_t trash = IC3BUF;
     _IC3IF = 0;
 }
 #endif
