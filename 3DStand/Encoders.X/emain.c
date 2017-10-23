@@ -33,11 +33,7 @@ int main ( void )
     setup_PLL_oscillator();
     
     uart_debug      = UART_init( 1, UART_BAUD_RATE_921600_HS, true, INT_PRIO_HIGH );    
-//    uart_interface  = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART initialized\n" );
-    
-//    command_translator_init( UARTm1, UARTm2 );
-    UART_write_string( uart_debug, "Start!\n" );
     
     initialize_encoders();
     timer_interrupt_initialization();
@@ -46,10 +42,12 @@ int main ( void )
 
     while ( 1 ) 
     {        
-        // External input
+        // Receive command from PC
+        // TODO -- just reset realized
         if ( UART_bytes_available( uart_debug ) )
         {
             uint8_t input_char = UART_get_byte( uart_debug );
+            // r - reset counters
             if ( input_char == 'r' )
             {
                 *encoderPitchPtr = *encoderRollPtr = 0;
@@ -60,13 +58,18 @@ int main ( void )
     return ( 0 );
 }
 
-const float INTERRUPT_PERIOD_S = 1000.0/1000000;
+// Interrupt scale variable [seconds]
+const float INTERRUPT_PERIOD_S = 1.0 / 1000;
 
 // Generates interrupt each 1 msec
 void timer_interrupt_initialization( void )
 {
     uint32_t timer_counter_limit = FCY * INTERRUPT_PERIOD_S;
     
+    // Timer setup:
+    //      32 bit
+    //      Divider 1
+    //      Highest priopity - 7th level
     T4CONbits.TON   = 0;
     T4CONbits.T32   = 1;
     T4CONbits.TCKPS = TIMER_DIV_1;
@@ -79,7 +82,7 @@ void timer_interrupt_initialization( void )
 
 void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 {  
-//    UART_write_string( uart_debug, "%ld %ld\n", *encoderRollPtr, *encoderPitchPtr  );
+    // Publish as 4 words
     UART_write_words( uart_debug, (uint16_t *)encodersData, ENCODER_DATA_ARR_SIZE );
     
     _T5IF = 0;
@@ -90,6 +93,12 @@ void initialize_encoders( void )
 #ifdef ENCODERS_ENABLED 
     
     _TRISD9 = _TRISD8 = _TRISD10 = _TRISD11 = 1;
+
+    // Input capture setup
+    //      Based on timer 2
+    //      Highest priority
+    //      Edge mode - catch on rise
+    //      1 interrupt per event
 
     IC1CONbits.ICM = IC_CE_MODE_DISABLED;
     IC1CONbits.ICTMR = IC_TIMER_2;
@@ -110,6 +119,8 @@ void initialize_encoders( void )
 #endif  
 }
 
+// Increment logic
+// Based on shifts boosts the code performance
 #ifdef ENCODERS_ENABLED 
 void __attribute__( (__interrupt__, no_auto_psv) ) _IC1Interrupt()
 {
