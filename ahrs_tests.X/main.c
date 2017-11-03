@@ -38,10 +38,10 @@ int main ( void )
     
     setup_PLL_oscillator();
     
-    uart_interface  = UART_init( 1, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
+    uart_interface  = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_set_big_endian_mode( uart_interface, true ); 
     
-    uart_debug      = UART_init( 2, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
+    uart_debug      = UART_init( 1, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_string( uart_debug, "UART ready\n" );
     
     i2c_init( 1 ); 

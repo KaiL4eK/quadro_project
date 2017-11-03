@@ -13,10 +13,10 @@ TARGET = DataProcessing
 TEMPLATE = app
 
 INCLUDEPATH +=  $(HOME)/qwt/include \
-                $(HOME)/Qt/qwt-6.1.2/include \
-                ../common
+                $(HOME)/Qt/qwt-6.1.4/include \
+                ../../common
 
-LIBS += -L$(HOME)/Qt/qwt-6.1.2/lib -L$(HOME)/qwt/lib -lqwt
+LIBS += -L$(HOME)/Qt/qwt-6.1.4/lib -lqwt
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -26,6 +26,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
         qwtPlotter.h \
         serialLink.h \
-    ../common/serial_protocol.h
+    ../../common/serial_protocol.h
 
 CONFIG += c++11
