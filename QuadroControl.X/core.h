@@ -6,7 +6,7 @@
 #include <filters.h>
 
 #include <MPU6050.h>
-#include "motor_control.h"
+#include <motor_control.h>
 
 #define CONTROL_BYTE    0xff
 
@@ -15,7 +15,7 @@
 
 /********** DEFINES **********/
 typedef int16_t euler_angle_degree_int_t;
-typedef int16_t motor_power_t;
+
 typedef int16_t error_value_t;
 
 typedef struct

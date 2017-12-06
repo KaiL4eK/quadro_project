@@ -1,7 +1,13 @@
 #ifndef MOTOR_CONTROL_H_
 #define	MOTOR_CONTROL_H_
 
-#include "core.h"
+#include <per_proto.h>
+
+#ifdef DSPIC_ENABLE_PLL
+    #error "PLL not supported yet"
+#endif
+
+typedef int16_t motor_power_t;
 
 typedef enum {
     MOTOR_1 = 0,
@@ -22,6 +28,10 @@ void motor_control_set_motors_stopped( void );
 
 #define INPUT_POWER_MAX 3200L // ESC_MAX_POWER - ESC_MIN_POWER
 #define INPUT_POWER_MIN 0L
+
+#ifndef clip_value
+    #define clip_value( val, min, max ) ((val) > max ? max : (val) < min ? min : (val))
+#endif
 
 #endif	/* MOTOR_CONTROL_H_ */
 

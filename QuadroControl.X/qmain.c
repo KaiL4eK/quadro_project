@@ -15,25 +15,29 @@
 #define RC_CONTROL_ENABLED
 //#define MPU_DATA_COLLECTION
 
-#define UART_BT     1
+#define UART_BT_MODULE     1
 #define UART_SERIAL 2
 
+#define I2C_AHRS_MODULE_IDX     1
+
 #if 1
-#define UART_DEBUG  UART_SERIAL
+#define UART_DEBUG_MODULE  UART_SERIAL
 #else
-#define UART_DEBUG  UART_BT
+#define UART_DEBUG_MODULE  UART_BT_MODULE
 #endif
 
-#define UART_PYT    1
+#define UART_PYT_MODULE    1
 
-const  float                SAMPLE_PERIOD_S = 5.0/1000;
+// Frequency if 200 Hz
+const  float                        SAMPLE_PERIOD_S = 5.0/1000;
 
-static Control_values_t     *control_values = NULL;
-static gyro_accel_data_t    *g_a            = NULL;
-static quadrotor_state_t    quadrotor_state;
-static euler_angles_t       euler_angles    = { 0, 0, 0 };
-static euler_angles_t       gyro_rates      = { 0, 0, 0 };
-static float                gyro_sensitivity;    
+static Control_values_t             *control_values = NULL;
+static gy_521_gyro_accel_data_t     *g_a            = NULL;
+static i2c_module_t                 *ahrs_sensors   = NULL;
+static quadrotor_state_t            quadrotor_state;
+static euler_angles_t               euler_angles    = { 0, 0, 0 };
+static euler_angles_t               gyro_rates      = { 0, 0, 0 };
+static float                        gyro_sensitivity;    
 
 volatile static uart_module_t       uart_debug      = NULL;
 volatile static uart_module_t       uart_interface  = NULL;
@@ -53,14 +57,14 @@ int main ( void )
     OFF_ALL_ANALOG_INPUTS;
     INIT_ERR_L;
     ERR_LIGHT = ERR_LIGHT_ERR;
-#if UART_DEBUG == UART_BT
-    uart_debug = UART_init( UART_DEBUG, UART_115200, INT_PRIO_HIGH );
+#if UART_DEBUG_MODULE == UART_BT_MODULE
+    uart_debug = UART_init( UART_DEBUG_MODULE, UART_115200, INT_PRIO_HIGH );
 #else
-    uart_debug = UART_init( UART_DEBUG, UART_460800, INT_PRIO_HIGH );
+    uart_debug = UART_init( UART_DEBUG_MODULE, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
 #endif 
     
-#ifdef UART_PYT
-    uart_interface = UART_init( UART_PYT, UART_460800, INT_PRIO_HIGH );
+#ifdef UART_PYT_MODULE
+    uart_interface = UART_init( UART_PYT_MODULE, UART_BAUD_RATE_460800_HS, true, INT_PRIO_HIGH );
     UART_write_set_big_endian_mode( uart_interface, true );
 #endif
     
@@ -89,10 +93,10 @@ int main ( void )
     file_io_initialize( uart_debug );
     UART_write_string( uart_debug, "SD initialized\n" );
 #endif /* SD_CARD */
-    i2c_init( 1, 400000 );
+    ahrs_sensors = i2c_init( I2C_AHRS_MODULE_IDX );
     UART_write_string( uart_debug, "I2C initialized\n" );
     
-    if ( mpu6050_init( NULL, uart_debug ) < 0 )
+    if ( mpu6050_init( ahrs_sensors, uart_debug ) < 0 )
         error_process( "MPU6050 initialization" );
     
     mpu6050_offsets_t mpu6050_offsets = { -3893, 302, 1656, 111, -13, -19 };     // Quadro data
@@ -502,24 +506,24 @@ void send_data_package_quadro_state ( uart_module_t uart, quadrotor_state_t *q_s
 
 #define MPU_GYRO_STATE_MULT_RATE     100
 
-void send_data_package_imu_state ( uart_module_t uart, gyro_accel_data_t *imu_state )
+void send_data_package_imu_state ( uart_module_t uart, gy_521_gyro_accel_data_t *imu_state )
 {
     int     i = 0;
     int16_t buffer[7];
 
-    buffer[i++] = imu_state->value.x_accel;
-    buffer[i++] = imu_state->value.y_accel;
-    buffer[i++] = imu_state->value.z_accel;
-    buffer[i++] = imu_state->value.x_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
-    buffer[i++] = imu_state->value.y_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
-    buffer[i++] = imu_state->value.z_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = imu_state->x_accel;
+    buffer[i++] = imu_state->y_accel;
+    buffer[i++] = imu_state->z_accel;
+    buffer[i++] = imu_state->x_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = imu_state->y_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
+    buffer[i++] = imu_state->z_gyro * gyro_sensitivity * MPU_GYRO_STATE_MULT_RATE;
     buffer[i++] = motorPower;    // Free variable
 
     UART_write_words( uart, (uint16_t *)buffer, sizeof(buffer) / 2 );
 }
 
 
-#ifdef UART_PYT
+#ifdef UART_PYT_MODULE
 void send_serial_data_full ( uart_module_t uart, uart_module_t debug, quadrotor_state_t *q_state )
 {
     static bool         data_switch = false;
@@ -592,12 +596,12 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
 #endif
     mpu6050_receive_gyro_accel_raw_data();
     
-    filter_input.acc_x = g_a->value.x_accel;
-    filter_input.acc_y = g_a->value.y_accel;
-    filter_input.acc_z = g_a->value.z_accel;
-    filter_input.gyr_x = g_a->value.x_gyro * gyro_sensitivity;
-    filter_input.gyr_y = g_a->value.y_gyro * gyro_sensitivity;
-    filter_input.gyr_z = g_a->value.z_gyro * gyro_sensitivity;
+    filter_input.acc_x = g_a->x_accel;
+    filter_input.acc_y = g_a->y_accel;
+    filter_input.acc_z = g_a->z_accel;
+    filter_input.gyr_x = g_a->x_gyro * gyro_sensitivity;
+    filter_input.gyr_y = g_a->y_gyro * gyro_sensitivity;
+    filter_input.gyr_z = g_a->z_gyro * gyro_sensitivity;
     
 //    complementary_filter_position_execute( &filter_input, &euler_angles );
     madgwick_filter_position_execute( &filter_input, &euler_angles );
@@ -628,7 +632,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T5Interrupt()
     quadrotor_state.yaw_rate    = gyro_rates.yaw     * 100;
     battery_charge_read_value();
     
-#ifdef UART_PYT
+#ifdef UART_PYT_MODULE
     send_serial_data_full( uart_interface, uart_debug, &quadrotor_state );
 #endif
     
