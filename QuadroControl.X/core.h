@@ -7,6 +7,7 @@
 
 #include <MPU6050.h>
 #include <motor_control.h>
+#include <remote_control.h>
 
 #define CONTROL_BYTE    0xff
 

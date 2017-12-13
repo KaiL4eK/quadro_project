@@ -19,16 +19,20 @@ static uart_module_t    uart_debug;
 const char *menu_string =   "Hello! It`s testing programm for F450 frame quadro\n"
                             "For testing module choose one of next points:\n"
                             "    1 - test motor rotation direction\n"
-                            "    2 - test raw RC output\n";
+                            "    2 - test raw RC output\n"
+                            "    3 - test calibrated RC output\n";
 
 const char *cancel_msg  = "Press 'c' to cancel\n";
 
-#define TEST_UNDEFINED          -1
-#define TEST_MOTOR_DIRECTION    0
-#define TEST_RC_RAW_OUTPUT      1
+#define TEST_UNDEFINED              -1
+#define TEST_MOTOR_DIRECTION        0
+#define TEST_RC_RAW_OUTPUT          1
+#define TEST_RC_CALIBRATED_OUTPUT   2
 
 RC_input_values_t   *rc_input;
 RC_input_raw_t      *rc_input_raw;
+
+Motor_control_t     *motor_control;
 
 int get_user_input ( uart_module_t uart_intrf )
 {
@@ -47,6 +51,9 @@ int get_user_input ( uart_module_t uart_intrf )
                  
                 case '2':
                     return TEST_RC_RAW_OUTPUT;
+                    
+                case '3':
+                    return TEST_RC_CALIBRATED_OUTPUT;
 
                 default:
                     return TEST_UNDEFINED;
@@ -83,40 +90,59 @@ bool get_user_cancel_delay ( uart_module_t uart_intrf, uint32_t delay_ms )
 
 void test_motor_direction ( uart_module_t uart_intrf )
 {
+/*
     int         i_power;
-    int         i_motor;
     uint16_t    power_list[] = { INPUT_POWER_MIN,
                                  INPUT_POWER_MAX * 0.25, 
                                  INPUT_POWER_MAX * 0.5,
                                  INPUT_POWER_MAX * 0.75, 
                                  INPUT_POWER_MAX };
-    motor_num_t motor_list[] = { MOTOR_1,
-                                 MOTOR_2,
-                                 MOTOR_3,
-                                 MOTOR_4 };
+*/
+    char input = 0;
     
     while ( 1 )
     {
-        for ( i_motor = 0; i_motor < sizeof( motor_list )/sizeof( motor_list[0] ); i_motor++ )
+        motor_control_set_motors_started();
+        
+        if ( UART_bytes_available( uart_intrf ) )
         {
-            motor_control_set_motor_started( motor_list[i_motor] );
-            for ( i_power = 0; i_power < sizeof( power_list )/sizeof( power_list[0] ); i_power++ )
+            input = UART_get_byte( uart_intrf );
+            if ( input == 'c' )
             {
-                motor_control_set_motor_power( motor_list[i_motor], power_list[i_power] );
-                if ( get_user_cancel_delay( uart_intrf, POWER_SWITCH_DELAY_MS ) )
-                {
-                    motor_control_set_motors_stopped();
-                    return;
-                }
+                motor_control_set_motors_stopped();
+                return;
             }
-            motor_control_set_motors_stopped();
         }
+/*
+        for ( i_power = 0; i_power < sizeof( power_list )/sizeof( power_list[0] ); i_power++ )
+        {
+            motor_control->motor1 = 
+            motor_control->motor2 = 
+            motor_control->motor3 = 
+            motor_control->motor4 = power_list[i_power];
+            
+            motor_control_update_PWM();
+            
+            if ( get_user_cancel_delay( uart_intrf, POWER_SWITCH_DELAY_MS ) )
+            {
+                motor_control_set_motors_stopped();
+                return;
+            }
+        }
+        
+        motor_control_set_motors_stopped();
+        
+        if ( get_user_cancel_delay( uart_intrf, POWER_SWITCH_DELAY_MS * 2 ) )
+        {
+            return;
+        }
+*/
     }
 }
 
 #define RC_RAW_OUTPUT_TEST_DELAY_MS    100
 
-void test_rc_raw_output ( uart_module_t uart_intrf )
+void test_rc_output ( uart_module_t uart_intrf, bool is_raw )
 {
     if ( !remote_control_find_controller() )
     {
@@ -135,12 +161,25 @@ void test_rc_raw_output ( uart_module_t uart_intrf )
                 return;
         }
         
-        UART_write_string( uart_intrf, "3) %04ld, 4) %04ld, 1) %04ld, 2) %04ld, 5) %04ld\n", 
-                rc_input_raw->channel_3, 
-                rc_input_raw->channel_4, 
-                rc_input_raw->channel_1, 
-                rc_input_raw->channel_2, 
-                rc_input_raw->channel_5 );
+        if ( is_raw )
+        {
+            UART_write_string( uart_intrf, "3) %04ld, 4) %04ld, 1) %04ld, 2) %04ld, 5) %04ld\n", 
+                    rc_input_raw->channel_3, 
+                    rc_input_raw->channel_4, 
+                    rc_input_raw->channel_1, 
+                    rc_input_raw->channel_2, 
+                    rc_input_raw->channel_5 );
+        }
+        else
+        {
+            remote_control_update_control_values();
+            UART_write_string( uart_intrf, "T) %03d, R) %03d, P) %03d, Y) %03d, S) %01d\n", 
+                    rc_input->throttle,
+                    rc_input->roll,
+                    rc_input->pitch,
+                    rc_input->rudder,
+                    rc_input->two_pos_switch );
+        }
         
         delay_ms( RC_RAW_OUTPUT_TEST_DELAY_MS );
     }
@@ -152,7 +191,7 @@ int main ( void )
     UART_write_string( uart_debug, "/------------------------/\n" );
     UART_write_string( uart_debug, "UART initialized\n" );
     
-    motor_control_init();
+    motor_control = motor_control_init();
     UART_write_string( uart_debug, "Motors initialized\n" );
     motor_control_set_motors_stopped();
     
@@ -176,7 +215,13 @@ int main ( void )
             case TEST_RC_RAW_OUTPUT:
                 UART_write_string( uart_debug, "RC raw output test start\n" );
                 UART_write_string( uart_debug, cancel_msg );
-                test_rc_raw_output( uart_debug );
+                test_rc_output( uart_debug, true );
+                break;
+
+            case TEST_RC_CALIBRATED_OUTPUT:
+                UART_write_string( uart_debug, "RC raw output test start\n" );
+                UART_write_string( uart_debug, cancel_msg );
+                test_rc_output( uart_debug, false );
                 break;
                 
             default:

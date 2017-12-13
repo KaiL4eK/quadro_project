@@ -11,21 +11,47 @@
 #define MOTOR_ESC_MIN_PWM   4799L // USEC_2_PWM(1200)
 #define MOTOR_ESC_STOP_PWM  3599L // USEC_2_PWM(900)
 
+#define MOTOR_COUNT         4
+
+static Motor_control_t  motor_control;
+static motor_power_t    *motor_powers = (motor_power_t *)&motor_control;
+
+
 volatile unsigned int   *aMotor_power_reg[]   = { &PDC1, &PDC2, &PDC3, &PDC4 };
 bool                    aMotor_armed[]        = { false, false, false, false };
 uint16_t                aMotor_PWM[]          = { 0, 0, 0, 0 };
 bool                    motors_armed          = false;
 
-inline uint16_t power_2_PWM( motor_power_t power )
+static inline uint16_t power_2_PWM( motor_power_t power )
 {
 //    return( val * (esc_max_power - esc_min_power)/INPUT_POWER_MAX + esc_min_power );
     return( power + MOTOR_ESC_MIN_PWM );
 }
 
 // Always shift duty cycle << 1 if prescaler not 1:1
-static void set_motor_PWM( motor_num_t n_motor, uint16_t pwm_value )
+static void set_motor_PWM( motor_num_t i_motor, uint16_t pwm_value )
 {
-    *aMotor_power_reg[n_motor] = pwm_value << 1;
+    *aMotor_power_reg[i_motor] = pwm_value << 1;
+}
+
+
+void motor_control_update_PWM ( void )
+{
+    if ( !motors_armed )
+        return;
+    
+    uint8_t i;
+    for ( i = 0; i < MOTOR_COUNT; i++ ) 
+    {
+        uint16_t input_power = 0;
+                
+        if ( motor_powers[i] < 0 )
+            input_power = MOTOR_ESC_STOP_PWM;
+        else
+            input_power = clip_value( motor_powers[i], INPUT_POWER_MIN, INPUT_POWER_MAX );
+
+        set_motor_PWM( i, power_2_PWM( input_power ) );   
+    }
 }
 
 
@@ -94,7 +120,7 @@ void motor_control_set_motors_stopped( void )
 
 #define PWM_PERIOD      9999 //((FCY/FREQ_CONTROL_SYSTEM/PWM_PRESCALE) - 1)   // 15 bytes | max = 32767
 
-void motor_control_init( void )
+Motor_control_t * motor_control_init( void )
 {
 //    _TRISE0 = _TRISE2 = _TRISE4 = _TRISE6 = 0;
 //    _RE0 = _RE2 = _RE4 = _RE6 = 0;
@@ -119,4 +145,6 @@ void motor_control_init( void )
     motor_control_set_motors_stopped();
     
     P1TCONbits.PTEN = 1; 
+    
+    return &motor_control;
 }

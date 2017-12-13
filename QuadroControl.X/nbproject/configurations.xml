@@ -6,7 +6,6 @@
                    projectFiles="true">
       <itemPath>core.h</itemPath>
       <itemPath>pragmas_wd.h</itemPath>
-      <itemPath>remote_control.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -20,7 +19,6 @@
       <itemPath>error.c</itemPath>
       <itemPath>PID_control_system.c</itemPath>
       <itemPath>qmain.c</itemPath>
-      <itemPath>remote_control.c</itemPath>
       <itemPath>serial_module.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
@@ -261,7 +259,7 @@
       </C30-LD>
       <C30Global>
         <property key="common-include-directories"
-                  value="../Libraries/ahrs_sensors;../Libraries/dspic33fj256mc710_periphery;../Libraries/filters;../Libraries/Math_lib.X;../common;../Libraries/SD_card.X;../Libraries/MotorControl.X"/>
+                  value="../Libraries/ahrs_sensors;../Libraries/dspic33fj256mc710_periphery;../Libraries/filters;../Libraries/Math_lib.X;../common;../Libraries/SD_card.X;../Libraries/MotorControl.X;../Libraries/RC_input.X"/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="true"/>
         <property key="generic-16-bit" value="false"/>

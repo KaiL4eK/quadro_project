@@ -1,6 +1,5 @@
 #include "core.h"
 
-#include "remote_control.h"
 #include <file_io.h>
 
 #include "pragmas_wd.h"

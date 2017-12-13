@@ -82,7 +82,7 @@ init_watch_dog_timer()
     T3CONbits.TON = 1;
 }
 
-/* Whatch dog timer overflow */
+/* Watch dog timer overflow */
 void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
 {
     // Processing losing signal from transmitter
@@ -98,6 +98,7 @@ RC_input_values_t *remote_control_init( void )
     TMR2 = 0;
     PR2 = UINT16_MAX;
     TRIS_LOSS_L = 0;
+    
     init_channel_1();
     init_channel_2();
     init_channel_3();

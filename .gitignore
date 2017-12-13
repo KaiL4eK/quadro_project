@@ -30,9 +30,3 @@ putty*
 **/nbproject/Makefile-*
 **/disassembly/
 *.map
-/3DStand/Encoders.X/nbproject/private/
-/3DStand/Encoders.X/dist/default/
-/Libraries/Math_lib.X/nbproject/private/
-/Libraries/MotorControl.X/nbproject/private/
-/Libraries/MotorControl.X/dist/default/
-/Libraries/Math_lib.X/dist/default/
