@@ -3,19 +3,15 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>QuadroTestSystems</name>
-            <creation-uuid>2c6cf7ae-cd74-483f-977d-bd5be2802c4d</creation-uuid>
+            <name>RC_input</name>
+            <creation-uuid>7129749a-166a-430d-851f-55f954fc5a98</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
             <cpp-extensions/>
-            <header-extensions/>
+            <header-extensions>h</header-extensions>
             <asminc-extensions/>
             <sourceEncoding>UTF-8</sourceEncoding>
-            <make-dep-projects>
-                <make-dep-project>../Libraries/dspic33fj256mc710_periphery</make-dep-project>
-                <make-dep-project>../Libraries/RC_input.X</make-dep-project>
-                <make-dep-project>../Libraries/MotorControl.X</make-dep-project>
-            </make-dep-projects>
+            <make-dep-projects/>
         </data>
     </configuration>
 </project>

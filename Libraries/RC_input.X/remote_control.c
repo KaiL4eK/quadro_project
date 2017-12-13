@@ -33,25 +33,16 @@ typedef struct
                 channel_5;
 }Calibrated_control_t;
 
-typedef struct
-{
-    int32_t     channel_1,
-                channel_2,
-                channel_3,
-                channel_4,
-                channel_5;
-}Control_t;
-
 /********** RC FUNCTIONS **********/
 
-static Control_t            control_raw;
+static RC_input_raw_t            control_raw;
 static Calibrated_control_t clbr_control_raw = { { 16754, 29989, 23371 },   //Roll
                                                  { 16832, 30036, 23434 },   //Pitch
                                                  { 16832, 30068, 23450 },   //Throttle
                                                  { 16752, 29991, 23371 },   //Yaw
                                                  { 16736, 30020, 23786 }
                                                 };
-static Control_values_t     dir_values;
+static RC_input_values_t     dir_values;
 static bool                 remote_control_online   = false,
                             intialized              = false;
 
@@ -100,7 +91,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T3Interrupt()
     _T3IF = 0;
 }
 
-Control_values_t *remote_control_init( void )
+RC_input_values_t *remote_control_init( void )
 {
     T2CONbits.TON = 0;
     T2CONbits.TCKPS = TIMER_DIV_1;
@@ -117,6 +108,11 @@ Control_values_t *remote_control_init( void )
     intialized = true;
     
     return( &dir_values );
+}
+
+RC_input_raw_t *remote_control_get_raw_prt ( void )
+{
+    return &control_raw;
 }
 
 /********************************/
@@ -147,7 +143,6 @@ turn_off_timer1_time_measurement()
     TMR1 = 0;
 }
 
-// Change this after going to 80 MHz!!!
 void remote_control_make_calibration( uart_module_t module )
 {
     _TRISA5 = 0;
@@ -215,7 +210,7 @@ void __attribute__( (__interrupt__, no_auto_psv) ) _T1Interrupt()
 int remote_control_update_control_values( void )
 {
     int16_t res = 0;
-    Control_t tmp_count_cntrl_raw;
+    RC_input_raw_t tmp_count_cntrl_raw;
     
     memcpy( &tmp_count_cntrl_raw, &control_raw, sizeof( control_raw ) );
     if ( !remote_control_online || !intialized )

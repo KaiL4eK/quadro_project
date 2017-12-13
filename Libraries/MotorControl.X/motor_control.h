@@ -3,6 +3,14 @@
 
 #include <per_proto.h>
 
+/*
+ * Modules utilized:
+ *      PWM_GEN         1   RE0
+ *      PWM_GEN         2   RE2
+ *      PWM_GEN         3   RE4
+ *      PWM_GEN         4   RE6
+ */
+
 #ifdef DSPIC_ENABLE_PLL
     #error "PLL not supported yet"
 #endif
