@@ -26,6 +26,8 @@ public:
     static bool checkBTEnabled(QWidget *parent);
     bool connectDevice();
 
+    void disconnectDevice();
+
 private:
     QBluetoothSocket                *btSocket;
 
@@ -35,6 +37,8 @@ private:
 
     QMap<QListWidgetItem *, QBluetoothDeviceInfo> m_discoveredDevices;
     QBluetoothDeviceInfo            m_deviceInfo;
+
+    bool                            isConnected;
 
     void closeEvent(QCloseEvent *event);
     void startScan();
@@ -46,6 +50,7 @@ private slots:
     void addDevice(const QBluetoothDeviceInfo &info);
     void itemActivated(QListWidgetItem *item);
 
+    void socketError(QBluetoothSocket::SocketError error);
 };
 
 #endif // DEVICEBTSELECT_H

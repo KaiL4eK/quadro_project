@@ -2,6 +2,8 @@
 
 #include "devicebtselect.h"
 
+QT_BEGIN_NAMESPACE
+
 DeviceBTSelect::DeviceBTSelect(QWidget *parent)
 :   QDialog(parent)
 {
@@ -51,10 +53,12 @@ void DeviceBTSelect::addDevice(const QBluetoothDeviceInfo &info)
 {
     QString label = QString("%1 %2").arg(info.address().toString()).arg(info.name());
     QList<QListWidgetItem *> items = devicesList->findItems(label, Qt::MatchExactly);
-    if (items.empty()) {
+    if (items.empty())
+    {
         QListWidgetItem *item = new QListWidgetItem(label);
         QBluetoothLocalDevice::Pairing pairingStatus = localDevice.pairingStatus(info.address());
-        if (pairingStatus == QBluetoothLocalDevice::Paired || pairingStatus == QBluetoothLocalDevice::AuthorizedPaired ) {
+        if (pairingStatus == QBluetoothLocalDevice::Paired || pairingStatus == QBluetoothLocalDevice::AuthorizedPaired )
+        {
             item->setTextColor(QColor(Qt::green));
             m_discoveredDevices.insert(item, info);
         } else
@@ -66,8 +70,23 @@ void DeviceBTSelect::addDevice(const QBluetoothDeviceInfo &info)
 
 void DeviceBTSelect::itemActivated(QListWidgetItem *item)
 {
+//    QString text = item->text();
+
+//    int index = text.indexOf(' ');
+
+//    if (index == -1)
+//        return;
+
+//    QBluetoothAddress address(text.left(index));
+//    QString name(text.mid(index + 1));
+
+//    qDebug() << name << address.toString();
+
     if ( item->textColor() == QColor(Qt::black) )
+    {
+//        localDevice.requestPairing( address, QBluetoothLocalDevice::Paired );
         return;
+    }
 
     m_deviceInfo = m_discoveredDevices.value(item);
     m_discoveryAgent.stop();
@@ -104,8 +123,8 @@ bool DeviceBTSelect::connectDevice()
 
         connect(btSocket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()) );
 
-//        connect(btSocket, static_cast<void(QBluetoothSocket::*)(QBluetoothSocket::SocketError)>(&QBluetoothSocket::error),
-//                this, &ControlWindow::btSocketError);
+        connect(btSocket, SIGNAL(error(QBluetoothSocket::SocketError)),
+                this,     SLOT(socketError(QBluetoothSocket::SocketError)));
 
 //        connect(btSocket, &QBluetoothSocket::readyRead,
 //                this, &ControlWindow::btSocketReadyRead);
@@ -116,17 +135,40 @@ bool DeviceBTSelect::connectDevice()
     return( false );
 }
 
+void DeviceBTSelect::disconnectDevice()
+{
+    qDebug() << "Called:" << __FUNCTION__;
+    btSocket->disconnectFromService();
+}
+
 void DeviceBTSelect::socketDisconnected()
 {
+    qDebug() << "Called:" << __FUNCTION__;
+    isConnected = false;
     delete btSocket;
 }
 
 void DeviceBTSelect::socketConnected()
 {
+    qDebug() << "Called:" << __FUNCTION__;
+    isConnected = true;
+}
 
+void DeviceBTSelect::socketError(QBluetoothSocket::SocketError error)
+{
+    qDebug() << "Called:" << __FUNCTION__;
+    qDebug() << btSocket->errorString();
+
+//    btSocket->
+    // OperationError = 19
 }
 
 void DeviceBTSelect::discoveryFinish()
 {
-    qDebug() << "discovery finish";
+    qDebug() << "Called:" << __FUNCTION__;
+
+    if ( devicesList->count() == 0 )
+    {
+        reject();
+    }
 }

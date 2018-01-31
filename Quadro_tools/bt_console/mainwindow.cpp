@@ -125,7 +125,7 @@ void MainWindow::connectBtnPressed ( bool clicked )
     else
     {
         // Disconnect
-
+        deviceSelect->disconnectDevice();
         deviceConnectBtn->setText( "Connect" );
     }
 }
