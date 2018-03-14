@@ -2,12 +2,14 @@
 # ROSLIB = ./ros_lib
 # include $(ROSLIB)/ros.mk
 
-PROJECT_CSRC 	= main.c
-# PROJECT_CPPSRC 	= $(ROSSRC) ros.cpp
-PROJECT_CPPSRC 	= 
+# AHRS library
+AHRS_ROOT       = ../Libraries/ahrs_sensors
+include $(AHRS_ROOT)/ahrs.mk
 
-# PROJECT_INCDIR	= $(ROSINC)
-PROJECT_INCDIR	= 
+PROJECT_CSRC    = main.c twi.c $(AHRS_CSRS)
+PROJECT_CPPSRC  = $(ROSSRC)
 
-PROJECT_LIBS	= -lm
+PROJECT_INCDIR  = $(ROSINC) $(AHRS_INC)
+
+PROJECT_LIBS    = -lm
 
