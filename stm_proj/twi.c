@@ -33,7 +33,10 @@ int i2c_write_bytes( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_add
     tx_buffer[0] = reg_addr;
     memcpy( &tx_buffer[1], data, size );
 
+    i2cAcquireBus( p_module );
     msg_t msg = i2cMasterTransmitTimeout( p_module, i2c_address, tx_buffer, size + 1, NULL, 0, MS2ST(i2c_timeout_ms) );
+    i2cReleaseBus( p_module );
+
     if ( msg != MSG_OK )
     {
         return EFAULT;
@@ -63,7 +66,10 @@ int i2c_read_bytes( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr
     /* Set eeprom address */
     tx_buffer[0] = reg_addr;
 
+    i2cAcquireBus( p_module );
     msg_t msg = i2cMasterTransmitTimeout( p_module, i2c_address, tx_buffer, 1, data, size, MS2ST(i2c_timeout_ms) );
+    i2cReleaseBus( p_module );
+    
     if ( msg != MSG_OK )
     {
         return EFAULT;

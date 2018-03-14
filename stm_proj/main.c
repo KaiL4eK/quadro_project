@@ -30,6 +30,82 @@ static const SerialConfig   sdcfg = {
     .cr3        = 0
 };
 
+/*===========================================================================*/
+/* EXT driver related.                                                       */
+/*===========================================================================*/
+
+static thread_t *mpu_drdy_tp;
+
+static void mpu_drdy_cb( EXTDriver *extp, expchannel_t channel )
+{
+   (void)extp;
+   (void)channel;
+
+   chSysLockFromISR();                   // ISR Critical Area
+   chEvtSignalI(mpu_drdy_tp, (eventmask_t)1);
+   chSysUnlockFromISR();                 // Close ISR Critical Area
+
+}
+
+static const EXTConfig extcfg =
+{
+   {
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    /* DRDY signal on PC_9 */
+    {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC, mpu_drdy_cb},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL}
+  }
+};
+
+static float                        gyro_sensitivity; 
+static gy_521_gyro_accel_data_t     *mpu_data;
+
+static THD_WORKING_AREA(waAccelGyro, 128); // 128 - stack size
+static THD_FUNCTION(AccelGyro, arg)
+{
+    mpu_data            = mpu6050_get_raw_data();
+    gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
+
+    mpu_drdy_tp         = chThdGetSelfX();
+
+    while ( 1 )
+    {
+        chEvtWaitAny((eventmask_t)1);
+
+        mpu6050_receive_gyro_accel_raw_data();
+    
+        // chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
+        // chprintf( debug_stream, "Gyro : %06d %06d %06d\n", mpu_data->x_gyro, mpu_data->y_gyro, mpu_data->z_gyro );
+    
+
+    }
+}
+
+/*===========================================================================*/
+/* Application code                                                          */
+/*===========================================================================*/
+
 /*
  *  MPU6050 - 14 bytes receive time = 407us (400kHz) / 1.56ms (100 kHz)
  *
@@ -81,15 +157,19 @@ int main(void)
     mpu6050_set_offsets( &mpu_offsets );
 #endif
 
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
+    mpu6050_set_bypass_mode( true );
+    mpu6050_set_interrupt_data_rdy_bit( true );
+    mpu6050_set_sample_rate_divider( 3 );
+
+    extStart( &EXTD1, &extcfg );
+    chThdCreateStatic( waAccelGyro, sizeof(waAccelGyro), NORMALPRIO, AccelGyro, NULL );
+
     while ( true )
     {
         chThdSleepMilliseconds( 500 );
-
-        gy_521_gyro_accel_data_t *mpu_data = mpu6050_get_raw_data();
-
-        mpu6050_receive_gyro_accel_raw_data();
-
-        chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
 
         // palSetPad( GPIOC, 8 );
 
