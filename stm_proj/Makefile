@@ -104,6 +104,8 @@ include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 
+include project.mk
+
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(STARTUPSRC) \
@@ -115,11 +117,11 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(STREAMSSRC) \
-       main.c
+       $(PROJECT_CSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC =
+CPPSRC = $(PROJECT_CPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -148,7 +150,7 @@ ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 INCDIR = $(CHIBIOS)/os/license \
          $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) $(STREAMSINC) \
-         $(CHIBIOS)/os/various
+         $(CHIBIOS)/os/various $(PROJECT_INCDIR)
 
 #
 # Project, sources and paths
@@ -210,7 +212,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS =
+ULIBS = $(PROJECT_LIBS)
 
 #
 # End of user defines

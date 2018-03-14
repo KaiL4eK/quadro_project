@@ -17,6 +17,7 @@ static const I2CConfig      mpuconf     = {
 #else
     .op_mode        = OPMODE_I2C,
     .clock_speed    = 400000,
+    // .duty_cycle     = STD_DUTY_CYCLE
     .duty_cycle     = FAST_DUTY_CYCLE_2
 #endif
 };
@@ -33,6 +34,11 @@ static const SerialConfig   sdcfg = {
     .cr2        = USART_CR2_LINEN,
     .cr3        = 0
 };
+
+/*
+ *  MPU6050 - 14 bytes receive time = 407us (400kHz) / 1.56ms (100 kHz)
+ *
+ */
 
 int main(void)
 {
@@ -55,16 +61,21 @@ int main(void)
     sdStart( debug_serial, &sdcfg );
     debug_stream = (BaseSequentialStream *)debug_serial;
 
-    uint8_t tx_buf[] = { 0x75 };
-    uint8_t rx_buf[2];
+    uint8_t tx_buf[] = { 0x3B };
+    uint8_t rx_buf[14];
+
+    palSetPadMode( GPIOC, 8, PAL_MODE_OUTPUT_PUSHPULL );
 
     while ( true )
     {
         chThdSleepMilliseconds( 500 );
 
+        palSetPad( GPIOC, 8 );
 
-        msg_t msg = i2cMasterTransmitTimeout( mpudrvr, 0b1101000, tx_buf, sizeof( tx_buf ), rx_buf, 1, MS2ST(50) );
+        msg_t msg = i2cMasterTransmitTimeout( mpudrvr, 0b1101000, tx_buf, sizeof( tx_buf ), rx_buf, 14, MS2ST(10) );
         
+        palClearPad( GPIOC, 8 );
+
         if ( msg == MSG_OK )
             chprintf( debug_stream, "Ok, 0x%x =)\n", rx_buf[0] );
         else
