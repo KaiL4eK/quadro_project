@@ -47,7 +47,7 @@ static void mpu_drdy_cb( EXTDriver *extp, expchannel_t channel )
 
 }
 
-static const EXTConfig extcfg =
+static EXTConfig extcfg =
 {
    {
     {EXT_CH_MODE_DISABLED, NULL},
@@ -59,8 +59,6 @@ static const EXTConfig extcfg =
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    /* DRDY signal on PC_9 */
-    {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC, mpu_drdy_cb},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
@@ -74,7 +72,7 @@ static const EXTConfig extcfg =
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL}
+    {EXT_CH_MODE_DISABLED, NULL},
   }
 };
 
@@ -84,6 +82,8 @@ static gy_521_gyro_accel_data_t     *mpu_data;
 static THD_WORKING_AREA(waAccelGyro, 128); // 128 - stack size
 static THD_FUNCTION(AccelGyro, arg)
 {
+    arg = arg;
+
     mpu_data            = mpu6050_get_raw_data();
     gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
 
@@ -138,7 +138,10 @@ int main(void)
     sdStart( debug_serial, &sdcfg );
     debug_stream = (BaseSequentialStream *)debug_serial;
 
-    palSetPadMode( GPIOC, 8, PAL_MODE_OUTPUT_PUSHPULL );
+    /* AHRS EXT init */
+    extcfg.channels[5].mode = EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC;
+    extcfg.channels[5].cb   = mpu_drdy_cb;
+    palSetPadMode( GPIOC, 5, PAL_MODE_OUTPUT_PUSHPULL );
 
     /* AHRS initialization */
     if ( mpu6050_init( mpudrvr ) != EOK )
@@ -166,6 +169,34 @@ int main(void)
 
     extStart( &EXTD1, &extcfg );
     chThdCreateStatic( waAccelGyro, sizeof(waAccelGyro), NORMALPRIO, AccelGyro, NULL );
+
+    /* PWM for motor control */
+    PWMDriver *pwmMotorDriver      = &PWMD3;
+    palSetPadMode( GPIOA, 6, PAL_MODE_ALTERNATE(2) );
+    palSetPadMode( GPIOC, 7, PAL_MODE_ALTERNATE(2) );
+    palSetPadMode( GPIOC, 8, PAL_MODE_ALTERNATE(2) );
+    palSetPadMode( GPIOC, 9, PAL_MODE_ALTERNATE(2) );
+
+    PWMConfig pwm3conf = {
+        .frequency = 1000000,
+        .period    = 4000, /* 4/1000 s = 4 ms = 250 Hz */
+        .callback  = NULL,
+        .channels  = {
+                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+                      {PWM_OUTPUT_ACTIVE_HIGH, NULL}
+                      },
+        .cr2        = 0,
+        .dier       = 0
+    };
+
+    pwmStart( pwmMotorDriver, &pwm3conf );
+
+    pwmEnableChannel( pwmMotorDriver, 0, 900 );
+    pwmEnableChannel( pwmMotorDriver, 1, 900 );
+    pwmEnableChannel( pwmMotorDriver, 2, 900 );
+    pwmEnableChannel( pwmMotorDriver, 3, 900 );
 
     while ( true )
     {
