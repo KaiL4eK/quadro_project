@@ -1,6 +1,7 @@
 #include <core.h>
 
 #include <MPU6050.h>
+#include <filters.h>
 
 /* I2C Hardware config */
 static I2CDriver            *mpudrvr    = &I2CD1;
@@ -24,7 +25,7 @@ static const I2CConfig      mpuconf     = {
 static SerialDriver         *debug_serial = &SD4;
 BaseSequentialStream        *debug_stream = NULL;
 static const SerialConfig   sdcfg = {
-    .speed      = 115200,
+    .speed      = 460800    ,
     .cr1        = 0,
     .cr2        = USART_CR2_LINEN,
     .cr3        = 0
@@ -76,25 +77,64 @@ static EXTConfig extcfg =
   }
 };
 
+/* 200 Hz */
+const  float            SAMPLE_PERIOD_S     = 5.0/1000;
+
 static float                        gyro_sensitivity; 
 static gy_521_gyro_accel_data_t     *mpu_data;
+
+static euler_angles_t               euler_angles    = { 0, 0, 0 };
+static euler_angles_t               gyro_rates      = { 0, 0, 0 };
 
 static THD_WORKING_AREA(waAccelGyro, 128); // 128 - stack size
 static THD_FUNCTION(AccelGyro, arg)
 {
     arg = arg;
 
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
+    mpu6050_set_bypass_mode( true );
+    mpu6050_set_interrupt_data_rdy_bit( true );
+    mpu6050_set_sample_rate_divider( 4 );
+
     mpu_data            = mpu6050_get_raw_data();
     gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
 
     mpu_drdy_tp         = chThdGetSelfX();
+
+    /* Filters */
+    madgwick_filter_set_angle_rate( 0.5f );
+    complementary_filter_set_angle_rate( 0.995f );
+    lowpass_filter_set_velocity_rate( 0.7f );
+    filter_initialize( SAMPLE_PERIOD_S );
+
+    madgwick_filter_set_inv_sqrt_method_manual( true );
+
+    imu_filter_input_t  filter_input;
 
     while ( 1 )
     {
         chEvtWaitAny((eventmask_t)1);
 
         mpu6050_receive_gyro_accel_raw_data();
-    
+
+        filter_input.acc_x = mpu_data->x_accel;
+        filter_input.acc_y = mpu_data->y_accel;
+        filter_input.acc_z = mpu_data->z_accel;
+        filter_input.gyr_x = mpu_data->x_gyro * gyro_sensitivity;
+        filter_input.gyr_y = mpu_data->y_gyro * gyro_sensitivity;
+        filter_input.gyr_z = mpu_data->z_gyro * gyro_sensitivity;
+            
+
+
+        madgwick_filter_position_execute( &filter_input, &euler_angles );
+        lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
+
+        chprintf( debug_stream, "Angls: %06d %06d %06d\n", 
+                                    (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER), 
+                                    (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER), 
+                                    (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
         // chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
         // chprintf( debug_stream, "Gyro : %06d %06d %06d\n", mpu_data->x_gyro, mpu_data->y_gyro, mpu_data->z_gyro );
     
@@ -108,7 +148,6 @@ static THD_FUNCTION(AccelGyro, arg)
 
 /*
  *  MPU6050 - 14 bytes receive time = 407us (400kHz) / 1.56ms (100 kHz)
- *
  */
 
 // #define MPU6050_CALIBRATION
@@ -121,6 +160,8 @@ static const mpu6050_offsets_t mpu_offsets = {
     -20,
     -9
 };
+
+static motor_power_t    *motor_powers       = NULL;
 
 int main(void)
 {
@@ -141,7 +182,7 @@ int main(void)
     /* AHRS EXT init */
     extcfg.channels[5].mode = EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC;
     extcfg.channels[5].cb   = mpu_drdy_cb;
-    palSetPadMode( GPIOC, 5, PAL_MODE_OUTPUT_PUSHPULL );
+    // palSetPadMode( GPIOC, 5, PAL_MODE_OUTPUT_PUSHPULL );
 
     /* AHRS initialization */
     if ( mpu6050_init( mpudrvr ) != EOK )
@@ -160,43 +201,12 @@ int main(void)
     mpu6050_set_offsets( &mpu_offsets );
 #endif
 
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
-    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
-    mpu6050_set_bypass_mode( true );
-    mpu6050_set_interrupt_data_rdy_bit( true );
-    mpu6050_set_sample_rate_divider( 3 );
-
     extStart( &EXTD1, &extcfg );
     chThdCreateStatic( waAccelGyro, sizeof(waAccelGyro), NORMALPRIO, AccelGyro, NULL );
 
-    /* PWM for motor control */
-    PWMDriver *pwmMotorDriver      = &PWMD3;
-    palSetPadMode( GPIOA, 6, PAL_MODE_ALTERNATE(2) );
-    palSetPadMode( GPIOC, 7, PAL_MODE_ALTERNATE(2) );
-    palSetPadMode( GPIOC, 8, PAL_MODE_ALTERNATE(2) );
-    palSetPadMode( GPIOC, 9, PAL_MODE_ALTERNATE(2) );
-
-    PWMConfig pwm3conf = {
-        .frequency = 1000000,
-        .period    = 4000, /* 4/1000 s = 4 ms = 250 Hz */
-        .callback  = NULL,
-        .channels  = {
-                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                      {PWM_OUTPUT_ACTIVE_HIGH, NULL}
-                      },
-        .cr2        = 0,
-        .dier       = 0
-    };
-
-    pwmStart( pwmMotorDriver, &pwm3conf );
-
-    pwmEnableChannel( pwmMotorDriver, 0, 900 );
-    pwmEnableChannel( pwmMotorDriver, 1, 900 );
-    pwmEnableChannel( pwmMotorDriver, 2, 900 );
-    pwmEnableChannel( pwmMotorDriver, 3, 900 );
+    /* Motor control init */
+    motor_control_init();
+    motor_powers = motor_control_get_powers_ptr();
 
     while ( true )
     {
