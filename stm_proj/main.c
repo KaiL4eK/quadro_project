@@ -77,19 +77,114 @@ static EXTConfig extcfg =
   }
 };
 
+/*===========================================================================*/
+/* System.                                                                   */
+/*===========================================================================*/
+
+static euler_angles_t               euler_angles    = { 0, 0, 0 };
+static euler_angles_t               gyro_rates      = { 0, 0, 0 };
+
+int16_t pitch_setpoint      = 0;
+int16_t roll_setpoint       = 0;
+int16_t yaw_setpoint        = 0;
+
+
+
+static motor_power_t    *motor_powers       = NULL;
+
+// #define ANGLE_ADJUST_RATE           50.0f
+// Max angular speed = 40 deg/sec   (1000/25)
+static const float CONTROL_2_ANGLE_SPEED_RATE   = 2.0f;
+static const float CONTROL_2_ANGLE_RATE         = 0;        // ????
+
+
+
+static THD_WORKING_AREA(waControlThread, 128);
+static THD_FUNCTION(ControlThread, arg)
+{
+    arg = arg;
+
+    time_measurement_t      control_tm;
+    chTMObjectInit( &control_tm );
+
+    int16_t pitch_control       = 0;
+    int16_t roll_control        = 0;
+    int16_t yaw_control         = 0;
+
+    float pitch_rate_setpoint   = 0;
+    float roll_rate_setpoint    = 0;
+    float yaw_rate_setpoint     = 0;
+
+    systime_t time = chVTGetSystemTimeX();
+
+    while ( 1 )
+    {
+        /* 2 - 6 us */
+        // chTMStartMeasurementX( &control_tm );
+        time += MS2ST( 5 );
+
+        pitch_rate_setpoint = (pitch_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.pitch) * CONTROL_2_ANGLE_SPEED_RATE;
+        pitch_control       = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch, gyro_rates.pitch );
+
+        roll_rate_setpoint  = (roll_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.roll) * CONTROL_2_ANGLE_SPEED_RATE;        
+        roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll, gyro_rates.roll );
+
+        yaw_rate_setpoint   = yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE;        
+        yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
+
+
+        /* Processing conversion */
+        int32_t motorPower  = 0; //MOTOR_INPUT_MAX / 2;
+        int32_t power       = 0;
+        
+        power = motorPower + pitch_control - roll_control - yaw_control;
+        motor_powers[MOTOR_1] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+        power = motorPower + pitch_control + roll_control + yaw_control;
+        motor_powers[MOTOR_2] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+        power = motorPower - pitch_control + roll_control - yaw_control;
+        motor_powers[MOTOR_3] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+        power = motorPower - pitch_control - roll_control + yaw_control;
+        motor_powers[MOTOR_4] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+
+        motor_control_update_PWM();
+        // chTMStopMeasurementX( &control_tm );
+
+        chprintf( debug_stream, "Pitch error: %06d %06d %06d\n", (int)((pitch_rate_setpoint - gyro_rates.pitch)), 
+                                                                 (int)(pitch_rate_setpoint), (int)(gyro_rates.pitch) );
+
+        // chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, control_tm.best), RTC2US(SYSTEM_FREQUENCY, control_tm.worst) );
+        // chprintf( debug_stream, "Rates SPs: %d, %d, %d\n", 
+        //                             (int)(roll_rate_setpoint * INT_ACCURACY_MULTIPLIER), 
+        //                             (int)(pitch_rate_setpoint * INT_ACCURACY_MULTIPLIER), 
+        //                             (int)(yaw_rate_setpoint * INT_ACCURACY_MULTIPLIER) );
+
+        // chprintf( debug_stream, "Controls: %d, %d, %d\n", roll_control, pitch_control, yaw_control );
+
+        chThdSleepUntil( time );
+    }
+}
+
+
+
 /* 200 Hz */
 const  float            SAMPLE_PERIOD_S     = 5.0/1000;
 
 static float                        gyro_sensitivity; 
 static gy_521_gyro_accel_data_t     *mpu_data;
 
-static euler_angles_t               euler_angles    = { 0, 0, 0 };
-static euler_angles_t               gyro_rates      = { 0, 0, 0 };
+static thread_reference_t           sender_ref      = NULL;
 
-static THD_WORKING_AREA(waAccelGyro, 128); // 128 - stack size
-static THD_FUNCTION(AccelGyro, arg)
+static THD_WORKING_AREA(waAHRSThread, 128);
+static THD_FUNCTION(AHRSThread, arg)
 {
     arg = arg;
+
+    time_measurement_t      filter_tm;
+    chTMObjectInit( &filter_tm );
 
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
@@ -117,7 +212,10 @@ static THD_FUNCTION(AccelGyro, arg)
     {
         chEvtWaitAny((eventmask_t)1);
 
+        // chTMStartMeasurementX( &filter_tm );
+        /* 376 - 377 us */
         mpu6050_receive_gyro_accel_raw_data();
+        // chTMStopMeasurementX( &filter_tm );
 
         filter_input.acc_x = mpu_data->x_accel;
         filter_input.acc_y = mpu_data->y_accel;
@@ -125,22 +223,40 @@ static THD_FUNCTION(AccelGyro, arg)
         filter_input.gyr_x = mpu_data->x_gyro * gyro_sensitivity;
         filter_input.gyr_y = mpu_data->y_gyro * gyro_sensitivity;
         filter_input.gyr_z = mpu_data->z_gyro * gyro_sensitivity;
-            
-
-
+        
+        // chTMStartMeasurementX( &filter_tm );
+        
+        /* 79 - 102 us */
         madgwick_filter_position_execute( &filter_input, &euler_angles );
+
+        /* 1 - 57 us */
+        // complementary_filter_position_execute( &filter_input, &euler_angles );
+
+        // chTMStopMeasurementX( &filter_tm );
+
+
         lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
 
-        chprintf( debug_stream, "Angls: %06d %06d %06d\n", 
-                                    (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER), 
-                                    (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER), 
-                                    (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
+        // chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, filter_tm.best), RTC2US(SYSTEM_FREQUENCY, filter_tm.worst) );
+
+        // chprintf( debug_stream, "Angls: %06d %06d %06d\n", 
+                                    // (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER), 
+                                    // (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER), 
+                                    // (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
+
+        // chprintf( debug_stream, "Rates: %06d %06d %06d\n", 
+        //                             (int)(gyro_rates.roll * INT_ACCURACY_MULTIPLIER), 
+        //                             (int)(gyro_rates.pitch * INT_ACCURACY_MULTIPLIER), 
+        //                             (int)(gyro_rates.yaw * INT_ACCURACY_MULTIPLIER) );
+
         // chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
         // chprintf( debug_stream, "Gyro : %06d %06d %06d\n", mpu_data->x_gyro, mpu_data->y_gyro, mpu_data->z_gyro );
     
 
     }
 }
+
+
 
 /*===========================================================================*/
 /* Application code                                                          */
@@ -153,15 +269,14 @@ static THD_FUNCTION(AccelGyro, arg)
 // #define MPU6050_CALIBRATION
 
 static const mpu6050_offsets_t mpu_offsets = {
-    -1772,
-    -653,
-    1412,
-    37,
-    -20,
-    -9
+    -1750,
+    -626,
+    1295,
+    50,
+    -23,
+    -1
 };
 
-static motor_power_t    *motor_powers       = NULL;
 
 int main(void)
 {
@@ -182,7 +297,6 @@ int main(void)
     /* AHRS EXT init */
     extcfg.channels[5].mode = EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC;
     extcfg.channels[5].cb   = mpu_drdy_cb;
-    // palSetPadMode( GPIOC, 5, PAL_MODE_OUTPUT_PUSHPULL );
 
     /* AHRS initialization */
     if ( mpu6050_init( mpudrvr ) != EOK )
@@ -197,20 +311,37 @@ int main(void)
 #ifdef MPU6050_CALIBRATION
     chprintf( debug_stream, "MPU6050 calibration start\n" );
     mpu6050_calibration();
+    chSysHalt( "Calibration mode" );
 #else
     mpu6050_set_offsets( &mpu_offsets );
 #endif
 
     extStart( &EXTD1, &extcfg );
-    chThdCreateStatic( waAccelGyro, sizeof(waAccelGyro), NORMALPRIO, AccelGyro, NULL );
+    chThdCreateStatic( waAHRSThread, sizeof(waAHRSThread), NORMALPRIO, AHRSThread, NULL );
 
     /* Motor control init */
     motor_control_init();
     motor_powers = motor_control_get_powers_ptr();
 
+
+
+    chThdCreateStatic( waControlThread, sizeof(waControlThread), NORMALPRIO, ControlThread, NULL );
+
     while ( true )
     {
         chThdSleepMilliseconds( 500 );
+        // chThdSuspend( &sender_ref );
+
+        if ( !palReadLine( LINE_BUTTON ) )
+        {
+            // palToggleLine( LINE_LED1 );
+            palTogglePad( GPIOA, 5 );
+
+            if ( motor_control_is_armed() )
+                motor_control_set_motors_stopped();
+            else
+                motor_control_set_motors_started(); 
+        }
 
         // palSetPad( GPIOC, 8 );
 
@@ -223,7 +354,7 @@ int main(void)
         // else
             // chprintf( debug_stream, "Not Ok %d 0x%x =)\n", msg, i2cGetErrors( mpudrvr ) );
 
-        palTogglePad( GPIOA, 5 );
+        // palTogglePad( GPIOA, 5 );
 
         // chprintf( debug_stream, "Hello =)\n" );
 

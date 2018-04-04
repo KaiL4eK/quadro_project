@@ -17,6 +17,8 @@
 
 #define F446RE
 
+#define SYSTEM_FREQUENCY    180000000UL
+
 extern BaseSequentialStream  *debug_stream;
 #define  uprintf  chprintf
 
@@ -68,6 +70,7 @@ motor_power_t *motor_control_get_powers_ptr( void );
 void motor_control_set_motors_started( void );
 void motor_control_set_motors_stopped( void );
 bool motor_control_is_armed( void );
+void motor_control_update_PWM( void );
 
 /*** PID control system ***/
 typedef struct {
@@ -85,4 +88,8 @@ typedef struct {
 typedef struct {
     float p, i, d;
 } PID_parts_t;
+
+int16_t PID_controller_generate_pitch_control( float error, float angle_speed );
+int16_t PID_controller_generate_roll_control( float error, float angle_speed );
+int16_t PID_controller_generate_yaw_control( float error );
 
