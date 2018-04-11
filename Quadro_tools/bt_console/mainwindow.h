@@ -2,12 +2,7 @@
 #define MAINWINDOW_H
 
 /** System header **/
-#include <QMainWindow>
-#include <QGridLayout>
-#include <QLineEdit>
-#include <QPushButton>
 
-#include <QDoubleValidator>
 #include <QMessageBox>
 
 /** User headers **/
@@ -23,9 +18,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void p_pos_rate_btn_clicked( bool clicked );
-
-    void rate_flds_edit_fin();
+    void sendDataBtnClicked( bool clicked );
 
     void connectBtnPressed(bool clicked);
 private:
@@ -42,16 +35,10 @@ private:
     QPushButton         *deviceConnectBtn;
     DeviceBTSelect      *deviceSelect;
 
-    QLineEdit   *p_pos_rate_fld;
-    QLineEdit   *i_pos_rate_fld;
-    QLineEdit   *p_spd_rate_fld;
-    QLineEdit   *d_spd_rate_fld;
+    ControlDataView     *ratesRollPitch;
+    ControlDataView     *ratesYaw;
 
-    QPushButton *p_pos_rate_set_btn;
-    QPushButton *i_pos_rate_set_btn;
-    QPushButton *p_spd_rate_set_btn;
-    QPushButton *d_spd_rate_set_btn;
-
+    QPushButton         *send_data_btn;
 
     bool chooseConnectionDevice();
 };
