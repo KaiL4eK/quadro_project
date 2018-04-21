@@ -76,14 +76,13 @@ typedef enum {
 
 } receive_mode_t;
 
+pid_rates_t main_rates  = { .rates = { 10.2, 5.3, 0.01 } };
+pid_rates_t yaw_rates   = { .rates = { 11.1, 6.5, 0.003 } };
+
 
 void responseConnectCommand( void )
 {
-    connect_response_t response = { .PIDRates = { 
-                                        { .rates = { 10.2, 5.3, 0.01 } }, 
-                                        { .rates = { 11.1, 6.5, 0.003 } } 
-                                                         }
-                                  };
+    connect_response_t response = { .PIDRates = { main_rates, yaw_rates } };
 
 
     sdWrite( btDriver, (uint8_t *)&response, sizeof(response) );
@@ -204,6 +203,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 {
                     pid_rates_t *rates = (pid_rates_t *)data_buffer;
 
+                    main_rates = *rates;
                     chprintf( (BaseSequentialStream *)uartDriver, "Main rates: %d, %d, %d\n", (int)(rates->rates[0] * 1000), 
                                                                                               (int)(rates->rates[1] * 1000), 
                                                                                               (int)(rates->rates[2] * 1000) );
@@ -212,6 +212,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 {
                     pid_rates_t *rates = (pid_rates_t *)data_buffer;
 
+                    yaw_rates = *rates;
                     chprintf( (BaseSequentialStream *)uartDriver, "Yaw rates: %d, %d, %d\n", (int)(rates->rates[0] * 1000), 
                                                                                              (int)(rates->rates[1] * 1000), 
                                                                                              (int)(rates->rates[2] * 1000) );
