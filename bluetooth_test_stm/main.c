@@ -26,16 +26,18 @@ static const SerialConfig btCfg = {
 
 #define FRAME_START         0x7E
 
-typedef enum {
-    COMMAND_EMPTY           = 0x00,
-    COMMAND_CONNECT,
-    COMMAND_SET_MAIN_RATES,
-    COMMAND_SET_YAW_RATES
+#define COMMAND_CONNECT         (1 << 0)
+#define COMMAND_DATA_START      (1 << 1)
+#define COMMAND_DATA_STOP       (1 << 2)
+#define COMMAND_DATA_PACK       (1 << 3)
+#define COMMAND_PING            (1 << 4)
+#define COMMAND_SET_MAIN_RATES  (1 << 5)
+#define COMMAND_SET_YAW_RATES   (1 << 6)
 
-} frame_command_t;
+typedef uint8_t frame_command_t;
 
 typedef struct {
-    float rates[3];
+    float       rates[3];
 } pid_rates_t;
 
 typedef struct {
@@ -45,8 +47,12 @@ typedef struct {
 } connect_response_t;
 
 typedef struct {
-    bool params_set;
-} set_params_response_t;
+    float       roll;
+} data_package_t;
+
+typedef struct {
+    bool        succeed;
+} response_ack_t;
 
 uint8_t calcChksum( uint8_t *data, uint8_t len )
 {
@@ -65,9 +71,6 @@ uint8_t calcChksum( uint8_t *data, uint8_t len )
     return (crc & 0xFF);
 }
 
-/********** COMMON CONFIGURATION END **********/
-
-
 typedef enum {
     WAIT_4_START,
     WAIT_4_COMMAND,
@@ -76,14 +79,57 @@ typedef enum {
 
 } receive_mode_t;
 
+/********** COMMON CONFIGURATION END **********/
+
+
+
+bool            is_data_transfering     = false;
+virtual_timer_t watchdog_vt;
+
+void watchdogTimerHandler ( void *arg )
+{
+    arg = arg;
+
+    palSetLine( LINE_LED1 );
+
+    chprintf( (BaseSequentialStream *)uartDriver, "Got timeout\n" );
+}
+
+void startDataTransfer ( void )
+{
+    is_data_transfering = true;
+    
+    /* Timeout 3 seconds */
+    chVTSet( &watchdog_vt, S2ST( 3 ), watchdogTimerHandler, NULL );
+
+    palClearLine( LINE_LED1 );
+    palSetLine( LINE_LED2 );
+}
+
+void resetDataTransfer ( void )
+{
+    startDataTransfer();
+}
+
+void stopDataTransfer ( void )
+{
+    is_data_transfering = false;
+
+    chVTReset( &watchdog_vt );
+
+    palClearLine( LINE_LED2 );
+}
+
 pid_rates_t main_rates  = { .rates = { 10.2, 5.3, 0.01 } };
 pid_rates_t yaw_rates   = { .rates = { 11.1, 6.5, 0.003 } };
 
 
-void responseConnectCommand( void )
+void responseConnectCommand ( frame_command_t cmd )
 {
     connect_response_t response = { .PIDRates = { main_rates, yaw_rates } };
 
+    sdPut( btDriver, FRAME_START );
+    sdPut( btDriver, cmd );
 
     sdWrite( btDriver, (uint8_t *)&response, sizeof(response) );
 
@@ -92,11 +138,23 @@ void responseConnectCommand( void )
     sdPut( btDriver, cksum );
 }
 
-void responseParametersSet( bool set )
+
+void responseAck ( frame_command_t cmd, bool set )
 {
-    set_params_response_t response = { .params_set = set };
+    response_ack_t response = { .succeed = set };
+
+    sdPut( btDriver, FRAME_START );
+    sdPut( btDriver, cmd );
 
     sdWrite( btDriver, (uint8_t *)&response, sizeof(response) );
+}
+
+void sendDataPackage ( frame_command_t cmd, data_package_t *data )
+{
+    sdPut( btDriver, FRAME_START );
+    sdPut( btDriver, cmd );
+
+    sdWrite( btDriver, (uint8_t *)data, sizeof(*data) );
 }
 
 static THD_WORKING_AREA(waBluetoothSerial, 512);
@@ -114,6 +172,8 @@ static THD_FUNCTION(BluetoothSerial, arg)
     uint8_t         data_idx            = 0;
 
     uint8_t         cksum               = 0;
+
+    chVTObjectInit( &watchdog_vt );
 
     /* Do we need to check if device was connected? */
 
@@ -146,8 +206,33 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 {
                     case COMMAND_CONNECT:
                         chprintf( (BaseSequentialStream *)uartDriver, "Got connect cmd\n" );
-                        responseConnectCommand();
+                        responseConnectCommand( COMMAND_CONNECT );
                         receive_mode = WAIT_4_START;
+                        break;
+
+                    case COMMAND_PING:
+                        chprintf( (BaseSequentialStream *)uartDriver, "Got ping cmd\n" );
+                        responseAck( COMMAND_PING, true );
+                        receive_mode = WAIT_4_START;
+                        
+                        resetDataTransfer();
+                        break;
+
+                    case COMMAND_DATA_START:
+                        chprintf( (BaseSequentialStream *)uartDriver, "Got data start cmd\n" );
+                        responseAck( COMMAND_DATA_START, true );
+                        receive_mode = WAIT_4_START;
+                        
+                        startDataTransfer();
+                        break;
+
+
+                    case COMMAND_DATA_STOP:
+                        chprintf( (BaseSequentialStream *)uartDriver, "Got data stop cmd\n" );
+                        responseAck( COMMAND_DATA_STOP, true );
+                        receive_mode = WAIT_4_START;
+                        
+                        stopDataTransfer();
                         break;
 
                     case COMMAND_SET_MAIN_RATES:
@@ -167,6 +252,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                         break;
 
                     default:
+                        chprintf( (BaseSequentialStream *)uartDriver, "Unknown cmd\n" );
                         receive_mode = WAIT_4_START;
                 }
 
@@ -189,11 +275,11 @@ static THD_FUNCTION(BluetoothSerial, arg)
 
                 if ( calc_cksum == cksum )
                 {
-                    responseParametersSet( true );
+                    responseAck ( received_cmd, true );
                 }
                 else
                 {
-                    responseParametersSet( false );
+                    responseAck ( received_cmd, false );
                     chprintf( (BaseSequentialStream *)uartDriver, "Invalid cksum\n" );
                 }
 
@@ -224,7 +310,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 ;
         }
 
-        palToggleLine( LINE_LED1 );
+        
         // chThdSleepMilliseconds( 300 );
     }
 }
@@ -245,7 +331,6 @@ static THD_FUNCTION(UARTSerial, arg)
 
         sdPut( btDriver, received_byte );
 
-        palToggleLine( LINE_LED2 );
         // chThdSleepMilliseconds( 300 );
     }
 }
@@ -255,10 +340,13 @@ static THD_FUNCTION(Blinker, arg)
 {
     arg = arg;
 
+    systime_t time = chVTGetSystemTimeX();
+
     while ( true )
     {
+        time += MS2ST( 500 );
         palToggleLine( LINE_LED3 );
-        chThdSleepSeconds( 1 );
+        chThdSleepUntil( time );
     }
 }
 
