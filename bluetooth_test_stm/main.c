@@ -49,12 +49,20 @@ typedef struct {
 } connect_response_t;
 
 typedef struct {
-    float       roll;
-} data_package_t;
-
-typedef struct {
     bool        succeed;
 } response_ack_t;
+
+#define DATA_FLOAT_MULTIPLIER   100
+
+typedef struct {
+    int16_t       roll;
+    int16_t       pitch;
+    int16_t       yaw;
+
+    int16_t       ref_roll;
+    int16_t       ref_pitch;
+    int16_t       ref_yaw;
+} data_package_t;
 
 uint8_t calcChksum( uint8_t *data, uint8_t len )
 {
@@ -139,19 +147,23 @@ uint16_t    send_period_ms = 5;
 pid_rates_t main_rates  = { .rates = { 10.2, 5.3, 0.01 } };
 pid_rates_t yaw_rates   = { .rates = { 11.1, 6.5, 0.003 } };
 
+BSEMAPHORE_DECL(sen_sem, false);
 
 void responseConnectCommand ( frame_command_t cmd )
 {
     connect_response_t response = { .PIDRates = { main_rates, yaw_rates },
                                     .plot_period_ms = send_period_ms };
 
+    uint8_t cksum = calcChksum( (void *)&response, sizeof(response) );
+
+    chBSemWait( &sen_sem );
+
     sdPut( btDriver, FRAME_START );
     sdPut( btDriver, cmd );
-
     sdWrite( btDriver, (uint8_t *)&response, sizeof(response) );
-
-    uint8_t cksum = calcChksum( (void *)&response, sizeof(response) );
     sdPut( btDriver, cksum );
+
+    chBSemSignal( &sen_sem );
 }
 
 
@@ -159,21 +171,27 @@ void responseAck ( frame_command_t cmd, bool set )
 {
     response_ack_t response = { .succeed = set };
 
+    chBSemWait( &sen_sem );
+
     sdPut( btDriver, FRAME_START );
     sdPut( btDriver, cmd );
-
     sdWrite( btDriver, (uint8_t *)&response, sizeof(response) );
+
+    chBSemSignal( &sen_sem );
 }
 
 void sendDataPackage ( data_package_t *data )
 {
+    uint8_t cksum = calcChksum( (void *)data, sizeof(*data) );
+
+    chBSemWait( &sen_sem );
+
     sdPut( btDriver, FRAME_START );
     sdPut( btDriver, COMMAND_DATA_PACK );
-
     sdWrite( btDriver, (uint8_t *)data, sizeof(*data) );
-
-    uint8_t cksum = calcChksum( (void *)data, sizeof(*data) );
     sdPut( btDriver, cksum );
+
+    chBSemSignal( &sen_sem );
 }
 
 static THD_WORKING_AREA(waBluetoothSerial, 512);
@@ -376,10 +394,10 @@ static THD_FUNCTION(Sender, arg)
 
             value += 0.02;
 
-            if ( value > 3.1 )
+            if ( value > 7 )
                 value = 0.0;
 
-            data.roll = value;
+            data.roll = value * DATA_FLOAT_MULTIPLIER;
 
             sendDataPackage( &data );
         }
@@ -422,10 +440,10 @@ int main(void)
     palSetPadMode( GPIOC, 12, PAL_MODE_ALTERNATE(8) );    // TX
     palSetPadMode( GPIOD, 2, PAL_MODE_ALTERNATE(8) );    // RX
 
-    chThdCreateStatic(waBluetoothSerial, sizeof(waBluetoothSerial), NORMALPRIO, BluetoothSerial, NULL);
+    chThdCreateStatic(waBluetoothSerial, sizeof(waBluetoothSerial), NORMALPRIO+2, BluetoothSerial, NULL);
     chThdCreateStatic(waUARTSerial, sizeof(waUARTSerial), NORMALPRIO, UARTSerial, NULL);
     chThdCreateStatic(waBlinker, sizeof(waBlinker), NORMALPRIO, Blinker, NULL);
-    chThdCreateStatic(waSender, sizeof(waSender), NORMALPRIO, Sender, NULL);
+    chThdCreateStatic(waSender, sizeof(waSender), NORMALPRIO+1, Sender, NULL);
 
     while (true)
     {
