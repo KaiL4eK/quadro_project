@@ -38,30 +38,32 @@ static const SerialConfig btCfg = {
 typedef uint8_t frame_command_t;
 
 typedef struct {
-    float       rates[3];
+    float           rates[3];
 } pid_rates_t;
 
 typedef struct {
     /* [ rp[P, I, D], y[P, I, D] ] */
-    pid_rates_t PIDRates[2];
-    uint16_t    plot_period_ms;
+    pid_rates_t     PIDRates[2];
+    uint16_t        plot_period_ms;
 
 } connect_response_t;
 
 typedef struct {
-    bool        succeed;
+    bool            succeed;
 } response_ack_t;
 
 #define DATA_FLOAT_MULTIPLIER   100
 
 typedef struct {
-    int16_t       roll;
-    int16_t       pitch;
-    int16_t       yaw;
+    uint32_t        packId;
 
-    int16_t       ref_roll;
-    int16_t       ref_pitch;
-    int16_t       ref_yaw;
+    int16_t         roll;
+    int16_t         pitch;
+    int16_t         yaw;
+
+    int16_t         ref_roll;
+    int16_t         ref_pitch;
+    int16_t         ref_yaw;
 } data_package_t;
 
 uint8_t calcChksum( uint8_t *data, uint8_t len )
