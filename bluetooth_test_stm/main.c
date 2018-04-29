@@ -98,6 +98,7 @@ void stopDataTransfer ( void );
 
 bool            is_data_transfering     = false;
 virtual_timer_t watchdog_vt;
+uint32_t        package_id              = 0;
 
 void watchdogTimerHandler ( void *arg )
 {
@@ -114,7 +115,8 @@ void watchdogTimerHandler ( void *arg )
 void startDataTransfer ( void )
 {
     is_data_transfering = true;
-    
+    package_id          = 0;
+
     /* Timeout 3 seconds */
     chVTSet( &watchdog_vt, S2ST( 10 ), watchdogTimerHandler, NULL );
 
@@ -185,6 +187,7 @@ void responseAck ( frame_command_t cmd, bool set )
 void sendDataPackage ( data_package_t *data )
 {
     uint8_t cksum = calcChksum( (void *)data, sizeof(*data) );
+    data->packId = package_id++;
 
     chBSemWait( &sen_sem );
 
