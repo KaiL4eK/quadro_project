@@ -31,51 +31,6 @@ static const SerialConfig   sdcfg = {
     .cr3        = 0
 };
 
-/*===========================================================================*/
-/* EXT driver related.                                                       */
-/*===========================================================================*/
-
-static thread_t *mpu_drdy_tp;
-
-static void mpu_drdy_cb( EXTDriver *extp, expchannel_t channel )
-{
-   (void)extp;
-   (void)channel;
-
-   chSysLockFromISR();                   // ISR Critical Area
-   chEvtSignalI(mpu_drdy_tp, (eventmask_t)1);
-   chSysUnlockFromISR();                 // Close ISR Critical Area
-
-}
-
-static EXTConfig extcfg =
-{
-   {
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
-  }
-};
 
 /*===========================================================================*/
 /* System.                                                                   */
@@ -87,7 +42,6 @@ static euler_angles_t               gyro_rates      = { 0, 0, 0 };
 int16_t pitch_setpoint      = 0;
 int16_t roll_setpoint       = 0;
 int16_t yaw_setpoint        = 0;
-
 
 
 static motor_power_t    *motor_powers       = NULL;
@@ -104,8 +58,10 @@ static THD_FUNCTION(ControlThread, arg)
 {
     arg = arg;
 
+#ifdef TIME_MEASUREMENT_DEBUG
     time_measurement_t      control_tm;
     chTMObjectInit( &control_tm );
+#endif
 
     int16_t pitch_control       = 0;
     int16_t roll_control        = 0;
@@ -119,15 +75,20 @@ static THD_FUNCTION(ControlThread, arg)
 
     while ( 1 )
     {
+#ifdef TIME_MEASUREMENT_DEBUG
         /* 2 - 6 us */
-        // chTMStartMeasurementX( &control_tm );
+        chTMStartMeasurementX( &control_tm );
+#endif
+
         time += MS2ST( 5 );
 
         pitch_rate_setpoint = (pitch_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.pitch) * CONTROL_2_ANGLE_SPEED_RATE;
-        pitch_control       = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch, gyro_rates.pitch );
+        pitch_control       = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch,
+                                                                     gyro_rates.pitch );
 
         roll_rate_setpoint  = (roll_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.roll) * CONTROL_2_ANGLE_SPEED_RATE;        
-        roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll, gyro_rates.roll );
+        roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll,
+                                                                    gyro_rates.roll );
 
         yaw_rate_setpoint   = yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE;        
         yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
@@ -151,40 +112,59 @@ static THD_FUNCTION(ControlThread, arg)
 
 
         motor_control_update_PWM();
-        // chTMStopMeasurementX( &control_tm );
 
-        chprintf( debug_stream, "Pitch error: %06d %06d %06d\n", (int)((pitch_rate_setpoint - gyro_rates.pitch)), 
-                                                                 (int)(pitch_rate_setpoint), (int)(gyro_rates.pitch) );
+#ifdef TIME_MEASUREMENT_DEBUG
+        chTMStopMeasurementX( &control_tm );
+        chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, control_tm.best), RTC2US(SYSTEM_FREQUENCY, control_tm.worst) );
+#endif
 
-        // chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, control_tm.best), RTC2US(SYSTEM_FREQUENCY, control_tm.worst) );
-        // chprintf( debug_stream, "Rates SPs: %d, %d, %d\n", 
-        //                             (int)(roll_rate_setpoint * INT_ACCURACY_MULTIPLIER), 
-        //                             (int)(pitch_rate_setpoint * INT_ACCURACY_MULTIPLIER), 
-        //                             (int)(yaw_rate_setpoint * INT_ACCURACY_MULTIPLIER) );
-
-        // chprintf( debug_stream, "Controls: %d, %d, %d\n", roll_control, pitch_control, yaw_control );
+//chprintf( debug_stream, "Pitch error: %06d %06d %06d\n", (int)((pitch_rate_setpoint - gyro_rates.pitch)),
+//                                                         (int)(pitch_rate_setpoint), (int)(gyro_rates.pitch) );
+//
+//chprintf( debug_stream, "Rates SPs: %d, %d, %d\n",
+//                         (int)(roll_rate_setpoint * INT_ACCURACY_MULTIPLIER),
+//                         (int)(pitch_rate_setpoint * INT_ACCURACY_MULTIPLIER),
+//                         (int)(yaw_rate_setpoint * INT_ACCURACY_MULTIPLIER) );
+//
+//chprintf( debug_stream, "Controls: %d, %d, %d\n", roll_control, pitch_control, yaw_control );
 
         chThdSleepUntil( time );
     }
 }
 
 
+/*===========================================================================*/
+/* MPU6050 driver related.                                                   */
+/*===========================================================================*/
+
+static thread_t *mpu_drdy_tp;
+
+static void mpu_drdy_cb( EXTDriver *extp, expchannel_t channel )
+{
+   (void)extp;
+   (void)channel;
+
+   chSysLockFromISR();
+   chEvtSignalI(mpu_drdy_tp, (eventmask_t)1);
+   chSysUnlockFromISR();
+
+}
 
 /* 200 Hz */
-const  float            SAMPLE_PERIOD_S     = 5.0/1000;
+const  float                        SAMPLE_PERIOD_S     = 5.0/1000;
 
 static float                        gyro_sensitivity; 
 static gy_521_gyro_accel_data_t     *mpu_data;
-
-static thread_reference_t           sender_ref      = NULL;
 
 static THD_WORKING_AREA(waAHRSThread, 128);
 static THD_FUNCTION(AHRSThread, arg)
 {
     arg = arg;
 
+#ifdef TIME_MEASUREMENT_DEBUG
     time_measurement_t      filter_tm;
     chTMObjectInit( &filter_tm );
+#endif
 
     mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
     mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
@@ -212,10 +192,16 @@ static THD_FUNCTION(AHRSThread, arg)
     {
         chEvtWaitAny((eventmask_t)1);
 
-        // chTMStartMeasurementX( &filter_tm );
+#ifdef TIME_MEASUREMENT_DEBUG
         /* 376 - 377 us */
+        chTMStartMeasurementX( &filter_tm );
+#endif
+
         mpu6050_receive_gyro_accel_raw_data();
-        // chTMStopMeasurementX( &filter_tm );
+
+#ifdef TIME_MEASUREMENT_DEBUG
+        chTMStopMeasurementX( &filter_tm );
+#endif
 
         filter_input.acc_x = mpu_data->x_accel;
         filter_input.acc_y = mpu_data->y_accel;
@@ -224,33 +210,36 @@ static THD_FUNCTION(AHRSThread, arg)
         filter_input.gyr_y = mpu_data->y_gyro * gyro_sensitivity;
         filter_input.gyr_z = mpu_data->z_gyro * gyro_sensitivity;
         
-        // chTMStartMeasurementX( &filter_tm );
-        
+#ifdef TIME_MEASUREMENT_DEBUG
         /* 79 - 102 us */
+        chTMStartMeasurementX( &filter_tm );
+#endif
+
         madgwick_filter_position_execute( &filter_input, &euler_angles );
 
         /* 1 - 57 us */
         // complementary_filter_position_execute( &filter_input, &euler_angles );
 
-        // chTMStopMeasurementX( &filter_tm );
-
+#ifdef TIME_MEASUREMENT_DEBUG
+        chTMStopMeasurementX( &filter_tm );
+#endif
 
         lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
 
-        // chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, filter_tm.best), RTC2US(SYSTEM_FREQUENCY, filter_tm.worst) );
+// chprintf( debug_stream, "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, filter_tm.best), RTC2US(SYSTEM_FREQUENCY, filter_tm.worst) );
 
-        // chprintf( debug_stream, "Angls: %06d %06d %06d\n", 
-                                    // (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER), 
-                                    // (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER), 
-                                    // (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
+// chprintf( debug_stream, "Angls: %06d %06d %06d\n",
+                            // (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER),
+                            // (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER),
+                            // (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
 
-        // chprintf( debug_stream, "Rates: %06d %06d %06d\n", 
-        //                             (int)(gyro_rates.roll * INT_ACCURACY_MULTIPLIER), 
-        //                             (int)(gyro_rates.pitch * INT_ACCURACY_MULTIPLIER), 
-        //                             (int)(gyro_rates.yaw * INT_ACCURACY_MULTIPLIER) );
+// chprintf( debug_stream, "Rates: %06d %06d %06d\n",
+//                             (int)(gyro_rates.roll * INT_ACCURACY_MULTIPLIER),
+//                             (int)(gyro_rates.pitch * INT_ACCURACY_MULTIPLIER),
+//                             (int)(gyro_rates.yaw * INT_ACCURACY_MULTIPLIER) );
 
-        // chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
-        // chprintf( debug_stream, "Gyro : %06d %06d %06d\n", mpu_data->x_gyro, mpu_data->y_gyro, mpu_data->z_gyro );
+// chprintf( debug_stream, "Accel: %06d %06d %06d\n", mpu_data->x_accel, mpu_data->y_accel, mpu_data->z_accel );
+// chprintf( debug_stream, "Gyro : %06d %06d %06d\n", mpu_data->x_gyro, mpu_data->y_gyro, mpu_data->z_gyro );
     
 
     }
@@ -283,6 +272,8 @@ int main(void)
     chSysInit();
     halInit();
 
+    init_common_periphery();
+
     /* I2C hardware init */
     palSetPadMode( GPIOB, 8, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN );    // SCL = PB_8
     palSetPadMode( GPIOB, 9, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN );    // SDA = PB_9
@@ -293,10 +284,6 @@ int main(void)
 
     sdStart( debug_serial, &sdcfg );
     debug_stream = (BaseSequentialStream *)debug_serial;
-
-    /* AHRS EXT init */
-    extcfg.channels[5].mode = EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC;
-    extcfg.channels[5].cb   = mpu_drdy_cb;
 
     /* AHRS initialization */
     if ( mpu6050_init( mpudrvr ) != EOK )
@@ -316,21 +303,24 @@ int main(void)
     mpu6050_set_offsets( &mpu_offsets );
 #endif
 
-    extStart( &EXTD1, &extcfg );
+    /* AHRS EXT init */
+    /* Enable EXT on PC5 pin - MPU6050 */
+    EXTChannelConfig ch_cfg = { .mode = EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOC, .cb = mpu_drdy_cb };
+    extSetChannelMode( &EXTD1, 5, &ch_cfg );
+
+    /* AHRS Thread init */
     chThdCreateStatic( waAHRSThread, sizeof(waAHRSThread), NORMALPRIO, AHRSThread, NULL );
 
     /* Motor control init */
     motor_control_init();
     motor_powers = motor_control_get_powers_ptr();
 
-
-
+    /* Motor control Thread init */
     chThdCreateStatic( waControlThread, sizeof(waControlThread), NORMALPRIO, ControlThread, NULL );
 
     while ( true )
     {
         chThdSleepMilliseconds( 500 );
-        // chThdSuspend( &sender_ref );
 
         if ( !palReadLine( LINE_BUTTON ) )
         {

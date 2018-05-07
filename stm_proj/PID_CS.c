@@ -6,7 +6,7 @@
 
 PID_rates_float_t   roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
                     pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
-                    yaw_rates   = { .prop = 30,   .integr = 0 };
+                    yaw_rates   = { .prop = 30,          .integr = 0,              .diff = 0 };
 
 float       integr_sum_pitch = 0;
 float       integr_sum_roll  = 0;
@@ -35,6 +35,8 @@ int16_t PID_controller_generate_pitch_control( float error, float angle_speed )
     pitch_parts.p = error * pitch_rates.prop;
     pitch_parts.i = integr_sum_pitch;
 //    pitch_parts.d = (error - prev_error) * pitch_rates.diff;
+
+    /* Inversed to have negative derivative (in feedback) */
     pitch_parts.d = (prev_angle_speed - angle_speed) * pitch_rates.diff;
 
     int32_t regul = (pitch_parts.p + pitch_parts.i + pitch_parts.d);
@@ -56,6 +58,8 @@ int16_t PID_controller_generate_roll_control( float error, float angle_speed )
     roll_parts.p = error * roll_rates.prop;
     roll_parts.i = integr_sum_roll;
 //    roll_parts.d = (error - prev_error) * roll_rates.diff;
+
+    /* Inversed to have negative derivative (in feedback) */
     roll_parts.d = (prev_angle_speed - angle_speed) * roll_rates.diff;
     
     int32_t regul = (roll_parts.p + roll_parts.i + roll_parts.d);

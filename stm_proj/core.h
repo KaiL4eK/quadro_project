@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <ch.h>
 #include <hal.h>
@@ -18,6 +19,8 @@
 #define F446RE
 
 #define SYSTEM_FREQUENCY    180000000UL
+
+//#define TIME_MEASUREMENT_DEBUG
 
 extern BaseSequentialStream  *debug_stream;
 #define  uprintf  chprintf
@@ -30,7 +33,19 @@ extern BaseSequentialStream  *debug_stream;
 
 #define INT_ACCURACY_MULTIPLIER		100
 
+/*** Common ***/
+
+
+static inline void init_common_periphery ( void )
+{
+    EXTConfig extcfg;
+    /* Zero all fields */
+    memset( &extcfg, 0, sizeof( extcfg ) );
+    extStart( &EXTD1, &extcfg );
+}
+
 /*** I2C ***/
+
 typedef void * i2c_module_t;
 
 uint8_t 	i2c_read_byte 	( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr );
@@ -44,10 +59,10 @@ uint8_t 	i2c_read_bits 	( i2c_module_t p_module, uint8_t i2c_address, uint8_t re
 int 		i2c_write_bit 	( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr, uint8_t bit_start, uint8_t data );
 int 		i2c_write_bits  ( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr, uint8_t bit_start, uint8_t length, uint8_t data );
 
-/*** PWM ***/
+/*** Motor control ***/
+
 /* Limits (approx.): -32k --- 32k */
 typedef int16_t motor_power_t;
-
 
 #define MOTOR_INPUT_MIN		0
 #define MOTOR_INPUT_MAX		800
@@ -73,6 +88,7 @@ bool motor_control_is_armed( void );
 void motor_control_update_PWM( void );
 
 /*** PID control system ***/
+
 typedef struct {
     uint16_t        prop_rev,
                     diff,
@@ -92,4 +108,13 @@ typedef struct {
 int16_t PID_controller_generate_pitch_control( float error, float angle_speed );
 int16_t PID_controller_generate_roll_control( float error, float angle_speed );
 int16_t PID_controller_generate_yaw_control( float error );
+
+/*** Radio control ***/
+/*
+ * Use periphery:
+ *      EXT on
+ *      TIM7
+ */
+
+void radio_control_init ( void );
 
