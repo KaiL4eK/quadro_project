@@ -1,6 +1,3 @@
-[submodule "Libraries/dspic33fj256mc710_periphery"]
-	path = Libraries/dspic33fj256mc710_periphery
-	url = git@bitbucket.org:KaiL4eK/dspic33fj256mc710_periphery.git
 [submodule "Libraries/ahrs_sensors"]
 	path = Libraries/ahrs_sensors
 	url = git@bitbucket.org:KaiL4eK/ahrs_sensors.git
