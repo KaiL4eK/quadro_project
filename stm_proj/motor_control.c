@@ -1,10 +1,9 @@
 #include <core.h>
 
 
-
-#define MOTOR_ESC_MAX_PWM   2000
-#define MOTOR_ESC_MIN_PWM   1200
-#define MOTOR_ESC_STOP_PWM  900
+#define MOTOR_ESC_MAX_PWM   2000    // 2.0ms
+#define MOTOR_ESC_MIN_PWM   1200    // 1.2ms
+#define MOTOR_ESC_STOP_PWM  900     // 0.9ms
 
 PWMDriver       *pwmMotorDriver             = &PWMD3;
 motor_power_t   motor_powers[MOTOR_COUNT];
@@ -48,7 +47,7 @@ void motor_control_set_motors_stopped( void )
 
 static const PWMConfig pwm_conf = {
     .frequency = 1000000,   /* 1MHz */
-    .period    = 4000,      /* 4/1000 s = 4 ms = 250 Hz */
+    .period    = 4000,      /* 4 ms ~ 250 Hz */
     .callback  = NULL,
     .channels  = {
                   {PWM_OUTPUT_ACTIVE_HIGH, NULL},
