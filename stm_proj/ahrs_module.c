@@ -108,12 +108,12 @@ static THD_FUNCTION(AHRSThread, arg)
  */
 
 static const mpu6050_offsets_t mpu_offsets = {
-    -1750,
-    -626,
-    1295,
-    50,
-    -23,
-    -1
+    -1839,
+    -641,
+    1426,
+    46,
+    -18,
+    -10
 };
 
 
