@@ -169,7 +169,7 @@ static THD_FUNCTION(Blinker, arg)
         time += MS2ST( 500 );
 
         palTogglePad( GPIOA, 5 );
-        // dprintf( "Ping %d\n", chVTGetSystemTimeX() );
+        dprintf( "Ping %d\n", chVTGetSystemTimeX() );
 
         chThdSleepUntil( time );
     }
