@@ -101,20 +101,19 @@ void watchdogTimerHandler ( void *arg )
     is_data_transfering = false;
 }
 
+void resetDataTransfer ( void )
+{
+    /* Reset timer timeout */
+    chVTSet( &watchdog_vt, S2ST( 10 ), watchdogTimerHandler, NULL );
+}
+
 void startDataTransfer ( void )
 {
     is_data_transfering = true;
     package_id          = 0;
 
-    /* Timeout 3 seconds */
-    chVTSet( &watchdog_vt, S2ST( 10 ), watchdogTimerHandler, NULL );
+    resetDataTransfer();
 }
-
-void resetDataTransfer ( void )
-{
-    startDataTransfer();
-}
-
 
 time_measurement_t      send_tm;
 
@@ -123,14 +122,15 @@ void stopDataTransfer ( void )
     is_data_transfering = false;
 
     chVTReset( &watchdog_vt );
-
+#if 0
     dprintf( "Best: %d, Worst: %d\n", 
                 RTC2US(SYSTEM_FREQUENCY, send_tm.best), 
                 RTC2US(SYSTEM_FREQUENCY, send_tm.worst) );
+#endif
 }
 
 
-
+uint32_t    send_period_ms  = CONTROL_SYSTEM_PERIOD_MS;
 
 BSEMAPHORE_DECL(sen_sem, false);
 
@@ -139,7 +139,7 @@ void responseConnectCommand ( frame_command_t cmd )
     PID_rates_t main_rates  = PID_controller_get_rates( PID_ROLL );
     PID_rates_t yaw_rates   = PID_controller_get_rates( PID_YAW );
 
-    connect_response_t response = { .plot_period_ms = CONTROL_SYSTEM_PERIOD_MS };
+    connect_response_t response = { .plot_period_ms = send_period_ms };
 
     response.PIDRates[0].rates[0] = main_rates.prop;
     response.PIDRates[0].rates[1] = main_rates.diff;
@@ -177,9 +177,11 @@ void responseAck ( frame_command_t cmd, bool set )
 
 void sendDataPackage ( data_package_t *data )
 {
-    uint8_t cksum = calcChksum( (void *)data, sizeof(*data) );
+    /* First set final data, then calc cksum */
     data->packId = package_id++;
 
+    uint8_t cksum = calcChksum( (void *)data, sizeof(*data) );
+    
     chBSemWait( &sen_sem );
 
     sdPut( btDriver, FRAME_START );
@@ -389,6 +391,8 @@ static THD_FUNCTION(UARTSerial, arg)
     }
 }
 
+#endif
+
 static THD_WORKING_AREA(waSender, 128);
 static THD_FUNCTION(Sender, arg) 
 {
@@ -398,13 +402,13 @@ static THD_FUNCTION(Sender, arg)
 
     systime_t time = chVTGetSystemTimeX();
 
-    static float value = 0.0; 
+    // static float value = 0.0; 
 
     while ( 1 )
     {
         time += MS2ST( send_period_ms );
         
-        chTMStartMeasurementX( &send_tm );
+        
         if ( is_data_transfering )
         {
             data_package_t data;
@@ -414,20 +418,25 @@ static THD_FUNCTION(Sender, arg)
             // if ( value > 7 )
             //     value = 0.0;
 
-
             data.roll   = euler_angles.roll   * DATA_FLOAT_MULTIPLIER;
             data.pitch  = euler_angles.pitch  * DATA_FLOAT_MULTIPLIER;
             data.yaw    = euler_angles.yaw    * DATA_FLOAT_MULTIPLIER;
 
+            // dprintf( "Data send: %d / %d / %d\n", data.roll, data.pitch, data.yaw );
+
+            // chTMStartMeasurementX( &send_tm );
+
+            /* 95 - 111 us */
             sendDataPackage( &data );
+
+            // chTMStopMeasurementX( &send_tm );
         }
-        chTMStopMeasurementX( &send_tm );
 
         chThdSleepUntil( time );
     }
 }
 
-#endif
+
 
 int bt_control_init( tprio_t prio )
 {
@@ -437,10 +446,10 @@ int bt_control_init( tprio_t prio )
     palSetPadMode( GPIOC, 11, PAL_MODE_ALTERNATE(7) );    // RX`
 
     chThdCreateStatic(waBluetoothSerial, sizeof(waBluetoothSerial), prio, BluetoothSerial, NULL);
+    chThdCreateStatic(waSender, sizeof(waSender), prio , Sender, NULL);
 
 #ifndef TEST_DISABLED
     chThdCreateStatic(waUARTSerial, sizeof(waUARTSerial), NORMALPRIO, UARTSerial, NULL);
-    chThdCreateStatic(waSender, sizeof(waSender), NORMALPRIO+1, Sender, NULL);
 #endif
 
     dprintf_mod( BT_CONTROL_PREFIX, "Initialized\n" );

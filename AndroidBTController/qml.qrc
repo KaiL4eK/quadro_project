@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>ConfigurationForm.qml</file>
+        <file>ChartForm.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>SwipeViewPage.qml</file>
+        <file>images/arrows.png</file>
+        <file>BtScanner.qml</file>
+        <file>images/refresh.png</file>
+        <file>images/bt.png</file>
+        <file>RatesList.qml</file>
+        <file>StatusMessage.qml</file>
+        <file>ScopeView.qml</file>
+    </qresource>
+</RCC>

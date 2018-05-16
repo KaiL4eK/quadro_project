@@ -157,7 +157,7 @@ static THD_FUNCTION(Sender, arg)
 }
 
 
-static THD_WORKING_AREA(waBlinker, 16);
+static THD_WORKING_AREA(waBlinker, 256);
 static THD_FUNCTION(Blinker, arg) 
 {
     arg = arg;
