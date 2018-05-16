@@ -1,5 +1,7 @@
 #pragma once
 
+#include <core.h>
+
 /*** I2C ***/
 
 typedef void * i2c_module_t;

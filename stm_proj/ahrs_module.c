@@ -1,4 +1,7 @@
+#define CORE_DEBUG_ENABLED
 #include <core.h>
+
+#define AHRS_PREFIX     "[ahrs]: "
 
 euler_angles_t               euler_angles    = { 0, 0, 0 };
 euler_angles_t               gyro_rates      = { 0, 0, 0 };
@@ -22,12 +25,12 @@ static void mpu_drdy_cb( EXTDriver *extp, expchannel_t channel )
 }
 
 /* 200 Hz */
-const  float                        SAMPLE_PERIOD_S     = 5.0/1000;
+const  float                        SAMPLE_PERIOD_S     = CONTROL_SYSTEM_PERIOD_MS/1000.0;
 
 static float                        gyro_sensitivity; 
 static gy_521_gyro_accel_data_t     *mpu_data;
 
-static THD_WORKING_AREA(waAHRSThread, 256);
+static THD_WORKING_AREA(waAHRSThread, 1024);
 static THD_FUNCTION(AHRSThread, arg)
 {
     arg = arg;
@@ -36,16 +39,6 @@ static THD_FUNCTION(AHRSThread, arg)
     time_measurement_t      filter_tm;
     chTMObjectInit( &filter_tm );
 #endif
-
-    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
-    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
-    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
-    mpu6050_set_bypass_mode( true );
-    mpu6050_set_interrupt_data_rdy_bit( true );
-    mpu6050_set_sample_rate_divider( 4 );
-
-    mpu_data            = mpu6050_get_raw_data();
-    gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
 
     mpu_drdy_tp         = chThdGetSelfX();
 
@@ -64,10 +57,10 @@ static THD_FUNCTION(AHRSThread, arg)
         chEvtWaitAny((eventmask_t)1);
 
 #ifdef AHRS_TIME_MEASUREMENT_DEBUG
-        /* 376 - 377 us */
         chTMStartMeasurementX( &filter_tm );
 #endif
 
+        /* 376 - 377 us */
         mpu6050_receive_gyro_accel_raw_data();
 
 #ifdef AHRS_TIME_MEASUREMENT_DEBUG
@@ -82,14 +75,14 @@ static THD_FUNCTION(AHRSThread, arg)
         filter_input.gyr_z = mpu_data->z_gyro * gyro_sensitivity;
         
 #ifdef AHRS_TIME_MEASUREMENT_DEBUG
-        /* 79 - 102 us */
         chTMStartMeasurementX( &filter_tm );
 #endif
 
-        madgwick_filter_position_execute( &filter_input, &euler_angles );
+        /* 79 - 102 us */
+        // madgwick_filter_position_execute( &filter_input, &euler_angles );
 
         /* 1 - 57 us */
-        // complementary_filter_position_execute( &filter_input, &euler_angles );
+        complementary_filter_position_execute( &filter_input, &euler_angles );
 
 #ifdef AHRS_TIME_MEASUREMENT_DEBUG
         chTMStopMeasurementX( &filter_tm );
@@ -97,13 +90,6 @@ static THD_FUNCTION(AHRSThread, arg)
 #endif
 
         lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
-
-
-
-// dprintf( "Angls: %06d %06d %06d\n",
-                            // (int)(euler_angles.roll * INT_ACCURACY_MULTIPLIER),
-                            // (int)(euler_angles.pitch * INT_ACCURACY_MULTIPLIER),
-                            // (int)(euler_angles.yaw * INT_ACCURACY_MULTIPLIER) );
 
 // dprintf( "Rates: %06d %06d %06d\n",
 //                             (int)(gyro_rates.roll * INT_ACCURACY_MULTIPLIER),
@@ -149,7 +135,7 @@ static const I2CConfig      mpuconf     = {
 #endif
 };
 
-void ahrs_module_init ( void )
+void ahrs_module_init ( tprio_t prio )
 {
     /* I2C hardware init */
     palSetPadMode( GPIOB, 8, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN );    // SCL = PB_8
@@ -160,13 +146,23 @@ void ahrs_module_init ( void )
     if ( mpu6050_init( mpudrvr ) != EOK )
     {
         const char *reason = "MPU6050 init failed\n"; 
-        dprintf_str( reason );
+        dprintf( reason );
         chSysHalt( reason );
     }
     
     mpu6050_set_offsets( &mpu_offsets );
 
-    dprintf_str( "MPU6050 ready\n" );
+    mpu6050_set_bandwidth( MPU6050_DLPF_BW_42 );
+    mpu6050_set_gyro_fullscale( MPU6050_GYRO_FS_500 );
+    mpu6050_set_accel_fullscale( MPU6050_ACCEL_FS_2 );
+    mpu6050_set_bypass_mode( true );
+    mpu6050_set_interrupt_data_rdy_bit( true );
+    mpu6050_set_sample_rate_divider( 4 );
+
+    mpu_data            = mpu6050_get_raw_data();
+    gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
+
+    dprintf_mod( AHRS_PREFIX, "MPU6050 ready\n" );
 
     /* AHRS EXT init */
     /* Enable EXT on PC5 pin - MPU6050 */
@@ -174,7 +170,7 @@ void ahrs_module_init ( void )
     extSetChannelMode( &EXTD1, 5, &ch_cfg );
 
     /* AHRS Thread init */
-    chThdCreateStatic( waAHRSThread, sizeof(waAHRSThread), NORMALPRIO, AHRSThread, NULL );
+    chThdCreateStatic( waAHRSThread, sizeof(waAHRSThread), prio, AHRSThread, NULL );
 
 
 }

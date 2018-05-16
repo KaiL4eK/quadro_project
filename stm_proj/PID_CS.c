@@ -4,9 +4,13 @@
 #define INTEGR_RATE     0
 #define DIFF_RATE       0
 
-PID_rates_float_t   roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
-                    pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
-                    yaw_rates   = { .prop = 30,          .integr = 0,              .diff = 0 };
+typedef struct {
+    float p, i, d;
+} PID_parts_t;
+
+PID_rates_t     roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
+                pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
+                yaw_rates   = { .prop = 30,          .integr = 0,              .diff = 0 };
 
 float       integr_sum_pitch = 0;
 float       integr_sum_roll  = 0;
@@ -23,6 +27,49 @@ void PID_controller_reset_integral_sums ( void )
 {
     integr_sum_pitch = integr_sum_roll = integr_sum_yaw = 0;
 }
+
+void PID_controller_set_rates( PID_rates_t *rates_p, PID_rates_name_t name )
+{
+    switch ( name )
+    {
+        case PID_ROLL:
+            roll_rates = *rates_p;
+            break;
+
+        case PID_PITCH:
+            pitch_rates = *rates_p;
+            break;
+
+        case PID_YAW:
+            yaw_rates = *rates_p;
+            break;
+
+        default:
+            ;
+    }
+}
+
+PID_rates_t PID_controller_get_rates( PID_rates_name_t name )
+{
+    switch ( name )
+    {
+        case PID_ROLL:
+            return roll_rates;
+
+        case PID_PITCH:
+            return pitch_rates;
+
+        case PID_YAW:
+            return yaw_rates;
+
+        default:
+            ;
+    }
+
+    PID_rates_t zero = {0, 0, 0};
+    return zero;
+}
+
 
 int16_t PID_controller_generate_pitch_control( float error, float angle_speed )
 {

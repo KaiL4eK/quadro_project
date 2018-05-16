@@ -33,12 +33,14 @@
 //#define TIME_MEASUREMENT_DEBUG
 
 extern BaseSequentialStream  *debug_stream;
-#define uprintf  chprintf
-#define dprintf_str(str)                chprintf(debug_stream, str);
-#define dprintf(str, ...)               chprintf(debug_stream, str, __VA_ARGS__);
-#define dprintf_mod(mod, str, ...)      dprintf(mod str, __VA_ARGS__);
-#define dprintf_mod_str(mod, str)       dprintf_str(mod str);
 
+#ifdef CORE_DEBUG_ENABLED
+    #define dprintf(str, ...)               chprintf(debug_stream, str, ##__VA_ARGS__);
+    #define dprintf_mod(mod, str, ...)      dprintf(mod str, ##__VA_ARGS__);
+#else
+    #define dprintf(str, ...)
+    #define dprintf_mod(mod, str, ...)
+#endif
 
 #define delay_ms(x) (chThdSleepMilliseconds((x)))
 
@@ -49,6 +51,8 @@ extern BaseSequentialStream  *debug_stream;
 #define INT_ACCURACY_MULTIPLIER		100
 
 /*** Common ***/
+
+#define  CONTROL_SYSTEM_PERIOD_MS   5
 
 static inline void init_common_periphery ( void )
 {
@@ -65,7 +69,7 @@ static inline void init_common_periphery ( void )
 extern euler_angles_t euler_angles;
 extern euler_angles_t gyro_rates;
 
-void ahrs_module_init ( void );
+void ahrs_module_init ( tprio_t prio );
 
 /*** Motor control ***/
 
@@ -83,13 +87,13 @@ typedef enum {
 } motor_num_t;
 
 #define MOTOR_COUNT    		4
+extern motor_power_t   motor_powers[MOTOR_COUNT];
 
 void motor_control_init( void );
 /* Adviced to call during changing PWM values */
 void motor_control_lock( void );
 void motor_control_unlock( void );
 
-motor_power_t *motor_control_get_powers_ptr( void );
 void motor_control_set_motors_started( void );
 void motor_control_set_motors_stopped( void );
 bool motor_control_is_armed( void );
@@ -97,25 +101,26 @@ void motor_control_update_PWM( void );
 
 /*** PID control system ***/
 
-typedef struct {
-    uint16_t        prop_rev,
-                    diff,
-                    integr_rev;
-} PID_rates_t;
+typedef enum {
+    PID_ROLL,
+    PID_PITCH,
+    PID_YAW
+} PID_rates_name_t;
 
 typedef struct {
     float           prop,
                     diff,
                     integr;
-} PID_rates_float_t;
+} PID_rates_t;
 
-typedef struct {
-    float p, i, d;
-} PID_parts_t;
-
+void PID_controller_reset_integral_sums ( void );
 int16_t PID_controller_generate_pitch_control( float error, float angle_speed );
 int16_t PID_controller_generate_roll_control( float error, float angle_speed );
 int16_t PID_controller_generate_yaw_control( float error );
+
+PID_rates_t PID_controller_get_rates( PID_rates_name_t name );
+void        PID_controller_set_rates( PID_rates_t *rates_p, PID_rates_name_t name );
+
 
 /*** Radio control ***/
 /*
@@ -127,13 +132,13 @@ int16_t PID_controller_generate_yaw_control( float error );
 // #define RC_TIME_MEASUREMENT_DEBUG
 
 typedef enum {
-    ROLL        = 0,
-    PITCH       = 1,
+    RC_ROLL        = 0,
+    RC_PITCH       = 1,
 
-    THRUST      = 2,
-    YAW         = 3,
+    RC_THRUST      = 2,
+    RC_YAW         = 3,
 
-    SWITCH      = 4
+    RC_SWITCH      = 4
 
 } rc_control_name_t;
 
@@ -168,17 +173,25 @@ int radio_control_calibration ( void );
 // [0; 2000] -> [true, false]
 static inline bool radio_control_is_switch_enabled( void )
 {
-    return (control_input.channels[SWITCH] > (MAX_CONTROL_VALUE / 2));
+    return (control_input.channels[RC_SWITCH] > (MAX_CONTROL_VALUE / 2));
 }
 
 // [0; 2000] -> [-1000; 1000]
 static inline int32_t radio_control_get_angle_value( rc_control_name_t angle_name )
 {
+    if ( angle_name != RC_ROLL &&  angle_name != RC_PITCH && angle_name != RC_YAW )
+        return 0;
+
     return (control_input.channels[angle_name] - (MAX_CONTROL_VALUE / 2));
 }
 
 // [0; 2000] -> [0; 500]
 static inline int32_t radio_control_get_thrust_value( void )
 {
-    return (control_input.channels[THRUST] * 500 / MAX_CONTROL_VALUE);
+    return (control_input.channels[RC_THRUST] * 500 / MAX_CONTROL_VALUE);
 }
+
+/*** BT Control ***/
+/* The module uses other modules functions to represent data */
+
+int bt_control_init( tprio_t prio );

@@ -1,20 +1,7 @@
-#include <ch.h>
-#include <hal.h>
+#define CORE_DEBUG_ENABLED
+#include <core.h>
 
-#include <chprintf.h>
-
-static SerialDriver         *btDriver       = &SD5;
-static SerialDriver         *uartDriver     = &SD7;
-static BaseSequentialStream *debug;
-
-static const SerialConfig uartCfg = {
-    .speed = 460800,
-    .cr1 = 0,
-    .cr2 = USART_CR2_LINEN,
-    .cr3 = 0
-};
-
-
+static SerialDriver         *btDriver       = &SD3;
 static const SerialConfig btCfg = {
     .speed = 115200,
     .cr1 = 0,
@@ -22,6 +9,9 @@ static const SerialConfig btCfg = {
     .cr3 = 0
 };
 
+#define TEST_DISABLED
+
+#define BT_CONTROL_PREFIX   "[BT control]: "
 
 /********** COMMON CONFIGURATION **********/
 
@@ -55,8 +45,10 @@ typedef struct {
 #define DATA_FLOAT_MULTIPLIER   100
 
 typedef struct {
+    /* Service fields */
     uint32_t        packId;
 
+    /* Data fields */
     int16_t         roll;
     int16_t         pitch;
     int16_t         yaw;
@@ -104,12 +96,9 @@ void watchdogTimerHandler ( void *arg )
 {
     arg = arg;
 
-    palSetLine( LINE_LED1 );
-
-    chprintf( debug, "Got timeout\n" );
+    dprintf_mod( BT_CONTROL_PREFIX, "Got timeout\n" );
 
     is_data_transfering = false;
-    palClearLine( LINE_LED2 );
 }
 
 void startDataTransfer ( void )
@@ -119,9 +108,6 @@ void startDataTransfer ( void )
 
     /* Timeout 3 seconds */
     chVTSet( &watchdog_vt, S2ST( 10 ), watchdogTimerHandler, NULL );
-
-    palClearLine( LINE_LED1 );
-    palSetLine( LINE_LED2 );
 }
 
 void resetDataTransfer ( void )
@@ -129,7 +115,6 @@ void resetDataTransfer ( void )
     startDataTransfer();
 }
 
-#define SYSTEM_FREQUENCY    216000000UL
 
 time_measurement_t      send_tm;
 
@@ -139,24 +124,30 @@ void stopDataTransfer ( void )
 
     chVTReset( &watchdog_vt );
 
-    palClearLine( LINE_LED2 );
-
-    chprintf( debug, "Best: %d, Worst: %d\n", 
+    dprintf( "Best: %d, Worst: %d\n", 
                 RTC2US(SYSTEM_FREQUENCY, send_tm.best), 
                 RTC2US(SYSTEM_FREQUENCY, send_tm.worst) );
 }
 
-uint16_t    send_period_ms = 5; 
 
-pid_rates_t main_rates  = { .rates = { 10.2, 5.3, 0.01 } };
-pid_rates_t yaw_rates   = { .rates = { 11.1, 6.5, 0.003 } };
+
 
 BSEMAPHORE_DECL(sen_sem, false);
 
 void responseConnectCommand ( frame_command_t cmd )
 {
-    connect_response_t response = { .PIDRates = { main_rates, yaw_rates },
-                                    .plot_period_ms = send_period_ms };
+    PID_rates_t main_rates  = PID_controller_get_rates( PID_ROLL );
+    PID_rates_t yaw_rates   = PID_controller_get_rates( PID_YAW );
+
+    connect_response_t response = { .plot_period_ms = CONTROL_SYSTEM_PERIOD_MS };
+
+    response.PIDRates[0].rates[0] = main_rates.prop;
+    response.PIDRates[0].rates[1] = main_rates.diff;
+    response.PIDRates[0].rates[2] = main_rates.integr;
+
+    response.PIDRates[1].rates[0] = yaw_rates.prop;
+    response.PIDRates[1].rates[1] = yaw_rates.diff;
+    response.PIDRates[1].rates[2] = yaw_rates.integr;
 
     uint8_t cksum = calcChksum( (void *)&response, sizeof(response) );
 
@@ -199,7 +190,7 @@ void sendDataPackage ( data_package_t *data )
     chBSemSignal( &sen_sem );
 }
 
-static THD_WORKING_AREA(waBluetoothSerial, 512);
+static THD_WORKING_AREA(waBluetoothSerial, 1024);
 static THD_FUNCTION(BluetoothSerial, arg) 
 {
     arg = arg;
@@ -225,7 +216,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
 
         received_byte = msg;
 
-        // chprintf( debug, "Got: 0x%x / %c\n", received_byte, received_byte );
+        // dprintf( "Got: 0x%x / %c\n", received_byte, received_byte );
         // sdPut( uartDriver, received_byte );
 
         switch ( receive_mode )
@@ -235,7 +226,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 if ( received_byte == FRAME_START )
                 {
                     receive_mode = WAIT_4_COMMAND;
-                    chprintf( debug, "Wait 4 cmd\n" );
+                    dprintf( "Wait 4 cmd\n" );
                 }  
 
                 break;
@@ -247,13 +238,13 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 switch ( received_cmd )
                 {
                     case COMMAND_CONNECT:
-                        chprintf( debug, "Got connect cmd\n" );
+                        dprintf( "Got connect cmd\n" );
                         responseConnectCommand( COMMAND_CONNECT );
                         receive_mode = WAIT_4_START;
                         break;
 
                     case COMMAND_PING:
-                        chprintf( debug, "Got ping cmd\n" );
+                        dprintf( "Got ping cmd\n" );
                         responseAck( COMMAND_PING, true );
                         receive_mode = WAIT_4_START;
                         
@@ -261,7 +252,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                         break;
 
                     case COMMAND_DATA_START:
-                        chprintf( debug, "Got data start cmd\n" );
+                        dprintf( "Got data start cmd\n" );
                         responseAck( COMMAND_DATA_START, true );
                         receive_mode = WAIT_4_START;
                         
@@ -270,7 +261,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
 
 
                     case COMMAND_DATA_STOP:
-                        chprintf( debug, "Got data stop cmd\n" );
+                        dprintf( "Got data stop cmd\n" );
                         responseAck( COMMAND_DATA_STOP, true );
                         receive_mode = WAIT_4_START;
                         
@@ -278,7 +269,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                         break;
 
                     case COMMAND_SET_MAIN_RATES:
-                        chprintf( debug, "Got set main rates cmd\n" );
+                        dprintf( "Got set main rates cmd\n" );
                         receive_data_length = sizeof( pid_rates_t );
                         receive_mode = WAIT_4_DATA;
                         data_idx = 0;
@@ -286,7 +277,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                         break;
 
                     case COMMAND_SET_YAW_RATES:
-                        chprintf( debug, "Got set yaw rates cmd\n" );
+                        dprintf( "Got set yaw rates cmd\n" );
                         receive_data_length = sizeof( pid_rates_t );
                         receive_mode = WAIT_4_DATA;
                         data_idx = 0;
@@ -294,7 +285,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
                         break;
 
                     default:
-                        chprintf( debug, "Unknown cmd\n" );
+                        dprintf( "Unknown cmd\n" );
                         receive_mode = WAIT_4_START;
                 }
 
@@ -322,29 +313,49 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 else
                 {
                     responseAck ( received_cmd, false );
-                    chprintf( debug, "Invalid cksum\n" );
+                    dprintf( "Invalid cksum\n" );
                 }
 
                 receive_mode = WAIT_4_START;
 
+                /* Resolving received data */
+                pid_rates_t *rates = (pid_rates_t *)data_buffer;
+                PID_rates_t res_rates;
+
+                res_rates.prop     = rates->rates[0];
+                res_rates.diff     = rates->rates[1];
+                res_rates.integr   = rates->rates[2];
+
                 if ( received_cmd == COMMAND_SET_MAIN_RATES )
                 {
-                    pid_rates_t *rates = (pid_rates_t *)data_buffer;
-
-                    main_rates = *rates;
-                    chprintf( debug, "Main rates: %d, %d, %d\n", (int)(rates->rates[0] * 1000), 
-                                                                                              (int)(rates->rates[1] * 1000), 
-                                                                                              (int)(rates->rates[2] * 1000) );
+                    PID_controller_set_rates( &res_rates, PID_ROLL );
+                    PID_controller_set_rates( &res_rates, PID_PITCH );
                 }
                 else if ( received_cmd == COMMAND_SET_YAW_RATES )
                 {
-                    pid_rates_t *rates = (pid_rates_t *)data_buffer;
-
-                    yaw_rates = *rates;
-                    chprintf( debug, "Yaw rates: %d, %d, %d\n", (int)(rates->rates[0] * 1000), 
-                                                                                             (int)(rates->rates[1] * 1000), 
-                                                                                             (int)(rates->rates[2] * 1000) );
+                    PID_controller_set_rates( &res_rates, PID_YAW );
                 }
+
+#if 1
+                if ( received_cmd == COMMAND_SET_MAIN_RATES ||
+                     received_cmd == COMMAND_SET_YAW_RATES )
+                {
+                    PID_rates_t roll_rates = PID_controller_get_rates( PID_ROLL );
+                    PID_rates_t pitch_rates = PID_controller_get_rates( PID_PITCH );
+                    PID_rates_t yaw_rates = PID_controller_get_rates( PID_YAW );
+
+                    dprintf( "PID: R: %d / %d / %d | P: %d / %d / %d | Y: %d / %d / %d\n",
+                                (int)(roll_rates.prop       * INT_ACCURACY_MULTIPLIER),
+                                (int)(roll_rates.integr     * INT_ACCURACY_MULTIPLIER),
+                                (int)(roll_rates.diff       * INT_ACCURACY_MULTIPLIER),
+                                (int)(pitch_rates.prop      * INT_ACCURACY_MULTIPLIER),
+                                (int)(pitch_rates.integr    * INT_ACCURACY_MULTIPLIER),
+                                (int)(pitch_rates.diff      * INT_ACCURACY_MULTIPLIER),
+                                (int)(yaw_rates.prop        * INT_ACCURACY_MULTIPLIER),
+                                (int)(yaw_rates.integr      * INT_ACCURACY_MULTIPLIER),
+                                (int)(yaw_rates.diff        * INT_ACCURACY_MULTIPLIER) );
+                }
+#endif
 
                 break;
 
@@ -357,6 +368,7 @@ static THD_FUNCTION(BluetoothSerial, arg)
     }
 }
 
+#ifndef TEST_DISABLED
 
 static THD_WORKING_AREA(waUARTSerial, 16);
 static THD_FUNCTION(UARTSerial, arg) 
@@ -377,7 +389,7 @@ static THD_FUNCTION(UARTSerial, arg)
     }
 }
 
-static THD_WORKING_AREA(waSender, 16);
+static THD_WORKING_AREA(waSender, 128);
 static THD_FUNCTION(Sender, arg) 
 {
     arg = arg;
@@ -397,12 +409,15 @@ static THD_FUNCTION(Sender, arg)
         {
             data_package_t data;
 
-            value += 0.02;
+            // value += 0.02;
 
-            if ( value > 7 )
-                value = 0.0;
+            // if ( value > 7 )
+            //     value = 0.0;
 
-            data.roll = value * DATA_FLOAT_MULTIPLIER;
+
+            data.roll   = euler_angles.roll   * DATA_FLOAT_MULTIPLIER;
+            data.pitch  = euler_angles.pitch  * DATA_FLOAT_MULTIPLIER;
+            data.yaw    = euler_angles.yaw    * DATA_FLOAT_MULTIPLIER;
 
             sendDataPackage( &data );
         }
@@ -412,46 +427,23 @@ static THD_FUNCTION(Sender, arg)
     }
 }
 
-static THD_WORKING_AREA(waBlinker, 16);
-static THD_FUNCTION(Blinker, arg) 
+#endif
+
+int bt_control_init( tprio_t prio )
 {
-    arg = arg;
-
-    systime_t time = chVTGetSystemTimeX();
-
-    while ( true )
-    {
-        time += MS2ST( 500 );
-        palToggleLine( LINE_LED3 );
-        chThdSleepUntil( time );
-    }
-}
-
-
-int main(void)
-{
-    chSysInit();
-    halInit();
-
-    debug = (BaseSequentialStream *)uartDriver;
-
     /* Setup Bluetooth serial */
     sdStart( btDriver, &btCfg );
-    palSetPadMode( GPIOE, 8, PAL_MODE_ALTERNATE(8) );    // TX
-    palSetPadMode( GPIOE, 7, PAL_MODE_ALTERNATE(8) );    // RX
+    palSetPadMode( GPIOC, 10, PAL_MODE_ALTERNATE(7) );    // TX
+    palSetPadMode( GPIOC, 11, PAL_MODE_ALTERNATE(7) );    // RX`
 
-    /* Setup wired serial */
-    sdStart( uartDriver, &uartCfg );
-    palSetPadMode( GPIOC, 12, PAL_MODE_ALTERNATE(8) );    // TX
-    palSetPadMode( GPIOD, 2, PAL_MODE_ALTERNATE(8) );    // RX
+    chThdCreateStatic(waBluetoothSerial, sizeof(waBluetoothSerial), prio, BluetoothSerial, NULL);
 
-    chThdCreateStatic(waBluetoothSerial, sizeof(waBluetoothSerial), NORMALPRIO+2, BluetoothSerial, NULL);
+#ifndef TEST_DISABLED
     chThdCreateStatic(waUARTSerial, sizeof(waUARTSerial), NORMALPRIO, UARTSerial, NULL);
-    chThdCreateStatic(waBlinker, sizeof(waBlinker), NORMALPRIO, Blinker, NULL);
     chThdCreateStatic(waSender, sizeof(waSender), NORMALPRIO+1, Sender, NULL);
+#endif
 
-    while (true)
-    {
-        chThdSleepSeconds(1);
-    }
+    dprintf_mod( BT_CONTROL_PREFIX, "Initialized\n" );
+
+    return EOK;
 }

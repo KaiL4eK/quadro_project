@@ -1,3 +1,4 @@
+// #define CORE_DEBUG_ENABLED
 #include <core.h>
 
 #define RADIO_MODULE_PREFIX     "[Radio] "
@@ -52,7 +53,10 @@ static void rc_pulse_cb( EXTDriver *extp, expchannel_t channel );
 static bool             rc_connected = false;
 static virtual_timer_t  connect_vt;
 
-static void rc_connect_timeout ( void *p ) {
+static void rc_connect_timeout ( void *p ) 
+{
+    p = p;
+
     rc_connected = false;
 
     memset( &control_input, 0, sizeof( control_input ) );
@@ -145,12 +149,14 @@ int radio_control_calibration ( void )
         chThdSleepMilliseconds( 20 );
     }
 
-    dprintf_mod_str( RADIO_MODULE_PREFIX, "Calibration results:\n" );
+    dprintf_mod( RADIO_MODULE_PREFIX, "Calibration results:\n" );
     for ( ch = 0; ch < MAX_CHANNELS_USED; ch++ )
     {
         dprintf_mod( RADIO_MODULE_PREFIX, "   ch%d: .min_value = %d, .max_value = %d\n", ch, 
                                                 rc_channels[ch].min_value, rc_channels[ch].max_value );
     }
+
+    return EOK;
 }
 
 bool radio_control_is_connected ( void )
