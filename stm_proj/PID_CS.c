@@ -1,8 +1,8 @@
 #include <core.h>
 
-#define PROP_RATE       5
+#define PROP_RATE       1
 #define INTEGR_RATE     0
-#define DIFF_RATE       0
+#define DIFF_RATE       10
 
 typedef struct {
     float p, i, d;
@@ -10,7 +10,7 @@ typedef struct {
 
 PID_rates_t     roll_rates  = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
                 pitch_rates = { .prop = PROP_RATE,   .integr = INTEGR_RATE,    .diff = DIFF_RATE },
-                yaw_rates   = { .prop = 30,          .integr = 0,              .diff = 0 };
+                yaw_rates   = { .prop = 10,          .integr = 0,              .diff = 0 };
 
 float       integr_sum_pitch = 0;
 float       integr_sum_roll  = 0;

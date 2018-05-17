@@ -325,8 +325,8 @@ static THD_FUNCTION(BluetoothSerial, arg)
                 PID_rates_t res_rates;
 
                 res_rates.prop     = rates->rates[0];
-                res_rates.diff     = rates->rates[1];
-                res_rates.integr   = rates->rates[2];
+                res_rates.integr   = rates->rates[1];
+                res_rates.diff     = rates->rates[2];
 
                 if ( received_cmd == COMMAND_SET_MAIN_RATES )
                 {
@@ -369,29 +369,6 @@ static THD_FUNCTION(BluetoothSerial, arg)
         // chThdSleepMilliseconds( 300 );
     }
 }
-
-#ifndef TEST_DISABLED
-
-static THD_WORKING_AREA(waUARTSerial, 16);
-static THD_FUNCTION(UARTSerial, arg) 
-{
-    arg = arg;
-
-    uint8_t received_byte = 0;
-
-    while (true)
-    {
-        msg_t msg = sdGet( uartDriver );
-
-        received_byte = msg;
-
-        sdPut( btDriver, received_byte );
-
-        // chThdSleepMilliseconds( 300 );
-    }
-}
-
-#endif
 
 static THD_WORKING_AREA(waSender, 128);
 static THD_FUNCTION(Sender, arg) 
@@ -436,7 +413,28 @@ static THD_FUNCTION(Sender, arg)
     }
 }
 
+#ifndef TEST_DISABLED
 
+static THD_WORKING_AREA(waUARTSerial, 16);
+static THD_FUNCTION(UARTSerial, arg) 
+{
+    arg = arg;
+
+    uint8_t received_byte = 0;
+
+    while (true)
+    {
+        msg_t msg = sdGet( uartDriver );
+
+        received_byte = msg;
+
+        sdPut( btDriver, received_byte );
+
+        // chThdSleepMilliseconds( 300 );
+    }
+}
+
+#endif
 
 int bt_control_init( tprio_t prio )
 {
@@ -449,7 +447,7 @@ int bt_control_init( tprio_t prio )
     chThdCreateStatic(waSender, sizeof(waSender), prio , Sender, NULL);
 
 #ifndef TEST_DISABLED
-    chThdCreateStatic(waUARTSerial, sizeof(waUARTSerial), NORMALPRIO, UARTSerial, NULL);
+    chThdCreateStatic(waUARTSerial, sizeof(waUARTSerial), prio, UARTSerial, NULL);
 #endif
 
     dprintf_mod( BT_CONTROL_PREFIX, "Initialized\n" );

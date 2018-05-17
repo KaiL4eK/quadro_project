@@ -59,17 +59,17 @@ static const PWMConfig pwm_conf = {
     .dier       = 0
 };
 
-BSEMAPHORE_DECL(mc_lock, false);
+// BSEMAPHORE_DECL(mc_lock, false);
 
-void motor_control_lock( void )
-{
-    chBSemWait( &mc_lock );
-}
+// void motor_control_lock( void )
+// {
+//     chBSemWait( &mc_lock );
+// }
 
-void motor_control_unlock( void )
-{
-    chBSemSignal( &mc_lock );
-}
+// void motor_control_unlock( void )
+// {
+//     chBSemSignal( &mc_lock );
+// }
 
 void motor_control_update_PWM( void )
 {
@@ -78,24 +78,19 @@ void motor_control_update_PWM( void )
     
     motor_num_t     m_idx;
     motor_power_t   pwr;
-
-    motor_control_lock();
     
     for ( m_idx = MOTOR_1; m_idx < MOTOR_COUNT; m_idx++ ) 
     {
-        pwr = motor_powers[m_idx] < 0 ? MOTOR_ESC_STOP_PWM : 
-                clip_value( motor_powers[m_idx], MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+        pwr = clip_value( motor_powers[m_idx], MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
 
         set_motor_PWM( m_idx, power_2_PWM( pwr ) );   
     }
-
-    motor_control_unlock();
 }
 
-motor_power_t *motor_control_get_powers_ptr( void )
-{
-    return motor_powers;
-}
+// motor_power_t *motor_control_get_powers_ptr( void )
+// {
+//     return motor_powers;
+// }
 
 void motor_control_init( void )
 {

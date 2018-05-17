@@ -109,6 +109,8 @@ void radio_control_init ( void )
 
         active_ch->raw_value_2_control_rate = control_values_range / active_ch->value_range;
     }
+
+    dprintf_mod( RADIO_MODULE_PREFIX, "Radio control initialized\n" );
 }
 
 int radio_control_calibration ( void )
@@ -126,6 +128,7 @@ int radio_control_calibration ( void )
 
     /* 50 Hz ~ 20 ms */
     int i;
+    /* ~ 20 seconds */
     for ( i = 0; i < 1000; i++ )
     {
         if ( !rc_connected )

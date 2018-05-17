@@ -17,3 +17,4 @@ uint8_t 	i2c_read_bits 	( i2c_module_t p_module, uint8_t i2c_address, uint8_t re
 int 		i2c_write_bit 	( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr, uint8_t bit_start, uint8_t data );
 int 		i2c_write_bits  ( i2c_module_t p_module, uint8_t i2c_address, uint8_t reg_addr, uint8_t bit_start, uint8_t length, uint8_t data );
 
+#define delay_ms(x) (chThdSleepMilliseconds((x)))

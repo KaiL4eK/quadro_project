@@ -30,8 +30,6 @@
 
 #define MAIN_PROGRAM_ROUTINE                    PROGRAM_ROUTINE_MASTER
 
-//#define TIME_MEASUREMENT_DEBUG
-
 extern BaseSequentialStream  *debug_stream;
 
 #ifdef CORE_DEBUG_ENABLED
@@ -41,8 +39,6 @@ extern BaseSequentialStream  *debug_stream;
     #define dprintf(str, ...)
     #define dprintf_mod(mod, str, ...)
 #endif
-
-#define delay_ms(x) (chThdSleepMilliseconds((x)))
 
 #ifndef clip_value
     #define clip_value( val, min, max ) ((val) > max ? max : (val) < min ? min : (val))
@@ -66,8 +62,13 @@ static inline void init_common_periphery ( void )
 
 // #define AHRS_TIME_MEASUREMENT_DEBUG
 
-extern euler_angles_t euler_angles;
-extern euler_angles_t gyro_rates;
+extern euler_angles_t       euler_angles;
+extern euler_angles_t       gyro_rates;
+
+extern binary_semaphore_t   ahrs_sem;
+
+static inline void ahrs_data_access_lock( void )    { chBSemWait( &ahrs_sem ); }
+static inline void ahrs_data_access_unlock( void )  { chBSemSignal( &ahrs_sem ); }
 
 void ahrs_module_init ( tprio_t prio );
 
@@ -90,9 +91,6 @@ typedef enum {
 extern motor_power_t   motor_powers[MOTOR_COUNT];
 
 void motor_control_init( void );
-/* Adviced to call during changing PWM values */
-void motor_control_lock( void );
-void motor_control_unlock( void );
 
 void motor_control_set_motors_started( void );
 void motor_control_set_motors_stopped( void );

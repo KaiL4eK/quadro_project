@@ -1,101 +1,126 @@
 #define CORE_DEBUG_ENABLED
 #include <core.h>
 
+// #define CONTROL_TIME_MEASUREMENT_DEBUG
 
 /*===========================================================================*/
 /* System.                                                                   */
 /*===========================================================================*/
 
-int16_t pitch_setpoint      = 0;
-int16_t roll_setpoint       = 0;
-int16_t yaw_setpoint        = 0;
+int16_t     pitch_control           = 0;
+int16_t     roll_control            = 0;
+int16_t     yaw_control             = 0;
 
+float       pitch_rate_setpoint     = 0;
+float       roll_rate_setpoint      = 0;
+float       yaw_rate_setpoint       = 0;
+
+int16_t     pitch_setpoint          = 0;
+int16_t     roll_setpoint           = 0;
+int16_t     yaw_setpoint            = 0;
 
 /* Max angular speed = 40 deg/sec (20 deg * 2) */
 static const float CONTROL_2_ANGLE_SPEED_RATE   = 2.0f;
 /* Max angle = 10 degree (10 deg / 1000 points) */
 static const float CONTROL_2_ANGLE_RATE         = 0.01f;
 
-#ifdef TIME_MEASUREMENT_DEBUG
+#ifdef CONTROL_TIME_MEASUREMENT_DEBUG
 time_measurement_t      control_tm;
 #endif
 
-static THD_WORKING_AREA(waControlThread, 256);
+static THD_WORKING_AREA(waControlThread, 512);
 static THD_FUNCTION(ControlThread, arg)
 {
     arg = arg;
 
-#ifdef TIME_MEASUREMENT_DEBUG
+#ifdef CONTROL_TIME_MEASUREMENT_DEBUG
     chTMObjectInit( &control_tm );
 #endif
 
-    int16_t pitch_control       = 0;
-    int16_t roll_control        = 0;
-    int16_t yaw_control         = 0;
 
-    float pitch_rate_setpoint   = 0;
-    float roll_rate_setpoint    = 0;
-    float yaw_rate_setpoint     = 0;
 
     systime_t time = chVTGetSystemTimeX();
 
     while ( 1 )
     {
-        /* 2 - 6 us */
-#ifdef TIME_MEASUREMENT_DEBUG
+        /* 1 - 18 us */
+#ifdef CONTROL_TIME_MEASUREMENT_DEBUG
         chTMStartMeasurementX( &control_tm );
 #endif
 
         time += MS2ST( CONTROL_SYSTEM_PERIOD_MS );
 
-        /* Values [-1000; 1000] */
-        pitch_setpoint      = radio_control_get_angle_value( RC_PITCH );
-        roll_setpoint       = radio_control_get_angle_value( RC_ROLL );
-        yaw_setpoint        = radio_control_get_angle_value( RC_YAW );
+        /* Check if motors enabled */
+        if ( !motor_control_is_armed() )
+        {
+            /* If not but switch is enabled - start motors */
+            if ( radio_control_is_switch_enabled() )
+            {
+                motor_control_set_motors_started();
+            }
+        }
+        else
+        {
+            /* If motors are enabled, but switch is turned off - disabled motors */
+            if ( !radio_control_is_switch_enabled() )
+            {
+                motor_control_set_motors_stopped();
+            }
+        }
+
+        if ( motor_control_is_armed() )
+        {
+            /* Values [-1000; 1000] */
+            pitch_setpoint      = radio_control_get_angle_value( RC_PITCH );
+            roll_setpoint       = radio_control_get_angle_value( RC_ROLL );
+            yaw_setpoint        = radio_control_get_angle_value( RC_YAW );
 
 
-        pitch_rate_setpoint = (pitch_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.pitch) * CONTROL_2_ANGLE_SPEED_RATE;
-        pitch_control       = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch,
-                                                                     gyro_rates.pitch );
+            ahrs_data_access_lock();
 
-        roll_rate_setpoint  = (roll_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.roll) * CONTROL_2_ANGLE_SPEED_RATE;        
-        roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll,
-                                                                    gyro_rates.roll );
+            pitch_rate_setpoint = (pitch_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.pitch) * CONTROL_2_ANGLE_SPEED_RATE;
+            pitch_control       = PID_controller_generate_pitch_control( pitch_rate_setpoint - gyro_rates.pitch,
+                                                                         gyro_rates.pitch );
 
-        yaw_rate_setpoint   = yaw_setpoint * CONTROL_2_ANGLE_SPEED_RATE;        
-        yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
+            roll_rate_setpoint  = (roll_setpoint * CONTROL_2_ANGLE_RATE - euler_angles.roll) * CONTROL_2_ANGLE_SPEED_RATE;        
+            roll_control        = PID_controller_generate_roll_control( roll_rate_setpoint - gyro_rates.roll,
+                                                                        gyro_rates.roll );
 
-        /* Processing conversion */
-        /* Thrust value [0; 500] */
-        int32_t motorPower  = radio_control_get_thrust_value();
-        int32_t power       = motorPower;
-        
-        power = motorPower + pitch_control - roll_control - yaw_control;
-        motor_powers[MOTOR_1] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+            yaw_rate_setpoint   = yaw_setpoint * CONTROL_2_ANGLE_RATE * CONTROL_2_ANGLE_SPEED_RATE;        
+            yaw_control         = PID_controller_generate_yaw_control( yaw_rate_setpoint - gyro_rates.yaw );
 
-        power = motorPower + pitch_control + roll_control + yaw_control;
-        motor_powers[MOTOR_2] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
-
-        power = motorPower - pitch_control + roll_control - yaw_control;
-        motor_powers[MOTOR_3] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
-
-        power = motorPower - pitch_control - roll_control + yaw_control;
-        motor_powers[MOTOR_4] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+            ahrs_data_access_unlock();
 
 
-        motor_control_update_PWM();
+            /* Processing conversion */
+            /* Thrust value [0; 500] */
+            int32_t motorPower  = radio_control_get_thrust_value();
+            int32_t power       = motorPower;
+            
+            power = motorPower + pitch_control - roll_control - yaw_control;
+            motor_powers[MOTOR_1] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
 
-#ifdef TIME_MEASUREMENT_DEBUG
+            power = motorPower + pitch_control + roll_control + yaw_control;
+            motor_powers[MOTOR_2] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+            power = motorPower - pitch_control + roll_control - yaw_control;
+            motor_powers[MOTOR_3] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+            power = motorPower - pitch_control - roll_control + yaw_control;
+            motor_powers[MOTOR_4] = clip_value( power, MOTOR_INPUT_MIN, MOTOR_INPUT_MAX );
+
+            motor_control_update_PWM();
+        }
+
+
+#ifdef CONTROL_TIME_MEASUREMENT_DEBUG
         chTMStopMeasurementX( &control_tm );
 #endif
 
 //dprintf( "Pitch error: %06d %06d %06d\n", (int)((pitch_rate_setpoint - gyro_rates.pitch)),
 //                                                         (int)(pitch_rate_setpoint), (int)(gyro_rates.pitch) );
 //
-//dprintf( "Rates SPs: %d, %d, %d\n",
-//                         (int)(roll_rate_setpoint * INT_ACCURACY_MULTIPLIER),
-//                         (int)(pitch_rate_setpoint * INT_ACCURACY_MULTIPLIER),
-//                         (int)(yaw_rate_setpoint * INT_ACCURACY_MULTIPLIER) );
+
 //
 //dprintf( "Controls: %d, %d, %d\n", roll_control, pitch_control, yaw_control );
 
@@ -122,9 +147,11 @@ static THD_FUNCTION(Sender, arg)
 {
     arg = arg;
 
+    systime_t time = chVTGetSystemTimeX();
+
     while ( 1 )
     {
-        chThdSleepMilliseconds( 500 );
+        time += MS2ST( 500 );
 
 #if 0
         dprintf( "%s / [%d, %d] / Channels: %06d | %06d | %06d | %06d | %06d\n", 
@@ -149,10 +176,35 @@ static THD_FUNCTION(Sender, arg)
 #endif
 
 
-#ifdef TIME_MEASUREMENT_DEBUG
+#ifdef CONTROL_TIME_MEASUREMENT_DEBUG
         dprintf( "[Control] Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, control_tm.best), RTC2US(SYSTEM_FREQUENCY, control_tm.worst) );
 #endif
 
+#ifdef AHRS_TIME_MEASUREMENT_DEBUG
+        dprintf( "[AHRS] Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, filter_tm.best), RTC2US(SYSTEM_FREQUENCY, filter_tm.worst) );
+#endif
+
+#if 0
+        dprintf( "Setpoints: %d, %d, %d\n", roll_setpoint, pitch_setpoint, yaw_setpoint );
+#endif
+
+#if 1
+        dprintf( "Control: %d, %d, %d\n", roll_control, pitch_control, yaw_control );
+#endif
+
+#if 0
+        dprintf( "Rates SPs: %d, %d, %d\n",
+                        (int)(roll_rate_setpoint * INT_ACCURACY_MULTIPLIER),
+                        (int)(pitch_rate_setpoint * INT_ACCURACY_MULTIPLIER),
+                        (int)(yaw_rate_setpoint * INT_ACCURACY_MULTIPLIER) );
+#endif
+
+#if 0
+        dprintf( "Status: %s / %d\n", motor_control_is_armed() ? "En" : "Dis",
+                                        chVTGetSystemTimeX() );
+#endif
+
+        chThdSleepUntil( time );
     }
 }
 
@@ -166,10 +218,12 @@ static THD_FUNCTION(Blinker, arg)
 
     while ( true )
     {
-        time += MS2ST( 500 );
+        if ( motor_control_is_armed() ) 
+            time += MS2ST( 200 );
+        else
+            time += MS2ST( 1000 );
 
         palTogglePad( GPIOA, 5 );
-        dprintf( "Ping %d\n", chVTGetSystemTimeX() );
 
         chThdSleepUntil( time );
     }
@@ -193,54 +247,59 @@ int main(void)
     chThdCreateStatic( waSender, sizeof(waSender), NORMALPRIO-10, Sender, NULL );
     chThdCreateStatic( waBlinker, sizeof(waBlinker), NORMALPRIO-10, Blinker, NULL );
 
-    /* Main modules init */
-
-    /* Radio control init */
-    radio_control_init();
-
-#if ( MAIN_PROGRAM_ROUTINE == PROGRAM_ROUTINE_RC_CALIBRATION )
-    dprintf( "RC calibration start\n" );
-    radio_control_calibration();
-    chThdSleepSeconds( 1 );
-    chSysHalt( "Calibration mode" );
-#endif
-
-    /* AHRS init */
-    ahrs_module_init( NORMALPRIO - 2 );
-
 #if ( MAIN_PROGRAM_ROUTINE == PROGRAM_ROUTINE_MPU6050_CALIBRATION )
+
+    ahrs_module_init( NORMALPRIO + 1 );
+
     dprintf( "MPU6050 calibration start\n" );
     mpu6050_calibration();
     chThdSleepSeconds( 1 );
     chSysHalt( "Calibration mode" );
-#else
-    
-#endif
+
+#elif ( MAIN_PROGRAM_ROUTINE == PROGRAM_ROUTINE_RC_CALIBRATION )
+
+    radio_control_init();
+
+    dprintf( "RC calibration start\n" );
+    if ( radio_control_calibration() < 0 )
+    {
+        dprintf( "RC is not connected\n" );
+    }
+    chThdSleepSeconds( 1 );
+    chSysHalt( "Calibration mode" );
+
+#elif ( MAIN_PROGRAM_ROUTINE == PROGRAM_ROUTINE_MASTER )
+    /*** Main modules init ***/
+
+    /* Radio control init */
+    radio_control_init();
+
+    /* AHRS init */
+    ahrs_module_init( NORMALPRIO + 1 );
 
     /* Motor control init */
     motor_control_init();
 
-    /* Motor control Thread init */
-    chThdCreateStatic( waControlThread, sizeof(waControlThread), NORMALPRIO, ControlThread, NULL );
+    /* Control system thread init */
+    chThdCreateStatic( waControlThread, sizeof(waControlThread), NORMALPRIO + 2, ControlThread, NULL );
 
     /* Bluetooth communication init */
     bt_control_init( NORMALPRIO );
 
 
-
     while ( true )
     {
-        chThdSleepMilliseconds( 100 );
+        chThdSleepMilliseconds( 1000 );
 
         // if ( !palReadLine( LINE_BUTTON ) )
-        if ( radio_control_is_switch_enabled() )
-        {
-            motor_control_set_motors_started(); 
-        }
-        else
-        {
-            motor_control_set_motors_stopped();
-        }
+        // if ( radio_control_is_switch_enabled() )
+        // {
+        //     motor_control_set_motors_started(); 
+        // }
+        // else
+        // {
+        //     motor_control_set_motors_stopped();
+        // }
 
         // palSetPad( GPIOC, 8 );
 
@@ -257,4 +316,6 @@ int main(void)
 
         // dprintf( "Hello =)\n" );
     }
+
+#endif
 }

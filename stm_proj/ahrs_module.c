@@ -3,9 +3,13 @@
 
 #define AHRS_PREFIX     "[ahrs]: "
 
-euler_angles_t               euler_angles    = { 0, 0, 0 };
-euler_angles_t               gyro_rates      = { 0, 0, 0 };
+euler_angles_t              euler_angles    = { 0, 0, 0 };
+euler_angles_t              gyro_rates      = { 0, 0, 0 };
 
+static  euler_angles_t      internal_angles = { 0, 0, 0 };
+static  euler_angles_t      internal_rates  = { 0, 0, 0 };
+
+BSEMAPHORE_DECL(ahrs_sem, false);
 
 /*===========================================================================*/
 /* MPU6050 driver related.                                                   */
@@ -43,11 +47,13 @@ static THD_FUNCTION(AHRSThread, arg)
     mpu_drdy_tp         = chThdGetSelfX();
 
     /* Filters */
-    madgwick_filter_set_angle_rate( 0.5f );
-    complementary_filter_set_angle_rate( 0.995f );
-    lowpass_filter_set_velocity_rate( 0.7f );
-    filter_initialize( SAMPLE_PERIOD_S );
 
+
+    complementary_filter_set_angle_rate( 0.995f );
+    lowpass_filter_set_velocity_rate( 1.0f );
+    filter_initialize( SAMPLE_PERIOD_S );
+    
+    madgwick_filter_set_angle_rate( 0.5f );
     madgwick_filter_set_inv_sqrt_method_manual( true );
 
     imu_filter_input_t  filter_input;
@@ -82,14 +88,22 @@ static THD_FUNCTION(AHRSThread, arg)
         // madgwick_filter_position_execute( &filter_input, &euler_angles );
 
         /* 1 - 57 us */
-        complementary_filter_position_execute( &filter_input, &euler_angles );
+        complementary_filter_position_execute( &filter_input, &internal_angles );
 
 #ifdef AHRS_TIME_MEASUREMENT_DEBUG
         chTMStopMeasurementX( &filter_tm );
-        dprintf( "Best: %d, Worst: %d\n", RTC2US(SYSTEM_FREQUENCY, filter_tm.best), RTC2US(SYSTEM_FREQUENCY, filter_tm.worst) );
 #endif
 
-        lowpass_filter_velocity_execute( &filter_input, &gyro_rates );
+        lowpass_filter_velocity_execute( &filter_input, &internal_rates );
+
+        /* Copy to shared data */
+
+        ahrs_data_access_lock();
+
+        euler_angles    = internal_angles;
+        gyro_rates      = internal_rates;
+
+        ahrs_data_access_unlock();
 
 // dprintf( "Rates: %06d %06d %06d\n",
 //                             (int)(gyro_rates.roll * INT_ACCURACY_MULTIPLIER),
@@ -121,17 +135,21 @@ static const mpu6050_offsets_t mpu_offsets = {
 static I2CDriver            *mpudrvr    = &I2CD1;
 static const I2CConfig      mpuconf     = {
 #ifndef F446RE
+
     .timingr  = STM32_TIMINGR_PRESC(0U) |
                 STM32_TIMINGR_SCLDEL(11U) | STM32_TIMINGR_SDADEL(0U) |
                 // STM32_TIMINGR_SCLH(61U)  | STM32_TIMINGR_SCLL(61U),
                 STM32_TIMINGR_SCLH(48U)  | STM32_TIMINGR_SCLL(74U),
     .cr1      = 0,
     .cr2      = 0
+
 #else
+
     .op_mode        = OPMODE_I2C,
     .clock_speed    = 400000,
     // .duty_cycle     = STD_DUTY_CYCLE
     .duty_cycle     = FAST_DUTY_CYCLE_2
+
 #endif
 };
 
@@ -159,6 +177,7 @@ void ahrs_module_init ( tprio_t prio )
     mpu6050_set_interrupt_data_rdy_bit( true );
     mpu6050_set_sample_rate_divider( 4 );
 
+    /* Must be assigned after full initialization */
     mpu_data            = mpu6050_get_raw_data();
     gyro_sensitivity    = mpu6050_get_gyro_sensitivity_rate();
 
